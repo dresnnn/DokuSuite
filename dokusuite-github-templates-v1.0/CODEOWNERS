@@ -1,0 +1,20 @@
+# CODEOWNERS (Beispiel) – Handles an eure Org anpassen
+# Docs: https://docs.github.com/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Global Default
+*                                    @stadtbild/maintainers
+
+# Apps
+/apps/ios/                           @stadtbild/ios @stadtbild/maintainers
+/apps/web/                           @stadtbild/web @stadtbild/maintainers
+/apps/server/                        @stadtbild/backend @stadtbild/maintainers
+
+# Packages
+/packages/contracts/                 @stadtbild/backend @stadtbild/web
+/packages/shared/                    @stadtbild/backend @stadtbild/web @stadtbild/ios
+/packages/workers/                   @stadtbild/backend
+
+# Infra & CI
+/infra/                              @stadtbild/ops
+/.github/                            @stadtbild/ops @stadtbild/maintainers
+/docs/                               @stadtbild/maintainers
