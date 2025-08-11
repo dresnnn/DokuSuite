@@ -1,0 +1,112 @@
+[
+  {
+    "title": "Contracts: OpenAPI 3.1 Grundschema anlegen",
+    "body": "AC:\n- `packages/contracts/openapi.yaml` angelegt\n- Kernmodelle (Auth, Photo, Location, Order/Item, Share, Export) skizziert\n- README mit Build-Hinweisen\n",
+    "labels": ["type:feat", "area:contracts", "prio:P1", "status:ready"]
+  },
+  {
+    "title": "Contracts: Enums & Fehlercodes definieren",
+    "body": "AC:\n- Einheitliche Fehlerobjekte\n- Enums für Modus, Wasserzeichen-Policy, Status\n",
+    "labels": ["type:feat", "area:contracts", "prio:P1", "status:ready"]
+  },
+
+  {"title": "Server: FastAPI Skeleton erzeugen",
+   "body": "AC:\n- Startbarer Server\n- Liveness/Readiness\n- `.env`-Config\n- Strukturierte Logs\n",
+   "labels": ["type:feat", "area:server", "prio:P1", "status:ready"]},
+
+  {"title": "Server: DB-Schema & Alembic (Postgres + PostGIS)",
+   "body": "AC:\n- Tabellen laut Datenmodell\n- GIST/KNN-Index auf Geodaten (PostGIS)\n- Migrationen lauffähig\n",
+   "labels": ["type:feat", "area:server", "prio:P1", "status:ready"]},
+
+  {"title": "Server: S3 Pre-Signed Uploads",
+   "body": "AC:\n- Endpoint generiert PUT-URLs\n- TTL konfigurierbar\n- CORS-Header passend\n",
+   "labels": ["type:feat", "area:server", "area:infra", "prio:P1", "status:ready"]},
+
+  {"title": "Server: Ingestion-Worker Grundgerüst",
+   "body": "AC:\n- Job anlegen/abholen\n- DLQ\n- Idempotenz via Hash\n",
+   "labels": ["type:feat", "area:server", "prio:P1", "status:ready"]},
+
+  {"title": "Server: EXIF-Read & Orientation-Normalize",
+   "body": "AC:\n- Thumbnails korrekt\n- Hoch/Quer im Web richtig dargestellt\n",
+   "labels": ["type:feat", "area:server", "prio:P1", "status:ready"]},
+
+  {"title": "Server: Hashing & Duplikate",
+   "body": "AC:\n- SHA-256 Hash\n- Duplikatflag bei Hash-Kollision\n- Kein Doppel-Record\n",
+   "labels": ["type:feat", "area:server", "prio:P1", "status:ready"]},
+
+  {"title": "Server: Matching (PostGIS, 50 m)",
+   "body": "AC:\n- Kandidatenliste im Radius 50 m\n- Auto-Vorschlag bei eindeutiger Lage\n",
+   "labels": ["type:feat", "area:server", "prio:P1", "status:ready", "area:maps"]},
+
+  {"title": "Server: Belegungswoche (Europe/Berlin)",
+   "body": "AC:\n- Sonntag zählt zur Folgewoche\n- Override pro Auftrag möglich\n",
+   "labels": ["type:feat", "area:server", "prio:P1", "status:ready"]},
+
+  {"title": "Server: Reverse Geocoding Interface + Cache",
+   "body": "AC:\n- Google-Adapter\n- Redis-Cache\n- Quota/Rate-Limit\n",
+   "labels": ["type:feat", "area:server", "area:maps", "prio:P1", "status:ready"]},
+
+  {"title": "Server: Audit-Log Basis",
+   "body": "AC:\n- Änderungen an Foto/Zuordnung/Share protokolliert\n- Download/Einsicht im Kundenportal protokolliert\n",
+   "labels": ["type:feat", "area:server", "prio:P1", "status:ready"]},
+
+  {"title": "iOS: SwiftUI Skeleton + Login",
+   "body": "AC:\n- Login (Passwort)\n- Session im Keychain\n- Logout\n",
+   "labels": ["type:feat", "area:ios", "prio:P1", "status:ready"]},
+
+  {"title": "iOS: Capture-Flow + Standort-Refresh",
+   "body": "AC:\n- Genauigkeitsanzeige\n- Moduswahl (Fester Standort/Mobil)\n",
+   "labels": ["type:feat", "area:ios", "prio:P1", "status:ready"]},
+
+  {"title": "iOS: Kandidatenliste (Cache-Daten)",
+   "body": "AC:\n- Top-3 Standorte im 50 m Radius\n- Manuell wählbar\n",
+   "labels": ["type:feat", "area:ios", "prio:P1", "status:ready"]},
+
+  {"title": "iOS: Upload-Queue (Background Sessions)",
+   "body": "AC:\n- Offline-Warteschlange\n- Retry/Backoff\n- Statusanzeige\n",
+   "labels": ["type:feat", "area:ios", "prio:P1", "status:ready"]},
+
+  {"title": "Web: Next.js Skeleton + Auth-Flows (Stub)",
+   "body": "AC:\n- Loginseite\n- Magic-Link-Stub\n- Geschützte Routen\n",
+   "labels": ["type:feat", "area:web", "prio:P1", "status:ready"]},
+
+  {"title": "Web: Galerie/Tabelle mit virtuellem Scrolling",
+   "body": "AC:\n- 10k Elemente performant\n- Gemeinsame Filterleiste\n",
+   "labels": ["type:feat", "area:web", "prio:P1", "status:ready"]},
+
+  {"title": "Web: Bulk-Selection & Batch-Zuordnung",
+   "body": "AC:\n- 1.000 Fotos wählen\n- Auftrag(en) zuordnen\n- Audit-Eintrag\n",
+   "labels": ["type:feat", "area:web", "prio:P1", "status:ready"]},
+
+  {"title": "Web: Kunden-Shares (Magic Link + Wasserzeichen)",
+   "body": "AC:\n- Share erstellen\n- Ablauf festlegen\n- Branding/Wasserzeichen-Policy\n",
+   "labels": ["type:feat", "area:web", "prio:P1", "status:ready", "area:export"]},
+
+  {"title": "Web: Exporte (Excel/ZIP)",
+   "body": "AC:\n- Spalten wie definiert\n- ZIP-Struktur /Auftrag/YYYY-WW/...\n",
+   "labels": ["type:feat", "area:web", "area:export", "prio:P1", "status:ready"]},
+
+  {"title": "Web: Kartenansicht (Google Maps Placeholder)",
+   "body": "AC:\n- Cluster\n- Klick → Filter übernimmt\n- Deep-Link zu Google Maps\n",
+   "labels": ["type:feat", "area:web", "area:maps", "prio:P1", "status:ready"]},
+
+  {"title": "Sync: Ninox Pull-Client (Read-only)",
+   "body": "AC:\n- Tabellen E, MB, Q, NB, K, L, M, P, R, PB, Z, VC, WC\n- X/HC/IC ignorieren\n",
+   "labels": ["type:feat", "area:sync", "prio:P1", "status:ready"]},
+
+  {"title": "Sync: Idempotente Upserts + Quarantäne",
+   "body": "AC:\n- Keine Duplikate bei Wiederholungen\n- Quarantäne bei Referenzbruch\n- Audit der Sync-Ereignisse\n",
+   "labels": ["type:feat", "area:sync", "prio:P1", "status:ready"]},
+
+  {"title": "Infra: GitHub Actions Lint/Test/Build (Skeleton)",
+   "body": "AC:\n- Workflows je App\n- Status Checks required\n",
+   "labels": ["type:feat", "area:infra", "prio:P1", "status:ready"]},
+
+  {"title": "Infra: Hetzner S3 Buckets & CORS-Policy",
+   "body": "AC:\n- dev/stg/prd Buckets definiert\n- CORS passend zu Uploads\n- Keine Keys im Repo\n",
+   "labels": ["type:chore", "area:infra", "prio:P1", "status:ready"]},
+
+  {"title": "Infra: Branchschutz & CODEOWNERS aktivieren",
+   "body": "AC:\n- Branchschutz `main` aktiv\n- CODEOWNERS wirksam (Review)\n- Secret Scanning an\n",
+   "labels": ["type:chore", "area:infra", "prio:P1", "status:ready"]}
+]

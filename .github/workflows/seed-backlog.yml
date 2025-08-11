@@ -1,0 +1,62 @@
+name: Seed P1 Backlog
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  seed:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Create milestone and issues
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const path = '.github/backlog-p1.json';
+            const issues = JSON.parse(fs.readFileSync(path, 'utf8'));
+
+            // Ensure milestone MVP v1.0 exists
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const msTitle = 'MVP v1.0';
+
+            let milestoneNumber = null;
+            const { data: milestones } = await github.rest.issues.listMilestones({ owner, repo, state: 'open' });
+            const found = milestones.find(m => m.title === msTitle);
+            if (found) {
+              milestoneNumber = found.number;
+            } else {
+              const { data: created } = await github.rest.issues.createMilestone({ owner, repo, title: msTitle });
+              milestoneNumber = created.number;
+            }
+
+            // Helper: check if issue with same title exists (open or closed)
+            async function exists(title) {
+              // search issues by title
+              const q = `repo:${owner}/${repo} in:title "${title.replace(/"/g, '\\"')}"`; // escape quotes
+              const res = await github.rest.search.issuesAndPullRequests({ q });
+              return res.data.items.find(i => i.title === title && i.pull_request == null);
+            }
+
+            for (const item of issues) {
+              const dupe = await exists(item.title);
+              if (dupe) {
+                core.info(`Skip existing: ${item.title}`);
+                continue;
+              }
+              const labels = item.labels || [];
+              await github.rest.issues.create({
+                owner, repo,
+                title: item.title,
+                body: item.body,
+                labels,
+                milestone: milestoneNumber
+              });
+              core.info(`Created: ${item.title}`);
+            }
+
