@@ -2,6 +2,11 @@ name: Seed P1 Backlog
 
 on:
   workflow_dispatch:
+    inputs:
+      path:
+        description: "Path to backlog JSON (e.g., .github/backlog-p1.json)"
+        required: false
+        default: ".github/backlog-p1.json"
 
 permissions:
   contents: read
@@ -17,8 +22,9 @@ jobs:
         with:
           script: |
             const fs = require('fs');
-            const path = '.github/backlog-p1.json';
-            const issues = JSON.parse(fs.readFileSync(path, 'utf8'));
+            const inputPath = core.getInput('path') || '.github/backlog-p1.json';
+            core.info(`Reading backlog from ${inputPath}`);
+            const issues = JSON.parse(fs.readFileSync(inputPath, 'utf8'));
 
             // Ensure milestone MVP v1.0 exists
             const owner = context.repo.owner;
@@ -59,4 +65,3 @@ jobs:
               });
               core.info(`Created: ${item.title}`);
             }
-

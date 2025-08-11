@@ -1,0 +1,7 @@
+[
+  {
+    "title": "Monitoring-Skizze (Metriken & Dashboard-Entwurf)",
+    "body": "AC:\n- Basis-Metriken definiert (Uploads/min, Jobdauer, Fehlerquoten)\n- Prometheus/Grafana Entwurf (Dashboards/Alerts skizziert)\n- Logging/Tracing Mindestumfang festgehalten\n",
+    "labels": ["type:feat", "area:infra", "prio:P2", "status:ready"]
+  }
+]
