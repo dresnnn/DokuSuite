@@ -1,10 +1,10 @@
-name: Seed P1 Backlog
+name: Seed Backlog
 
 on:
   workflow_dispatch:
     inputs:
       path:
-        description: "Path to backlog JSON (e.g., .github/backlog-p1.json)"
+        description: "Path to backlog JSON (e.g., .github/backlog-p1.json or .github/backlog-p2.json)"
         required: false
         default: ".github/backlog-p1.json"
 
@@ -24,13 +24,12 @@ jobs:
             const fs = require('fs');
             const inputPath = core.getInput('path') || '.github/backlog-p1.json';
             core.info(`Reading backlog from ${inputPath}`);
-            const issues = JSON.parse(fs.readFileSync(inputPath, 'utf8'));
+            const items = JSON.parse(fs.readFileSync(inputPath, 'utf8'));
 
-            // Ensure milestone MVP v1.0 exists
-            const owner = context.repo.owner;
-            const repo = context.repo.repo;
+            const { owner, repo } = context.repo;
             const msTitle = 'MVP v1.0';
 
+            // Ensure milestone exists
             let milestoneNumber = null;
             const { data: milestones } = await github.rest.issues.listMilestones({ owner, repo, state: 'open' });
             const found = milestones.find(m => m.title === msTitle);
@@ -41,27 +40,34 @@ jobs:
               milestoneNumber = created.number;
             }
 
-            // Helper: check if issue with same title exists (open or closed)
-            async function exists(title) {
-              // search issues by title
-              const q = `repo:${owner}/${repo} in:title "${title.replace(/"/g, '\\"')}"`; // escape quotes
-              const res = await github.rest.search.issuesAndPullRequests({ q });
-              return res.data.items.find(i => i.title === title && i.pull_request == null);
+            // Check duplicates by exact title via listForRepo
+            async function existsByTitle(title) {
+              let page = 1;
+              while (true) {
+                const { data } = await github.rest.issues.listForRepo({ owner, repo, state: 'all', per_page: 100, page });
+                if (!data.length) break;
+                const hit = data.find(i => !i.pull_request && i.title === title);
+                if (hit) return hit;
+                page++;
+              }
+              return null;
             }
 
-            for (const item of issues) {
-              const dupe = await exists(item.title);
+            let createdCount = 0, skipped = 0;
+            for (const item of items) {
+              const dupe = await existsByTitle(item.title);
               if (dupe) {
-                core.info(`Skip existing: ${item.title}`);
+                core.info(`Skip existing: ${item.title} (#${dupe.number})`);
+                skipped++;
                 continue;
               }
-              const labels = item.labels || [];
-              await github.rest.issues.create({
-                owner, repo,
-                title: item.title,
-                body: item.body,
-                labels,
-                milestone: milestoneNumber
-              });
+              await github.rest.issues.create({ owner, repo, title: item.title, body: item.body, labels: item.labels || [], milestone: milestoneNumber });
               core.info(`Created: ${item.title}`);
+              createdCount++;
             }
+
+            await core.summary
+              .addHeading('Backlog Seeding')
+              .addRaw(`Input: ${inputPath}\nCreated: ${createdCount}\nSkipped: ${skipped}\n`)
+              .write();
+
