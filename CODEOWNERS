@@ -1,0 +1,17 @@
+# CODEOWNERS – DokuSuite
+# Docs: https://docs.github.com/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Globale Standardeigentümerschaft
+*                                    @dresnnn
+
+# Optional: explizite Pfade (aktuell ebenfalls @dresnnn)
+/apps/ios/                           @dresnnn
+/apps/web/                           @dresnnn
+/apps/server/                        @dresnnn
+/packages/contracts/                 @dresnnn
+/packages/shared/                    @dresnnn
+/packages/workers/                   @dresnnn
+/infra/                              @dresnnn
+/.github/                            @dresnnn
+/docs/                               @dresnnn
+

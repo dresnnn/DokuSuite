@@ -1,0 +1,84 @@
+labels:
+  # Areas
+  - name: area:ios
+    color: 1D76DB
+    description: iOS App related
+  - name: area:web
+    color: 0E8A16
+    description: Web/Frontend related
+  - name: area:server
+    color: 5319E7
+    description: Backend/API/Workers related
+  - name: area:infra
+    color: BFD4F2
+    description: Infrastructure/CI/CD
+  - name: area:contracts
+    color: 0052CC
+    description: API contracts / OpenAPI
+  - name: area:sync
+    color: 5319E7
+    description: Ninox sync & data import
+  - name: area:auth
+    color: 5319E7
+    description: Authentication/Authorization
+  - name: area:export
+    color: 0E8A16
+    description: Exports (ZIP/Excel/PDF)
+  - name: area:maps
+    color: 1D76DB
+    description: Maps/Geocoding
+  - name: area:ux
+    color: A2EEEF
+    description: UX/UI/Design
+
+  # Types
+  - name: type:bug
+    color: D73A4A
+    description: Bug fix
+  - name: type:feat
+    color: 0E8A16
+    description: Feature
+  - name: type:chore
+    color: FEF2C0
+    description: Chore/maintenance
+  - name: type:docs
+    color: D4C5F9
+    description: Documentation
+  - name: type:test
+    color: E4E669
+    description: Tests/UAT
+
+  # Priority
+  - name: prio:P1
+    color: B60205
+    description: Must-have for MVP
+  - name: prio:P2
+    color: FBCA04
+    description: Nice to have for pilot
+  - name: prio:P3
+    color: C5DEF5
+    description: Low priority
+
+  # Status
+  - name: status:blocked
+    color: 000000
+    description: Blocked
+  - name: status:needs-info
+    color: D4C5F9
+    description: Needs info/clarification
+  - name: status:design-review
+    color: BFD4F2
+    description: Awaiting design/arch review
+  - name: status:ready
+    color: 0E8A16
+    description: Ready to start
+  - name: status:in-progress
+    color: 1D76DB
+    description: Work in progress
+  - name: status:qa
+    color: FBCA04
+    description: QA/UAT verification
+  - name: status:done
+    color: C2E0C6
+    description: Done
+
