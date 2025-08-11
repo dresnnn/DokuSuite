@@ -19,4 +19,4 @@ jobs:
         with:
           node-version: '20'
       - name: Lint with Spectral CLI
-        run: npx -y @stoplight/spectral-cli@6 lint packages/contracts/openapi.yaml --fail-severity=error
+        run: npx -y @stoplight/spectral-cli@6 lint packages/contracts/openapi.yaml --ruleset spectral:oas --fail-severity=error
