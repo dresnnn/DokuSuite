@@ -14,6 +14,7 @@ Willkommen zur Planungs- und Konzeptdokumentation der DokuSuite. Dieser Ordner b
 - Betrieb/DevOps (High-Level): `ops/ops-devops.md`
 - Roadmap & Meilensteine: `roadmap.md`
 - Offene Fragen & Annahmen: `open-questions.md`
+ - Beschlüsse/Designentscheidungen: `decisions.md`
+ - Ninox-Integration & Sync: `integrations/ninox-sync.md`
 
 Änderungen an diesen Dokumenten sind ausdrücklich erwünscht. Sie dienen als gemeinsame, lebende Grundlage für die Umsetzung.
-

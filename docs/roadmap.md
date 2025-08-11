@@ -6,8 +6,9 @@ Phase 0 – Discovery/Feinspezifikation
 
 Phase 1 – MVP (intern): iOS Capture + Grundverwaltung
 - iOS: Zwei Modi, Offline-Cache, Upload-Queue, Grundmetadaten.
-- Backend: Auth, Fotos, Presigned Uploads, einfache Matching-Regeln, Thumbnails.
+- Backend: Auth, Fotos, Presigned Uploads, einfache Matching-Regeln (50 m Radius, PostGIS), Thumbnails.
 - Web: Galerie, Filter (Basis), manuelle Zuweisung, einfache Exporte.
+ - Hinweis: Keine automatische Auftragszuordnung im MVP (manuell/Bulk im Web).
 
 Phase 2 – Betriebsreife
 - Belegungsfenster-Regeln (Vor-/Nachklebetag), Ninox-Sync robust, Bulk-Workflows.
@@ -24,4 +25,3 @@ Phase 4 – Optimierung/Erweiterungen
 - ML-gestützte Qualitätsbewertung (optional), Routenplanung.
 
 Definition of Done je Phase: dokumentiert, getestet, betriebsfähig.
-

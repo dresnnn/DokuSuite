@@ -14,9 +14,9 @@ Technik/Plattform:
 - EXIF/HEIC/JPEG-Handling; Kompatibilität, Kompression konfigurierbar.
 - Auth: sichere Token-Ablage im Keychain; SSO optional später.
 - Sicherheit: AppTransportSecurity, minimale Berechtigungen, Datenschutztexte (Kamera/Standort).
+ - Verteilung: Geräteverwaltung/MDM (z. B. JAMF) für Rollout/Policies.
 
 UX/Robustheit:
 - Deutliche Statuskommunikation (Offline/Sync), klare Fehlerhinweise.
 - Undo/Korrektur vor Upload (Standort/Metadaten ändern).
 - Performance bei großen lokalen Queues (virtuelle Listen, Thumbnail-Caching).
-
