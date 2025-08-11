@@ -14,9 +14,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Lint with Spectral
-        uses: stoplightio/spectral-action@v1
+      - name: Setup Node
+        uses: actions/setup-node@v4
         with:
-          file_glob: 'packages/contracts/openapi.yaml'
-          # fail severity can be adjusted: error|warn|info|hint
-          fail_severity: error
+          node-version: '20'
+      - name: Lint with Spectral CLI
+        run: npx -y @stoplight/spectral-cli@6 lint packages/contracts/openapi.yaml --fail-severity=error
