@@ -1,6 +1,7 @@
 name: Lint OpenAPI
 
 on:
+  workflow_dispatch:
   push:
     paths:
       - 'packages/contracts/openapi.yaml'
