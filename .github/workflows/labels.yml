@@ -10,7 +10,6 @@ on:
 permissions:
   contents: read
   issues: write
-  metadata: read
 
 jobs:
   sync:
@@ -22,4 +21,3 @@ jobs:
         with:
           config-file: .github/labels.yml
           delete-other-labels: false
-
