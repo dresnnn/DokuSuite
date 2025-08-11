@@ -22,7 +22,9 @@ jobs:
         with:
           script: |
             const fs = require('fs');
-            const inputPath = core.getInput('path') || '.github/backlog-p1.json';
+            const inputPath = (context.payload && context.payload.inputs && context.payload.inputs.path)
+              || core.getInput('path')
+              || '.github/backlog-p1.json';
             core.info(`Reading backlog from ${inputPath}`);
             const items = JSON.parse(fs.readFileSync(inputPath, 'utf8'));
 
@@ -70,4 +72,3 @@ jobs:
               .addHeading('Backlog Seeding')
               .addRaw(`Input: ${inputPath}\nCreated: ${createdCount}\nSkipped: ${skipped}\n`)
               .write();
-
