@@ -1,0 +1,535 @@
+openapi: 3.1.0
+info:
+  title: DokuSuite API
+  version: 0.1.0
+  description: |
+    API für iOS-App, Web-Tool und Integrationen der DokuSuite.
+    Zeitzone: Europe/Berlin. Datums-/Zeitangaben sind RFC3339 UTC, mit klarer Interpretation für Woche (ISO-8601 Kalenderwoche).
+servers:
+  - url: /api
+tags:
+  - name: health
+  - name: auth
+  - name: photos
+  - name: locations
+  - name: orders
+  - name: shares
+  - name: exports
+security:
+  - bearerAuth: []
+paths:
+  /healthz:
+    get:
+      tags: [health]
+      summary: Health check
+      security: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status: { type: string, example: ok }
+  /auth/login:
+    post:
+      tags: [auth]
+      summary: Login with email and password
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email: { type: string, format: email }
+                password: { type: string, minLength: 1 }
+      responses:
+        '200':
+          description: JWT access token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthToken'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /locations:
+    get:
+      tags: [locations]
+      summary: List/search locations
+      parameters:
+        - in: query
+          name: q
+          schema: { type: string }
+          description: Freitextsuche (Name, Adresse)
+        - in: query
+          name: near
+          schema: { type: string, pattern: '^-?\d+\.\d+,-?\d+\.\d+$' }
+          description: Lat,Lon (WGS84)
+        - in: query
+          name: radius_m
+          schema: { type: integer, minimum: 1, maximum: 1000, default: 50 }
+          description: Radius in Metern (Default 50 m)
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/limit'
+      responses:
+        '200':
+          description: List of locations
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Page_Location_'
+
+  /locations/offline-delta:
+    get:
+      tags: [locations]
+      summary: Offline delta for iOS cache
+      parameters:
+        - in: query
+          name: since
+          required: true
+          schema: { type: string, format: date-time }
+          description: Deliver changes since this timestamp
+      responses:
+        '200':
+          description: Delta payload
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  upserts:
+                    type: array
+                    items: { $ref: '#/components/schemas/Location' }
+                  tombstones:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id: { type: string }
+
+  /photos/upload-intent:
+    post:
+      tags: [photos]
+      summary: Request a pre-signed upload (S3-compatible)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [contentType, size]
+              properties:
+                contentType: { type: string, example: image/heic }
+                size: { type: integer, minimum: 1 }
+      responses:
+        '200':
+          description: Upload parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UploadIntent'
+        '400': { $ref: '#/components/responses/BadRequest' }
+
+  /photos:
+    get:
+      tags: [photos]
+      summary: List/search photos
+      parameters:
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/limit'
+        - in: query
+          name: from
+          schema: { type: string, format: date-time }
+        - in: query
+          name: to
+          schema: { type: string, format: date-time }
+        - in: query
+          name: mode
+          schema: { $ref: '#/components/schemas/Mode' }
+        - in: query
+          name: siteId
+          schema: { type: string }
+        - in: query
+          name: orderId
+          schema: { type: string }
+        - in: query
+          name: uploaderId
+          schema: { type: string }
+        - in: query
+          name: status
+          schema: { $ref: '#/components/schemas/PhotoStatus' }
+      responses:
+        '200':
+          description: Paginated photos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Page_Photo_'
+    post:
+      tags: [photos]
+      summary: Report completed upload and attach metadata
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PhotoIngest'
+      responses:
+        '201':
+          description: Photo created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Photo' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+
+  /photos/{id}:
+    get:
+      tags: [photos]
+      summary: Get photo by id
+      parameters:
+        - $ref: '#/components/parameters/id'
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/Photo' } } } }
+        '404': { $ref: '#/components/responses/NotFound' }
+    patch:
+      tags: [photos]
+      summary: Update photo metadata (flags, corrections)
+      parameters:
+        - $ref: '#/components/parameters/id'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PhotoUpdate'
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/Photo' } } } }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /photos/batch/assign:
+    post:
+      tags: [photos]
+      summary: Assign multiple photos to an order and week
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [photoIds, orderId]
+              properties:
+                photoIds: { type: array, items: { type: string }, minItems: 1 }
+                orderId: { type: string }
+                calendarWeek: { type: string, example: '2025-W32' }
+      responses:
+        '200':
+          description: Assignment results
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  updated: { type: integer }
+                  errors: { type: array, items: { $ref: '#/components/schemas/Error' } }
+
+  /orders:
+    get:
+      tags: [orders]
+      summary: List orders (read-only)
+      parameters:
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/limit'
+        - in: query
+          name: customerId
+          schema: { type: string }
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/Page_Order_' } } } }
+
+  /orders/{id}:
+    get:
+      tags: [orders]
+      summary: Get order by id (read-only)
+      parameters:
+        - $ref: '#/components/parameters/id'
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/Order' } } } }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /shares:
+    post:
+      tags: [shares]
+      summary: Create a customer share for an order
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ShareCreate' }
+      responses:
+        '201': { description: Created, content: { application/json: { schema: { $ref: '#/components/schemas/Share' } } } }
+  /shares/{id}:
+    get:
+      tags: [shares]
+      summary: Get share
+      parameters:
+        - $ref: '#/components/parameters/id'
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/Share' } } } }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /shares/{id}/revoke:
+    post:
+      tags: [shares]
+      summary: Revoke share
+      parameters:
+        - $ref: '#/components/parameters/id'
+      responses:
+        '204': { description: Revoked }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /exports/zip:
+    post:
+      tags: [exports]
+      summary: Create ZIP export for a selection
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                photoIds: { type: array, items: { type: string } }
+                orderId: { type: string }
+                title: { type: string }
+                includeExif: { type: boolean, default: false }
+      responses:
+        '202': { description: Accepted, content: { application/json: { schema: { $ref: '#/components/schemas/ExportJob' } } } }
+  /exports/excel:
+    post:
+      tags: [exports]
+      summary: Create Excel export (site list)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                orderId: { type: string }
+                photoIds: { type: array, items: { type: string } }
+      responses:
+        '202': { description: Accepted, content: { application/json: { schema: { $ref: '#/components/schemas/ExportJob' } } } }
+  /exports/{id}:
+    get:
+      tags: [exports]
+      summary: Get export job status/result
+      parameters:
+        - $ref: '#/components/parameters/id'
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/ExportJob' } } } }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  parameters:
+    id:
+      in: path
+      name: id
+      required: true
+      schema: { type: string }
+    page:
+      in: query
+      name: page
+      schema: { type: integer, minimum: 1, default: 1 }
+    limit:
+      in: query
+      name: limit
+      schema: { type: integer, minimum: 1, maximum: 200, default: 50 }
+  responses:
+    BadRequest:
+      description: Bad Request
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    NotFound:
+      description: Not found
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+  schemas:
+    Error:
+      type: object
+      properties:
+        code: { type: string }
+        message: { type: string }
+        details: { type: object, additionalProperties: true }
+    PageMeta:
+      type: object
+      properties:
+        page: { type: integer }
+        limit: { type: integer }
+        total: { type: integer }
+    Page_Location_:
+      type: object
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/Location' }
+        meta: { $ref: '#/components/schemas/PageMeta' }
+    Page_Photo_:
+      type: object
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/Photo' }
+        meta: { $ref: '#/components/schemas/PageMeta' }
+    Page_Order_:
+      type: object
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/Order' }
+        meta: { $ref: '#/components/schemas/PageMeta' }
+    GeoPoint:
+      type: object
+      properties:
+        lat: { type: number, minimum: -90, maximum: 90 }
+        lon: { type: number, minimum: -180, maximum: 180 }
+        accuracy_m: { type: number, minimum: 0 }
+        heading_deg: { type: number, minimum: 0, maximum: 360 }
+    Mode:
+      type: string
+      enum: [FIXED_SITE, MOBILE]
+      description: |
+        FIXED_SITE = eigener fester Standort, MOBILE = nicht-fester Standort (z. B. Laternen)
+    PhotoStatus:
+      type: string
+      enum: [INGESTED, PROCESSED, REVIEWED, SHARED]
+    WatermarkPolicy:
+      type: string
+      enum: [none, default, custom_text]
+    AuthToken:
+      type: object
+      properties:
+        access_token: { type: string }
+        token_type: { type: string, example: Bearer }
+        expires_in: { type: integer, example: 3600 }
+    Location:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        address: { type: string }
+        point: { $ref: '#/components/schemas/GeoPoint' }
+        active: { type: boolean }
+        ninox_id: { type: string }
+    Photo:
+      type: object
+      properties:
+        id: { type: string }
+        object_key: { type: string }
+        taken_at: { type: string, format: date-time }
+        mode: { $ref: '#/components/schemas/Mode' }
+        site_id: { type: string, nullable: true }
+        ad_hoc_spot: { $ref: '#/components/schemas/GeoPoint', nullable: true }
+        uploader_id: { type: string }
+        device_id: { type: string }
+        hash: { type: string }
+        is_duplicate: { type: boolean }
+        quality_score: { type: number, nullable: true }
+        flag_bad: { type: boolean, default: false }
+        flag_best_of: { type: boolean, default: false }
+        status: { $ref: '#/components/schemas/PhotoStatus' }
+        assignments:
+          type: array
+          items:
+            type: object
+            properties:
+              order_id: { type: string }
+              calendar_week: { type: string, example: '2025-W32' }
+              assigned_by: { type: string }
+              assigned_at: { type: string, format: date-time }
+    PhotoIngest:
+      type: object
+      required: [object_key, taken_at, mode]
+      properties:
+        object_key: { type: string, description: Vom Upload-Intent erhalten }
+        taken_at: { type: string, format: date-time }
+        mode: { $ref: '#/components/schemas/Mode' }
+        site_id: { type: string, nullable: true }
+        ad_hoc_spot: { $ref: '#/components/schemas/GeoPoint', nullable: true }
+        device_id: { type: string }
+        uploader_id: { type: string }
+        quality_flag: { type: string, nullable: true, enum: [bad, best_of] }
+        note: { type: string, nullable: true }
+    PhotoUpdate:
+      type: object
+      properties:
+        site_id: { type: string, nullable: true }
+        ad_hoc_spot: { $ref: '#/components/schemas/GeoPoint', nullable: true }
+        flag_bad: { type: boolean }
+        flag_best_of: { type: boolean }
+        status: { $ref: '#/components/schemas/PhotoStatus' }
+    Order:
+      type: object
+      properties:
+        id: { type: string }
+        customer_id: { type: string }
+        name: { type: string }
+        status: { type: string, enum: [reserved, booked, cancelled] }
+        service_period:
+          type: object
+          properties:
+            begin: { type: string, format: date }
+            end: { type: string, format: date }
+    ShareCreate:
+      type: object
+      required: [order_id]
+      properties:
+        order_id: { type: string }
+        expires_at: { type: string, format: date-time, nullable: true }
+        watermark_policy: { $ref: '#/components/schemas/WatermarkPolicy' }
+        branding_theme: { type: string, nullable: true }
+        download_allowed: { type: boolean, default: true }
+    Share:
+      type: object
+      properties:
+        id: { type: string }
+        order_id: { type: string }
+        url: { type: string, format: uri }
+        expires_at: { type: string, format: date-time, nullable: true }
+        watermark_policy: { $ref: '#/components/schemas/WatermarkPolicy' }
+        branding_theme: { type: string, nullable: true }
+        download_allowed: { type: boolean }
+        created_at: { type: string, format: date-time }
+    UploadIntent:
+      type: object
+      properties:
+        object_key: { type: string }
+        url: { type: string, format: uri }
+        method: { type: string, example: PUT }
+        headers: { type: object, additionalProperties: { type: string } }
+        expires_in: { type: integer }
+    ExportJob:
+      type: object
+      properties:
+        id: { type: string }
+        kind: { type: string, enum: [zip, excel] }
+        status: { type: string, enum: [queued, processing, done, error] }
+        download_url: { type: string, format: uri, nullable: true }
+        created_at: { type: string, format: date-time }
+        error: { $ref: '#/components/schemas/Error', nullable: true }
+
