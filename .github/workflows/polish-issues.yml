@@ -1,0 +1,38 @@
+name: Polish P1 Issues
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  polish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const marker = '<!-- DoD-Template -->';
+            const append = `\n\n${marker}\n## Definition of Done\n- [ ] Akzeptanzkriterien dokumentiert\n- [ ] Tests/Verifikation geplant (UAT/Unit)\n- [ ] Logging/Telemetry Bedarf geprüft\n- [ ] Doku/README aktualisiert\n\n## Acceptance Criteria (Beispiel)\n- GIVEN … WHEN … THEN …\n`;
+
+            let page = 1;
+            while (true) {
+              const { data } = await github.rest.issues.listForRepo({ owner, repo, state: 'open', labels: 'prio:P1', per_page: 100, page });
+              if (!data.length) break;
+              for (const issue of data) {
+                if (issue.pull_request) continue;
+                if (issue.body && issue.body.includes(marker)) {
+                  core.info(`Skip (already polished): #${issue.number}`);
+                  continue;
+                }
+                const newBody = (issue.body || '') + append;
+                await github.rest.issues.update({ owner, repo, issue_number: issue.number, body: newBody });
+                core.info(`Updated #${issue.number}`);
+              }
+              page++;
+            }
+

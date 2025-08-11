@@ -1,0 +1,16 @@
+# ADR-Titel
+
+Status: proposed | accepted | rejected | superseded
+Datum: YYYY-MM-DD
+
+Kontext
+- …
+
+Entscheidung
+- …
+
+Konsequenzen
+- Positive: …
+- Negative: …
+- Offene Punkte: …
+
