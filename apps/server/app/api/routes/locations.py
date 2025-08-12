@@ -2,11 +2,12 @@ from fastapi import APIRouter, Depends, status
 from fastapi.responses import JSONResponse
 
 from app.core.security import get_current_user
+from app.db.session import get_session
 
 router = APIRouter(
     prefix="/locations",
     tags=["locations"],
-    dependencies=[Depends(get_current_user)],
+    dependencies=[Depends(get_current_user), Depends(get_session)],
 )
 
 
