@@ -23,7 +23,7 @@ class PhotoIngest(BaseModel):
     taken_at: datetime
     mode: Mode
     site_id: str | None = None
-    ad_hoc_spot: GeoPoint | None = None
+    ad_hoc_spot: GeoPoint
     device_id: str | None = None
     uploader_id: str | None = None
     quality_flag: str | None = None

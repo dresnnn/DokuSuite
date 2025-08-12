@@ -1,6 +1,7 @@
 import hashlib
 import uuid
 from datetime import datetime
+from math import asin, cos, radians, sin, sqrt
 
 import boto3
 from fastapi import APIRouter, Depends, HTTPException, Query, status
@@ -20,7 +21,7 @@ from app.api.schemas import (
 )
 from app.core.config import settings
 from app.core.security import get_current_user
-from app.db.models import Photo
+from app.db.models import Location, Photo
 from app.db.session import get_session
 from app.services.exif import normalize_orientation
 
@@ -35,6 +36,20 @@ def _s3_client():
         aws_access_key_id=settings.s3_access_key,
         aws_secret_access_key=settings.s3_secret_key,
     )
+
+
+def _distance_m(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
+    r = 6371000  # meters
+    phi1, phi2 = radians(lat1), radians(lat2)
+    dphi = radians(lat2 - lat1)
+    dlambda = radians(lon2 - lon1)
+    a = sin(dphi / 2) ** 2 + cos(phi1) * cos(phi2) * sin(dlambda / 2) ** 2
+    return 2 * r * asin(sqrt(a))
+
+
+def _parse_point(point: str) -> tuple[float, float]:
+    lon, lat = map(float, point.replace("POINT(", "").replace(")", "").split())
+    return lat, lon
 
 
 @router.post("/upload-intent", response_model=UploadIntent)
@@ -108,6 +123,26 @@ def ingest_photo(payload: PhotoIngest, session: Session = Depends(get_session)):
         hash=photo_hash,
         is_duplicate=is_dup,
     )
+
+    # Find nearest location within 50m
+    lat = payload.ad_hoc_spot.lat
+    lon = payload.ad_hoc_spot.lon
+    locations = session.exec(select(Location)).all()
+    nearest_id: int | None = None
+    min_dist = 50.0
+    for loc in locations:
+        if not loc.geog:
+            continue
+        try:
+            loc_lat, loc_lon = _parse_point(loc.geog)
+        except Exception:  # pragma: no cover - malformed data
+            continue
+        dist = _distance_m(lat, lon, loc_lat, loc_lon)
+        if dist < min_dist:
+            min_dist = dist
+            nearest_id = loc.id
+    if nearest_id is not None:
+        photo.location_id = nearest_id
     session.add(photo)
     session.commit()
     session.refresh(photo)
