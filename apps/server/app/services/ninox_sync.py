@@ -1,9 +1,10 @@
 from __future__ import annotations
 
-from datetime import datetime
-from typing import Any, Iterable
 import json
 import urllib.request
+from collections.abc import Iterable
+from datetime import datetime
+from typing import Any
 
 from sqlmodel import Session, select
 
@@ -13,7 +14,12 @@ from app.db.models import ExtRef, Location, Order
 class NinoxSyncService:
     """Synchronise data from Ninox into local tables."""
 
-    def __init__(self, session: Session, base_url: str | None = None, token: str | None = None) -> None:
+    def __init__(
+        self,
+        session: Session,
+        base_url: str | None = None,
+        token: str | None = None,
+    ) -> None:
         self.session = session
         self.base_url = base_url
         self.token = token
@@ -44,7 +50,9 @@ class NinoxSyncService:
         for rec in records:
             self._sync_record(rec, "order", Order, ["customer_id", "name", "status"])
 
-    def _sync_record(self, rec: dict[str, Any], table: str, model_cls: Any, fields: list[str]) -> None:
+    def _sync_record(
+        self, rec: dict[str, Any], table: str, model_cls: Any, fields: list[str]
+    ) -> None:
         ext = self.session.exec(
             select(ExtRef).where(
                 ExtRef.source == "ninox",
