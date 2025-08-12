@@ -24,6 +24,7 @@ from app.core.security import get_current_user
 from app.db.models import Location, Photo
 from app.db.session import get_session
 from app.services.exif import normalize_orientation
+from app.services.calendar_week import calendar_week_from_taken_at
 
 router = APIRouter(prefix="/photos", tags=["photos"], dependencies=[Depends(get_current_user)])
 
@@ -122,6 +123,7 @@ def ingest_photo(payload: PhotoIngest, session: Session = Depends(get_session)):
         taken_at=payload.taken_at,
         hash=photo_hash,
         is_duplicate=is_dup,
+        calendar_week=calendar_week_from_taken_at(payload.taken_at),
     )
 
     # Find nearest location within 50m
@@ -189,5 +191,7 @@ def batch_assign(
         photo.order_id = payload.order_id
         if payload.calendar_week is not None:
             photo.calendar_week = payload.calendar_week
+        elif photo.calendar_week is None:
+            photo.calendar_week = calendar_week_from_taken_at(photo.taken_at)
     session.commit()
     return {"assigned": len(photos)}
