@@ -4,11 +4,14 @@ app/__init__.py
 app/main.py
 app/api/__init__.py
 app/api/routes/__init__.py
+app/api/routes/auth.py
 app/api/routes/health.py
 app/core/config.py
+app/core/security.py
 dokusuite_server.egg-info/PKG-INFO
 dokusuite_server.egg-info/SOURCES.txt
 dokusuite_server.egg-info/dependency_links.txt
 dokusuite_server.egg-info/requires.txt
 dokusuite_server.egg-info/top_level.txt
+tests/test_auth.py
 tests/test_health.py

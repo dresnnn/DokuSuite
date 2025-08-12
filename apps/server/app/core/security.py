@@ -50,5 +50,8 @@ def create_access_token(subject: str, expires_in_minutes: int) -> dict[str, Any]
 def decode_token(token: str) -> dict[str, Any]:
     try:
         return jwt.decode(token, settings.jwt_secret, algorithms=[settings.jwt_algorithm])
-    except (jwt.ExpiredSignatureError, jwt.InvalidTokenError) as err:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token") from None
+    except (jwt.ExpiredSignatureError, jwt.InvalidTokenError):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token",
+        ) from None
