@@ -7,6 +7,7 @@ from .api.routes import ingestion as ingestion_routes
 from .api.routes import locations as location_routes
 from .api.routes import orders as order_routes
 from .api.routes import photos as photo_routes
+from .api.routes import shares as share_routes
 from .core.config import settings
 
 
@@ -18,6 +19,7 @@ def create_app() -> FastAPI:
     app.include_router(location_routes.router)
     app.include_router(photo_routes.router)
     app.include_router(order_routes.router)
+    app.include_router(share_routes.router)
     app.include_router(export_routes.router)
     return app
 

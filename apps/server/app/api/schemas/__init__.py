@@ -8,6 +8,7 @@ from .photo import (
     PhotoUpdate,
 )
 from .upload import UploadIntent, UploadIntentRequest
+from .share import ShareCreate, ShareRead
 
 __all__ = [
     "LocationRead",
@@ -19,4 +20,6 @@ __all__ = [
     "UploadIntent",
     "UploadIntentRequest",
     "OrderRead",
+    "ShareCreate",
+    "ShareRead",
 ]
