@@ -13,8 +13,7 @@ def make_client(monkeypatch):
     import app.db.session as session_module
     session_module = importlib.reload(session_module)
     import app.db.models as models
-    SQLModel.metadata.clear()
-    models = importlib.reload(models)
+    SQLModel.metadata.drop_all(session_module.engine)
     SQLModel.metadata.create_all(session_module.engine)
     session_gen = session_module.get_session()
     session = next(session_gen)

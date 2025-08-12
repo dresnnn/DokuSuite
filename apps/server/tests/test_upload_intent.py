@@ -16,8 +16,7 @@ os.environ["DOKUSUITE_DATABASE_URL"] = "sqlite:///:memory:"
 import app.db.session as session_module  # noqa: E402
 session_module = importlib.reload(session_module)
 import app.db.models as models  # noqa: E402
-SQLModel.metadata.clear()
-models = importlib.reload(models)
+SQLModel.metadata.drop_all(session_module.engine)
 SQLModel.metadata.create_all(session_module.engine)
 session = next(session_module.get_session())
 session.add(

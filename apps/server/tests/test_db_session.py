@@ -7,9 +7,10 @@ def test_session_roundtrip(monkeypatch):
     monkeypatch.setenv("DOKUSUITE_DATABASE_URL", "sqlite:///:memory:")
     import app.db.session as session_module
     session_module = importlib.reload(session_module)
-    SQLModel.metadata.clear()
+    SQLModel.metadata.drop_all(session_module.engine)
 
-    class Location(SQLModel, table=True):
+    class DummyLocation(SQLModel, table=True):
+        __tablename__ = "test_location"
         id: int | None = Field(default=None, primary_key=True)
         name: str
 
@@ -18,12 +19,12 @@ def test_session_roundtrip(monkeypatch):
     session_gen = session_module.get_session()
     session = next(session_gen)
     try:
-        loc = Location(name="Test")
+        loc = DummyLocation(name="Test")
         session.add(loc)
         session.commit()
         session.refresh(loc)
 
-        found = session.get(Location, loc.id)
+        found = session.get(DummyLocation, loc.id)
         assert found is not None
         assert found.name == "Test"
     finally:
