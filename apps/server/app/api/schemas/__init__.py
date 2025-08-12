@@ -1,4 +1,5 @@
 from .location import LocationRead
+from .order import OrderRead
 from .pagination import Page
 from .photo import (
     BatchAssignRequest,
@@ -17,4 +18,5 @@ __all__ = [
     "PhotoUpdate",
     "UploadIntent",
     "UploadIntentRequest",
+    "OrderRead",
 ]
