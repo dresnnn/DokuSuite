@@ -520,8 +520,7 @@ components:
       properties:
         object_key: { type: string }
         url: { type: string, format: uri }
-        method: { type: string, example: PUT }
-        headers: { type: object, additionalProperties: { type: string } }
+        fields: { type: object, additionalProperties: { type: string } }
         expires_in: { type: integer }
     ExportJob:
       type: object
