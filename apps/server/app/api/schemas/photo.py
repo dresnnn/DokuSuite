@@ -35,11 +35,19 @@ class PhotoRead(BaseModel):
     object_key: str
     taken_at: datetime
     status: str
+    mode: Mode
+    site_id: str | None = None
+    device_id: str | None = None
+    uploader_id: str | None = None
 
 
 class PhotoUpdate(BaseModel):
     quality_flag: str | None = None
     note: str | None = None
+    mode: Mode | None = None
+    site_id: str | None = None
+    device_id: str | None = None
+    uploader_id: str | None = None
 
 
 class BatchAssignRequest(BaseModel):

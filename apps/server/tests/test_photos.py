@@ -58,6 +58,9 @@ def test_photo_ingest_happy_path(monkeypatch):
         "object_key": "k1",
         "taken_at": "2024-01-01T00:00:00Z",
         "mode": "FIXED_SITE",
+        "site_id": "s1",
+        "device_id": "d1",
+        "uploader_id": "u1",
         "ad_hoc_spot": {"lat": 52.52, "lon": 13.405},
     }
     r = client.post("/photos", json=payload, headers=auth_headers())
@@ -65,6 +68,10 @@ def test_photo_ingest_happy_path(monkeypatch):
     data = r.json()
     assert data["object_key"] == "k1"
     assert data["status"] == "INGESTED"
+    assert data["mode"] == "FIXED_SITE"
+    assert data["site_id"] == "s1"
+    assert data["device_id"] == "d1"
+    assert data["uploader_id"] == "u1"
 
     session_gen = session_module.get_session()
     session = next(session_gen)
@@ -74,12 +81,20 @@ def test_photo_ingest_happy_path(monkeypatch):
         assert photo.object_key == "k1"
         assert photo.is_duplicate is False
         assert photo.calendar_week == "2024-W01"
+        assert photo.mode == "FIXED_SITE"
+        assert photo.site_id == "s1"
+        assert photo.device_id == "d1"
+        assert photo.uploader_id == "u1"
     finally:
         session_gen.close()
 
     assert s3_stub.last_put == b"norm"
     assert called["payload"]["photo_id"] == data["id"]
     assert called["payload"]["object_key"] == "k1"
+    assert called["payload"]["mode"] == "FIXED_SITE"
+    assert called["payload"]["site_id"] == "s1"
+    assert called["payload"]["device_id"] == "d1"
+    assert called["payload"]["uploader_id"] == "u1"
 
 
 def test_photo_ingest_creates_audit_log(monkeypatch):
@@ -227,6 +242,8 @@ def test_photos_filter(monkeypatch):
                 order_id=1,
                 status="INGESTED",
                 hash="h1",
+                mode="FIXED_SITE",
+                uploader_id="u1",
             )
         )
         session.add(
@@ -236,18 +253,25 @@ def test_photos_filter(monkeypatch):
                 order_id=2,
                 status="PROCESSED",
                 hash="h2",
+                mode="MOBILE",
+                uploader_id="u2",
             )
         )
         session.commit()
     finally:
         session_gen.close()
 
-    r = client.get("/photos?orderId=1&status=INGESTED", headers=auth_headers())
+    r = client.get(
+        "/photos?orderId=1&status=INGESTED&mode=FIXED_SITE&uploaderId=u1",
+        headers=auth_headers(),
+    )
     assert r.status_code == 200
     data = r.json()
     assert data["total"] == 1
     assert len(data["items"]) == 1
     assert data["items"][0]["object_key"] == "k1"
+    assert data["items"][0]["mode"] == "FIXED_SITE"
+    assert data["items"][0]["uploader_id"] == "u1"
 
 
 def test_get_photo(monkeypatch):
@@ -260,6 +284,7 @@ def test_get_photo(monkeypatch):
             taken_at=datetime(2024, 1, 1),
             status="INGESTED",
             hash="h1",
+            mode="FIXED_SITE",
         )
         session.add(photo)
         session.commit()
@@ -285,6 +310,7 @@ def test_update_photo(monkeypatch):
             taken_at=datetime(2024, 1, 1),
             status="INGESTED",
             hash="h1",
+            mode="FIXED_SITE",
         )
         session.add(photo)
         session.commit()
@@ -317,6 +343,7 @@ def test_update_photo_creates_audit_log(monkeypatch):
             taken_at=datetime(2024, 1, 1),
             status="INGESTED",
             hash="h1",
+            mode="FIXED_SITE",
         )
         session.add(photo)
         session.commit()
@@ -352,12 +379,14 @@ def test_batch_assign_default_calendar_week(monkeypatch):
             taken_at=datetime(2024, 1, 1),
             status="INGESTED",
             hash="h1",
+            mode="FIXED_SITE",
         )
         p2 = models.Photo(
             object_key="k2",
             taken_at=datetime(2024, 1, 2),
             status="INGESTED",
             hash="h2",
+            mode="FIXED_SITE",
         )
         session.add(p1)
         session.add(p2)
@@ -394,6 +423,7 @@ def test_batch_assign_override_calendar_week(monkeypatch):
             calendar_week="2024-W01",
             status="INGESTED",
             hash="h1",
+            mode="FIXED_SITE",
         )
         p2 = models.Photo(
             object_key="k2",
@@ -401,6 +431,7 @@ def test_batch_assign_override_calendar_week(monkeypatch):
             calendar_week="2024-W01",
             status="INGESTED",
             hash="h2",
+            mode="FIXED_SITE",
         )
         session.add(p1)
         session.add(p2)

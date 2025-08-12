@@ -102,7 +102,10 @@ def list_photos(
         query = query.where(Photo.order_id == orderId)
     if status:
         query = query.where(Photo.status == status)
-    # mode and uploaderId are accepted but not stored in the current model
+    if mode:
+        query = query.where(Photo.mode == mode)
+    if uploaderId:
+        query = query.where(Photo.uploader_id == uploaderId)
 
     total = session.exec(select(func.count()).select_from(query.subquery())).one()
     results = session.exec(query.offset((page - 1) * limit).limit(limit)).all()
@@ -129,6 +132,10 @@ def ingest_photo(
     photo = Photo(
         object_key=payload.object_key,
         taken_at=payload.taken_at,
+        mode=payload.mode,
+        site_id=payload.site_id,
+        device_id=payload.device_id,
+        uploader_id=payload.uploader_id,
         hash=photo_hash,
         is_duplicate=is_dup,
         calendar_week=calendar_week_from_taken_at(payload.taken_at),
