@@ -3,7 +3,7 @@ import io
 from datetime import datetime
 
 from fastapi.testclient import TestClient
-from sqlmodel import SQLModel
+from sqlmodel import SQLModel, select
 
 from app.core.config import settings
 from app.core.security import create_access_token
@@ -71,6 +71,7 @@ def test_photo_ingest_happy_path(monkeypatch):
         photo = session.get(models.Photo, data["id"])
         assert photo is not None
         assert photo.object_key == "k1"
+        assert photo.is_duplicate is False
     finally:
         session_gen.close()
 
@@ -87,6 +88,35 @@ def test_photo_ingest_validation_error(monkeypatch):
     }
     r = client.post("/photos", json=payload, headers=auth_headers())
     assert r.status_code == 422
+
+
+def test_photo_ingest_duplicate(monkeypatch):
+    client, session_module, models, *_ = make_client(monkeypatch)
+    payload1 = {
+        "object_key": "k1",
+        "taken_at": "2024-01-01T00:00:00Z",
+        "mode": "FIXED_SITE",
+    }
+    payload2 = {
+        "object_key": "k2",
+        "taken_at": "2024-01-01T00:00:00Z",
+        "mode": "FIXED_SITE",
+    }
+    r1 = client.post("/photos", json=payload1, headers=auth_headers())
+    assert r1.status_code == 201
+    r2 = client.post("/photos", json=payload2, headers=auth_headers())
+    assert r2.status_code == 201
+
+    session_gen = session_module.get_session()
+    session = next(session_gen)
+    try:
+        photos = session.exec(select(models.Photo).order_by(models.Photo.id)).all()
+        assert len(photos) == 2
+        assert photos[0].is_duplicate is False
+        assert photos[1].is_duplicate is True
+        assert photos[0].hash == photos[1].hash
+    finally:
+        session_gen.close()
 
 
 def test_photos_empty_list(monkeypatch):
@@ -107,6 +137,7 @@ def test_photos_filter(monkeypatch):
                 taken_at=datetime(2024, 1, 1),
                 order_id=1,
                 status="INGESTED",
+                hash="h1",
             )
         )
         session.add(
@@ -115,6 +146,7 @@ def test_photos_filter(monkeypatch):
                 taken_at=datetime(2024, 1, 2),
                 order_id=2,
                 status="PROCESSED",
+                hash="h2",
             )
         )
         session.commit()
@@ -138,6 +170,7 @@ def test_get_photo(monkeypatch):
             object_key="k1",
             taken_at=datetime(2024, 1, 1),
             status="INGESTED",
+            hash="h1",
         )
         session.add(photo)
         session.commit()
@@ -162,6 +195,7 @@ def test_update_photo(monkeypatch):
             object_key="k1",
             taken_at=datetime(2024, 1, 1),
             status="INGESTED",
+            hash="h1",
         )
         session.add(photo)
         session.commit()
@@ -189,8 +223,18 @@ def test_batch_assign(monkeypatch):
     session_gen = session_module.get_session()
     session = next(session_gen)
     try:
-        p1 = models.Photo(object_key="k1", taken_at=datetime(2024, 1, 1), status="INGESTED")
-        p2 = models.Photo(object_key="k2", taken_at=datetime(2024, 1, 2), status="INGESTED")
+        p1 = models.Photo(
+            object_key="k1",
+            taken_at=datetime(2024, 1, 1),
+            status="INGESTED",
+            hash="h1",
+        )
+        p2 = models.Photo(
+            object_key="k2",
+            taken_at=datetime(2024, 1, 2),
+            status="INGESTED",
+            hash="h2",
+        )
         session.add(p1)
         session.add(p2)
         session.commit()
