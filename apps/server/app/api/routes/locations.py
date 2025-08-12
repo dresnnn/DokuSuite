@@ -36,12 +36,14 @@ def offline_delta(
     since: datetime,
     session: Session = Depends(get_session),
 ):
+    # Include records updated exactly at `since` to avoid missing items when
+    # the caller's timestamp matches the update time down to the microsecond.
     upserts_query = select(Location).where(
-        Location.updated_at > since, Location.deleted_at.is_(None)
+        Location.updated_at >= since, Location.deleted_at.is_(None)
     )
     upserts = session.exec(upserts_query).all()
     tombstones_query = select(Location.id).where(
-        Location.deleted_at.is_not(None), Location.deleted_at > since
+        Location.deleted_at.is_not(None), Location.deleted_at >= since
     )
     tombstones = session.exec(tombstones_query).all()
     upserts_data = [LocationRead.model_validate(r, from_attributes=True) for r in upserts]
