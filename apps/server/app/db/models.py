@@ -1,7 +1,8 @@
 from __future__ import annotations
 
-from datetime import datetime
 import os
+from datetime import datetime
+
 from sqlalchemy import Column, DateTime, String, func
 from sqlmodel import Field, SQLModel
 
