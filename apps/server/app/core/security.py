@@ -4,18 +4,18 @@ import warnings
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
-warnings.filterwarnings("ignore", "'crypt' is deprecated", DeprecationWarning)
-
 import jwt
 from fastapi import Depends, HTTPException, Security, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from passlib.context import CryptContext
 from sqlmodel import Session, select
 
 from app.db.models import User as UserModel
 from app.db.session import get_session
 
 from .config import settings
+
+warnings.filterwarnings("ignore", "'crypt' is deprecated", DeprecationWarning)
+from passlib.context import CryptContext  # noqa: E402
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 

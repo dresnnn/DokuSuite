@@ -2,7 +2,6 @@ import secrets
 from datetime import UTC, datetime
 
 import boto3
-
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlmodel import Session, select
 
