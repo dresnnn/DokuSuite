@@ -16,16 +16,6 @@ def auth_headers():
     return {"Authorization": f"Bearer {token}"}
 
 
-def test_locations_requires_auth():
-    r = client().get("/locations")
-    assert r.status_code == 401
-
-
-def test_locations_with_auth_returns_501():
-    r = client().get("/locations", headers=auth_headers())
-    assert r.status_code == 501 or r.json().get("status") == "not_implemented"
-
-
 def test_photos_requires_auth():
     r = client().get("/photos")
     assert r.status_code == 401

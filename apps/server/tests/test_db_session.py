@@ -7,6 +7,7 @@ def test_session_roundtrip(monkeypatch):
     monkeypatch.setenv("DOKUSUITE_DATABASE_URL", "sqlite:///:memory:")
     import app.db.session as session_module
     session_module = importlib.reload(session_module)
+    SQLModel.metadata.clear()
 
     class Location(SQLModel, table=True):
         id: int | None = Field(default=None, primary_key=True)
