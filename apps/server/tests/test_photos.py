@@ -1,5 +1,6 @@
 import importlib
 import io
+from datetime import datetime
 
 from fastapi.testclient import TestClient
 from sqlmodel import SQLModel
@@ -86,3 +87,67 @@ def test_photo_ingest_validation_error(monkeypatch):
     }
     r = client.post("/photos", json=payload, headers=auth_headers())
     assert r.status_code == 422
+
+
+def test_photos_empty_list(monkeypatch):
+    client, *_ = make_client(monkeypatch)
+    r = client.get("/photos", headers=auth_headers())
+    assert r.status_code == 200
+    assert r.json() == {"items": [], "total": 0, "page": 1, "limit": 10}
+
+
+def test_photos_filter(monkeypatch):
+    client, session_module, models, *_ = make_client(monkeypatch)
+    session_gen = session_module.get_session()
+    session = next(session_gen)
+    try:
+        session.add(
+            models.Photo(
+                object_key="k1",
+                taken_at=datetime(2024, 1, 1),
+                order_id=1,
+                status="INGESTED",
+            )
+        )
+        session.add(
+            models.Photo(
+                object_key="k2",
+                taken_at=datetime(2024, 1, 2),
+                order_id=2,
+                status="PROCESSED",
+            )
+        )
+        session.commit()
+    finally:
+        session_gen.close()
+
+    r = client.get("/photos?orderId=1&status=INGESTED", headers=auth_headers())
+    assert r.status_code == 200
+    data = r.json()
+    assert data["total"] == 1
+    assert len(data["items"]) == 1
+    assert data["items"][0]["object_key"] == "k1"
+
+
+def test_get_photo(monkeypatch):
+    client, session_module, models, *_ = make_client(monkeypatch)
+    session_gen = session_module.get_session()
+    session = next(session_gen)
+    try:
+        photo = models.Photo(
+            object_key="k1",
+            taken_at=datetime(2024, 1, 1),
+            status="INGESTED",
+        )
+        session.add(photo)
+        session.commit()
+        session.refresh(photo)
+        photo_id = photo.id
+    finally:
+        session_gen.close()
+
+    r = client.get(f"/photos/{photo_id}", headers=auth_headers())
+    assert r.status_code == 200
+    data = r.json()
+    assert data["id"] == photo_id
+    assert data["object_key"] == "k1"

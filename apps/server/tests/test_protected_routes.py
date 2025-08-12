@@ -21,7 +21,9 @@ def test_photos_requires_auth():
     assert r.status_code == 401
 
 
-def test_photos_with_auth_returns_501():
+def test_photos_with_auth_returns_data():
     r = client().get("/photos", headers=auth_headers())
-    assert r.status_code == 501 or r.json().get("status") == "not_implemented"
+    assert r.status_code == 200
+    data = r.json()
+    assert {"items", "total", "page", "limit"}.issubset(data.keys())
 
