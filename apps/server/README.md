@@ -13,6 +13,11 @@ Minimaler Start für den Backend‑Service inkl. Health‑Endpoint.
 - Lint:
   - `ruff check .`
 
+## Logging & Monitoring
+- Logs werden im JSON‑Format ausgegeben.
+- Jeder Request erhält eine `X-Request-ID` und wird mit Dauer sowie Statuscode geloggt.
+- Prometheus‑Metrics unter `GET /metrics`, inkl. Request‑Counter und Gauge für laufende Requests.
+
 ## Migrationen
 - Neue Revision erzeugen:
   - `alembic revision --autogenerate -m "message"`
