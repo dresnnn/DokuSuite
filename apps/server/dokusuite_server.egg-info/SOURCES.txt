@@ -14,4 +14,5 @@ dokusuite_server.egg-info/dependency_links.txt
 dokusuite_server.egg-info/requires.txt
 dokusuite_server.egg-info/top_level.txt
 tests/test_auth.py
+tests/test_auth_guard.py
 tests/test_health.py
