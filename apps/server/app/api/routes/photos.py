@@ -8,7 +8,15 @@ from sqlalchemy import func
 from sqlmodel import Session, select
 from workers.ingestion.queue import enqueue_ingest
 
-from app.api.schemas import Page, PhotoIngest, PhotoRead, UploadIntent, UploadIntentRequest
+from app.api.schemas import (
+    BatchAssignRequest,
+    Page,
+    PhotoIngest,
+    PhotoRead,
+    PhotoUpdate,
+    UploadIntent,
+    UploadIntentRequest,
+)
 from app.core.config import settings
 from app.core.security import get_current_user
 from app.db.models import Photo
@@ -106,11 +114,35 @@ def get_photo(photo_id: int, session: Session = Depends(get_session)):
     return PhotoRead.model_validate(photo, from_attributes=True)
 
 
-@router.patch("/{photo_id}")
-def update_photo(photo_id: str):
-    return JSONResponse({"status": "not_implemented"}, status_code=status.HTTP_501_NOT_IMPLEMENTED)
+@router.patch("/{photo_id}", response_model=PhotoRead)
+def update_photo(
+    photo_id: int,
+    payload: PhotoUpdate,
+    session: Session = Depends(get_session),
+):
+    photo = session.get(Photo, photo_id)
+    if not photo:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+    for key, value in payload.model_dump(exclude_unset=True).items():
+        setattr(photo, key, value)
+    session.add(photo)
+    session.commit()
+    session.refresh(photo)
+    return PhotoRead.model_validate(photo, from_attributes=True)
 
 
 @router.post("/batch/assign")
-def batch_assign():
-    return JSONResponse({"status": "not_implemented"}, status_code=status.HTTP_501_NOT_IMPLEMENTED)
+def batch_assign(
+    payload: BatchAssignRequest, session: Session = Depends(get_session)
+):
+    photos = session.exec(
+        select(Photo).where(Photo.id.in_(payload.photo_ids))
+    ).all()
+    if len(photos) != len(payload.photo_ids):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+    for photo in photos:
+        photo.order_id = payload.order_id
+        if payload.calendar_week is not None:
+            photo.calendar_week = payload.calendar_week
+    session.commit()
+    return {"assigned": len(photos)}

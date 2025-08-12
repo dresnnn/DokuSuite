@@ -35,3 +35,14 @@ class PhotoRead(BaseModel):
     object_key: str
     taken_at: datetime
     status: str
+
+
+class PhotoUpdate(BaseModel):
+    quality_flag: str | None = None
+    note: str | None = None
+
+
+class BatchAssignRequest(BaseModel):
+    photo_ids: list[int]
+    order_id: int
+    calendar_week: str | None = None

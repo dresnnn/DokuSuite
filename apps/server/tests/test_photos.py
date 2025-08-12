@@ -151,3 +151,75 @@ def test_get_photo(monkeypatch):
     data = r.json()
     assert data["id"] == photo_id
     assert data["object_key"] == "k1"
+
+
+def test_update_photo(monkeypatch):
+    client, session_module, models, *_ = make_client(monkeypatch)
+    session_gen = session_module.get_session()
+    session = next(session_gen)
+    try:
+        photo = models.Photo(
+            object_key="k1",
+            taken_at=datetime(2024, 1, 1),
+            status="INGESTED",
+        )
+        session.add(photo)
+        session.commit()
+        session.refresh(photo)
+        photo_id = photo.id
+    finally:
+        session_gen.close()
+
+    payload = {"quality_flag": "bad", "note": "blurry"}
+    r = client.patch(f"/photos/{photo_id}", json=payload, headers=auth_headers())
+    assert r.status_code == 200
+
+    session_gen = session_module.get_session()
+    session = next(session_gen)
+    try:
+        updated = session.get(models.Photo, photo_id)
+        assert updated.quality_flag == "bad"
+        assert updated.note == "blurry"
+    finally:
+        session_gen.close()
+
+
+def test_batch_assign(monkeypatch):
+    client, session_module, models, *_ = make_client(monkeypatch)
+    session_gen = session_module.get_session()
+    session = next(session_gen)
+    try:
+        p1 = models.Photo(object_key="k1", taken_at=datetime(2024, 1, 1), status="INGESTED")
+        p2 = models.Photo(object_key="k2", taken_at=datetime(2024, 1, 2), status="INGESTED")
+        session.add(p1)
+        session.add(p2)
+        session.commit()
+        session.refresh(p1)
+        session.refresh(p2)
+        ids = [p1.id, p2.id]
+    finally:
+        session_gen.close()
+
+    payload = {"photo_ids": ids, "order_id": 1, "calendar_week": "2024-W01"}
+    r = client.post("/photos/batch/assign", json=payload, headers=auth_headers())
+    assert r.status_code == 200
+
+    session_gen = session_module.get_session()
+    session = next(session_gen)
+    try:
+        p1 = session.get(models.Photo, ids[0])
+        p2 = session.get(models.Photo, ids[1])
+        assert p1.order_id == 1 and p2.order_id == 1
+        assert p1.calendar_week == "2024-W01" and p2.calendar_week == "2024-W01"
+    finally:
+        session_gen.close()
+
+
+def test_batch_assign_validation_error(monkeypatch):
+    client, *_ = make_client(monkeypatch)
+    r = client.post(
+        "/photos/batch/assign",
+        json={"photo_ids": [1]},
+        headers=auth_headers(),
+    )
+    assert r.status_code == 422
