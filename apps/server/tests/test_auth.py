@@ -1,5 +1,4 @@
 import importlib
-import os
 
 from fastapi.testclient import TestClient
 
@@ -36,4 +35,3 @@ def test_login_failure(monkeypatch):
         json={"email": "admin@example.com", "password": "wrong"},
     )
     assert r.status_code == 401
-

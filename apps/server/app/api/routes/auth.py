@@ -24,4 +24,3 @@ def login(req: LoginRequest):
         )
     token = create_access_token(req.email, settings.access_token_expires_minutes)
     return token
-

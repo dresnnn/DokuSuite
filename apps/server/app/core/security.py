@@ -1,5 +1,4 @@
-import time
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 import jwt
@@ -27,13 +26,13 @@ def secrets_compare(a: str, b: str) -> bool:
     if len(a) != len(b):
         return False
     result = 0
-    for x, y in zip(a.encode(), b.encode()):
+    for x, y in zip(a.encode(), b.encode(), strict=False):
         result |= x ^ y
     return result == 0
 
 
 def create_access_token(subject: str, expires_in_minutes: int) -> dict[str, Any]:
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     exp = now + timedelta(minutes=expires_in_minutes)
     payload = {
         "sub": subject,
@@ -51,5 +50,5 @@ def create_access_token(subject: str, expires_in_minutes: int) -> dict[str, Any]
 def decode_token(token: str) -> dict[str, Any]:
     try:
         return jwt.decode(token, settings.jwt_secret, algorithms=[settings.jwt_algorithm])
-    except (jwt.ExpiredSignatureError, jwt.InvalidTokenError):
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
+    except (jwt.ExpiredSignatureError, jwt.InvalidTokenError) as err:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token") from None
