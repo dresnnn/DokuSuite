@@ -1,7 +1,8 @@
-from fastapi import APIRouter, Depends, status
-from fastapi.responses import JSONResponse
+from fastapi import APIRouter, Depends, File, UploadFile, status
+from fastapi.responses import JSONResponse, Response
 
 from app.core.security import get_current_user
+from app.services.exif import normalize_orientation
 
 router = APIRouter(prefix="/photos", tags=["photos"], dependencies=[Depends(get_current_user)])
 
@@ -17,8 +18,10 @@ def list_photos():
 
 
 @router.post("")
-def ingest_photo():
-    return JSONResponse({"status": "not_implemented"}, status_code=status.HTTP_501_NOT_IMPLEMENTED)
+async def ingest_photo(file: UploadFile = File(...)):
+    data = await file.read()
+    normalized = normalize_orientation(data)
+    return Response(content=normalized, media_type=file.content_type)
 
 
 @router.get("/{photo_id}")
