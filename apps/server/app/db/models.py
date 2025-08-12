@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 from datetime import datetime
 
-from sqlalchemy import JSON, Column, DateTime, String, func
+from sqlalchemy import JSON, Column, DateTime, String, UniqueConstraint, func
 from sqlmodel import Field, SQLModel
 
 try:  # geospatial support for PostGIS
@@ -58,6 +58,30 @@ class Order(SQLModel, table=True):
     customer_id: str
     name: str
     status: str
+
+
+class ExtRef(SQLModel, table=True):
+    __tablename__ = "ext_ref"
+
+    id: int | None = Field(default=None, primary_key=True)
+    source: str
+    table: str
+    record_id: str
+    local_id: int
+    etag: str | None = None
+    synced_at: datetime = Field(
+        default_factory=datetime.utcnow,
+        sa_column=Column(
+            DateTime(timezone=True),
+            nullable=False,
+            server_default=func.now(),
+            onupdate=func.now(),
+        ),
+    )
+
+    __table_args__ = (
+        UniqueConstraint("source", "table", "record_id"),
+    )
 
 
 class Photo(SQLModel, table=True):
