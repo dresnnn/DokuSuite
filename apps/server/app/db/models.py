@@ -64,6 +64,19 @@ class Photo(SQLModel, table=True):
     calendar_week: str | None = Field(default=None)
     hash: str
     is_duplicate: bool = Field(default=False)
+    updated_at: datetime = Field(
+        default_factory=datetime.utcnow,
+        sa_column=Column(
+            DateTime(timezone=True),
+            nullable=False,
+            server_default=func.now(),
+            onupdate=func.now(),
+        ),
+    )
+    deleted_at: datetime | None = Field(
+        default=None,
+        sa_column=Column(DateTime(timezone=True), nullable=True),
+    )
 
 
 class Share(SQLModel, table=True):
