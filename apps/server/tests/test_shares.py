@@ -1,7 +1,7 @@
 import importlib
 
 from fastapi.testclient import TestClient
-from sqlmodel import SQLModel
+from sqlmodel import SQLModel, select
 
 from app.core.config import settings
 from app.core.security import create_access_token
@@ -54,6 +54,47 @@ def test_create_share(monkeypatch):
         share = session.get(models.Share, share_id)
         assert share is not None
         assert share.order_id == order_id
+    finally:
+        session_gen.close()
+
+
+def test_share_audit_logs(monkeypatch):
+    client, session_module, models = make_client(monkeypatch)
+    session_gen = session_module.get_session()
+    session = next(session_gen)
+    try:
+        order = models.Order(customer_id="c1", name="o1", status="NEW")
+        session.add(order)
+        session.commit()
+        session.refresh(order)
+        order_id = order.id
+    finally:
+        session_gen.close()
+
+    r = client.post("/shares", json={"order_id": order_id}, headers=auth_headers())
+    assert r.status_code == 201
+    share_id = r.json()["id"]
+
+    session_gen = session_module.get_session()
+    session = next(session_gen)
+    try:
+        logs = session.exec(select(models.AuditLog)).all()
+        assert len(logs) == 1
+        log = logs[0]
+        assert log.action == "create" and log.entity == "share" and log.entity_id == share_id
+    finally:
+        session_gen.close()
+
+    r = client.post(f"/shares/{share_id}/revoke", headers=auth_headers())
+    assert r.status_code == 204
+
+    session_gen = session_module.get_session()
+    session = next(session_gen)
+    try:
+        logs = session.exec(select(models.AuditLog).order_by(models.AuditLog.id)).all()
+        assert len(logs) == 2
+        log = logs[1]
+        assert log.action == "delete" and log.entity_id == share_id
     finally:
         session_gen.close()
 

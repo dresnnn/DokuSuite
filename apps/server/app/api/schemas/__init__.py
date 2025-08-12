@@ -1,5 +1,5 @@
 from .location import LocationRead
-from .order import OrderRead
+from .order import OrderCreate, OrderRead, OrderUpdate
 from .pagination import Page
 from .photo import BatchAssignRequest, PhotoIngest, PhotoRead, PhotoUpdate
 from .share import ShareCreate, ShareRead
@@ -14,7 +14,9 @@ __all__ = [
     "PhotoUpdate",
     "UploadIntent",
     "UploadIntentRequest",
+    "OrderCreate",
     "OrderRead",
+    "OrderUpdate",
     "ShareCreate",
     "ShareRead",
 ]
