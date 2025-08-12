@@ -7,6 +7,7 @@ from app.api.schemas import ShareCreate, ShareRead
 from app.core.security import User, require_role
 from app.db.models import AuditLog, Share
 from app.db.session import get_session
+from app.services.mail import send_mail
 
 router = APIRouter(prefix="/shares", tags=["shares"])
 
@@ -26,6 +27,13 @@ def create_share(
     session.add(share)
     session.commit()
     session.refresh(share)
+
+    if payload.email:
+        send_mail(
+            payload.email,
+            "Your share link",
+            f"Download: {share.url}",
+        )
 
     log = AuditLog(
         action="create",

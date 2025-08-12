@@ -1,3 +1,5 @@
+import secrets
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, EmailStr
 from sqlmodel import Session, select
@@ -8,10 +10,13 @@ from app.core.security import (
     create_access_token,
     get_current_user,
     pwd_context,
+    require_role,
     verify_password,
 )
+from app.db.models import Invitation
 from app.db.models import User as UserModel
 from app.db.session import get_session
+from app.services.mail import send_mail
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -53,6 +58,25 @@ def login(req: LoginRequest, session: Session = Depends(get_session)):
         )
     token = create_access_token(user.email, settings.access_token_expires_minutes)
     return token
+
+
+class InviteRequest(BaseModel):
+    email: EmailStr
+
+
+@router.post("/invite", status_code=status.HTTP_201_CREATED)
+def invite_user(
+    req: InviteRequest,
+    session: Session = Depends(get_session),
+    user: User = Depends(require_role("ADMIN")),
+):
+    email = req.email.lower()
+    token = secrets.token_urlsafe(32)
+    invitation = Invitation(email=email, token=token)
+    session.add(invitation)
+    session.commit()
+    send_mail(email, "You're invited", f"Use this link: https://example.com/invite/{token}")
+    return {"id": invitation.id, "email": invitation.email}
 
 
 @router.get("/me")

@@ -21,6 +21,13 @@ class Settings(BaseSettings):
     s3_presign_ttl: int = 3600  # seconds
     s3_cors_origin: str = "*"
 
+    # SMTP mail configuration
+    smtp_host: str = "localhost"
+    smtp_port: int = 25
+    smtp_username: str | None = None
+    smtp_password: str | None = None
+    smtp_from: str = "no-reply@example.com"
+
     # Pydantic v2 style config
     model_config = SettingsConfigDict(env_prefix="DOKUSUITE_")
 
