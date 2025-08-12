@@ -3,14 +3,14 @@ from sqlalchemy import func
 from sqlmodel import Session, select
 
 from app.api.schemas import OrderCreate, OrderRead, OrderUpdate, Page
-from app.core.security import User, get_current_user
+from app.core.security import User, require_role
 from app.db.models import AuditLog, Order
 from app.db.session import get_session
 
-router = APIRouter(prefix="/orders", tags=["orders"], dependencies=[Depends(get_current_user)])
+router = APIRouter(prefix="/orders", tags=["orders"])
 
 
-@router.get("", response_model=Page[OrderRead])
+@router.get("", response_model=Page[OrderRead], dependencies=[Depends(require_role("ADMIN"))])
 def list_orders(
     customerId: str | None = None,
     page: int = 1,
@@ -27,7 +27,7 @@ def list_orders(
     return Page(items=items, total=total, page=page, limit=limit)
 
 
-@router.get("/{order_id}", response_model=OrderRead)
+@router.get("/{order_id}", response_model=OrderRead, dependencies=[Depends(require_role("ADMIN"))])
 def get_order(order_id: int, session: Session = Depends(get_session)):
     order = session.get(Order, order_id)
     if not order:
@@ -39,7 +39,7 @@ def get_order(order_id: int, session: Session = Depends(get_session)):
 def create_order(
     payload: OrderCreate,
     session: Session = Depends(get_session),
-    user: User = Depends(get_current_user),
+    user: User = Depends(require_role("ADMIN")),
 ):
     order = Order(**payload.model_dump())
     session.add(order)
@@ -63,7 +63,7 @@ def update_order(
     order_id: int,
     payload: OrderUpdate,
     session: Session = Depends(get_session),
-    user: User = Depends(get_current_user),
+    user: User = Depends(require_role("ADMIN")),
 ):
     order = session.get(Order, order_id)
     if not order:
