@@ -1,5 +1,5 @@
 import importlib
-from datetime import datetime
+from datetime import UTC, datetime
 
 from fastapi.testclient import TestClient
 from sqlmodel import SQLModel
@@ -80,13 +80,14 @@ def test_locations_offline_delta_upserts(monkeypatch):
     try:
         session.add(models.Location(name="Old", address="A", customer_id="c1"))
         session.commit()
-        since = datetime.utcnow()
+        since = datetime.now(UTC)
         session.add(models.Location(name="New", address="B", customer_id="c1"))
         session.commit()
     finally:
         session_gen.close()
     r = client.get(
-        f"/locations/offline-delta?since={since.isoformat()}",
+        "/locations/offline-delta",
+        params={"since": since.isoformat()},
         headers=auth_headers(),
     )
     assert r.status_code == 200
@@ -134,14 +135,15 @@ def test_locations_offline_delta_tombstones(monkeypatch):
         session.add(loc)
         session.commit()
         loc_id = loc.id
-        since = datetime.utcnow()
-        loc.deleted_at = datetime.utcnow()
+        since = datetime.now(UTC)
+        loc.deleted_at = datetime.now(UTC)
         session.add(loc)
         session.commit()
     finally:
         session_gen.close()
     r = client.get(
-        f"/locations/offline-delta?since={since.isoformat()}",
+        "/locations/offline-delta",
+        params={"since": since.isoformat()},
         headers=auth_headers(),
     )
     assert r.status_code == 200

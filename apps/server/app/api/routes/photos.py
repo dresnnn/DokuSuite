@@ -1,6 +1,6 @@
 import hashlib
 import uuid
-from datetime import datetime
+from datetime import UTC, datetime
 from math import asin, cos, radians, sin, sqrt
 
 import boto3
@@ -305,7 +305,7 @@ def delete_photo(
     photo = session.get(Photo, photo_id)
     if not photo or (user.customer_id and photo.customer_id != user.customer_id):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
-    photo.deleted_at = datetime.utcnow()
+    photo.deleted_at = datetime.now(UTC)
     session.add(photo)
     log = AuditLog(
         action="delete",

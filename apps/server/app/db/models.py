@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import os
-from datetime import datetime
+from datetime import UTC, datetime
 from enum import Enum
 
 from sqlalchemy import JSON, Column, DateTime, String, UniqueConstraint, func
@@ -35,7 +35,7 @@ class User(SQLModel, table=True):
     )
     customer_id: str | None = Field(default=None)
     created_at: datetime = Field(
-        default_factory=datetime.utcnow,
+        default_factory=lambda: datetime.now(UTC),
         sa_column=Column(
             DateTime(timezone=True), nullable=False, server_default=func.now()
         ),
@@ -50,7 +50,7 @@ class Location(SQLModel, table=True):
     geog: str | None = Field(default=None, sa_column=_geog_column)
     active: bool = True
     updated_at: datetime = Field(
-        default_factory=datetime.utcnow,
+        default_factory=lambda: datetime.now(UTC),
         sa_column=Column(
             DateTime(timezone=True),
             nullable=False,
@@ -82,7 +82,7 @@ class ExtRef(SQLModel, table=True):
     local_id: int
     etag: str | None = None
     synced_at: datetime = Field(
-        default_factory=datetime.utcnow,
+        default_factory=lambda: datetime.now(UTC),
         sa_column=Column(
             DateTime(timezone=True),
             nullable=False,
@@ -114,7 +114,7 @@ class Photo(SQLModel, table=True):
     hash: str
     is_duplicate: bool = Field(default=False)
     updated_at: datetime = Field(
-        default_factory=datetime.utcnow,
+        default_factory=lambda: datetime.now(UTC),
         sa_column=Column(
             DateTime(timezone=True),
             nullable=False,
@@ -145,7 +145,7 @@ class AuditLog(SQLModel, table=True):
     entity_id: int
     user: str
     timestamp: datetime = Field(
-        default_factory=datetime.utcnow,
+        default_factory=lambda: datetime.now(UTC),
         sa_column=Column(
             DateTime(timezone=True),
             nullable=False,
@@ -160,7 +160,7 @@ class Invitation(SQLModel, table=True):
     email: str = Field(sa_column=Column(String, nullable=False))
     token: str = Field(sa_column=Column(String, nullable=False, unique=True))
     created_at: datetime = Field(
-        default_factory=datetime.utcnow,
+        default_factory=lambda: datetime.now(UTC),
         sa_column=Column(
             DateTime(timezone=True), nullable=False, server_default=func.now()
         ),

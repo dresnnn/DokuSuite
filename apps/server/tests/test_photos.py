@@ -1,6 +1,6 @@
 import importlib
 import io
-from datetime import datetime
+from datetime import UTC, datetime
 
 from fastapi.testclient import TestClient
 from sqlmodel import SQLModel, select
@@ -627,7 +627,7 @@ def test_photos_offline_delta_upserts(monkeypatch):
             )
         )
         session.commit()
-        since = datetime.utcnow()
+        since = datetime.now(UTC)
         session.add(
             models.Photo(
                 object_key="new",
@@ -641,9 +641,11 @@ def test_photos_offline_delta_upserts(monkeypatch):
         session.commit()
     finally:
         session_gen.close()
-    r = client.get(
-        f"/photos/offline-delta?since={since.isoformat()}", headers=auth_headers()
-    )
+        r = client.get(
+            "/photos/offline-delta",
+            params={"since": since.isoformat()},
+            headers=auth_headers(),
+        )
     assert r.status_code == 200
     data = r.json()
     assert len(data["upserts"]) == 1
@@ -668,15 +670,17 @@ def test_photos_offline_delta_tombstones(monkeypatch):
         session.commit()
         session.refresh(photo)
         photo_id = photo.id
-        since = datetime.utcnow()
-        photo.deleted_at = datetime.utcnow()
+        since = datetime.now(UTC)
+        photo.deleted_at = datetime.now(UTC)
         session.add(photo)
         session.commit()
     finally:
         session_gen.close()
-    r = client.get(
-        f"/photos/offline-delta?since={since.isoformat()}", headers=auth_headers()
-    )
+        r = client.get(
+            "/photos/offline-delta",
+            params={"since": since.isoformat()},
+            headers=auth_headers(),
+        )
     assert r.status_code == 200
     data = r.json()
     assert data["upserts"] == []
@@ -699,14 +703,14 @@ def test_photos_customer_isolation(monkeypatch):
         )
         p1 = models.Photo(
             object_key="k1",
-            taken_at=datetime.utcnow(),
+            taken_at=datetime.now(UTC),
             mode="FIXED_SITE",
             customer_id="c1",
             hash="h1",
         )
         p2 = models.Photo(
             object_key="k2",
-            taken_at=datetime.utcnow(),
+            taken_at=datetime.now(UTC),
             mode="FIXED_SITE",
             customer_id="c2",
             hash="h2",
