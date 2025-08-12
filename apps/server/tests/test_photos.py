@@ -73,6 +73,7 @@ def test_photo_ingest_happy_path(monkeypatch):
         assert photo is not None
         assert photo.object_key == "k1"
         assert photo.is_duplicate is False
+        assert photo.calendar_week == "2024-W01"
     finally:
         session_gen.close()
 
@@ -281,7 +282,7 @@ def test_update_photo(monkeypatch):
         session_gen.close()
 
 
-def test_batch_assign(monkeypatch):
+def test_batch_assign_default_calendar_week(monkeypatch):
     client, session_module, models, *_ = make_client(monkeypatch)
     session_gen = session_module.get_session()
     session = next(session_gen)
@@ -307,7 +308,7 @@ def test_batch_assign(monkeypatch):
     finally:
         session_gen.close()
 
-    payload = {"photo_ids": ids, "order_id": 1, "calendar_week": "2024-W01"}
+    payload = {"photo_ids": ids, "order_id": 1}
     r = client.post("/photos/batch/assign", json=payload, headers=auth_headers())
     assert r.status_code == 200
 
@@ -318,6 +319,49 @@ def test_batch_assign(monkeypatch):
         p2 = session.get(models.Photo, ids[1])
         assert p1.order_id == 1 and p2.order_id == 1
         assert p1.calendar_week == "2024-W01" and p2.calendar_week == "2024-W01"
+    finally:
+        session_gen.close()
+
+
+def test_batch_assign_override_calendar_week(monkeypatch):
+    client, session_module, models, *_ = make_client(monkeypatch)
+    session_gen = session_module.get_session()
+    session = next(session_gen)
+    try:
+        p1 = models.Photo(
+            object_key="k1",
+            taken_at=datetime(2024, 1, 1),
+            calendar_week="2024-W01",
+            status="INGESTED",
+            hash="h1",
+        )
+        p2 = models.Photo(
+            object_key="k2",
+            taken_at=datetime(2024, 1, 2),
+            calendar_week="2024-W01",
+            status="INGESTED",
+            hash="h2",
+        )
+        session.add(p1)
+        session.add(p2)
+        session.commit()
+        session.refresh(p1)
+        session.refresh(p2)
+        ids = [p1.id, p2.id]
+    finally:
+        session_gen.close()
+
+    payload = {"photo_ids": ids, "order_id": 1, "calendar_week": "2024-W02"}
+    r = client.post("/photos/batch/assign", json=payload, headers=auth_headers())
+    assert r.status_code == 200
+
+    session_gen = session_module.get_session()
+    session = next(session_gen)
+    try:
+        p1 = session.get(models.Photo, ids[0])
+        p2 = session.get(models.Photo, ids[1])
+        assert p1.order_id == 1 and p2.order_id == 1
+        assert p1.calendar_week == "2024-W02" and p2.calendar_week == "2024-W02"
     finally:
         session_gen.close()
 
