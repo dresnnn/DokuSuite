@@ -1,0 +1,58 @@
+import importlib
+
+from fastapi.testclient import TestClient
+from sqlmodel import SQLModel
+
+from app.core.config import settings
+from app.core.security import create_access_token
+
+
+def make_client(monkeypatch):
+    monkeypatch.setenv("DOKUSUITE_DATABASE_URL", "sqlite:///:memory:")
+    import app.db.session as session_module
+    session_module = importlib.reload(session_module)
+    import app.db.models as models
+    SQLModel.metadata.clear()
+    models = importlib.reload(models)
+    SQLModel.metadata.create_all(session_module.engine)
+    import app.main as app_main
+    app_main = importlib.reload(app_main)
+    return TestClient(app_main.create_app()), session_module, models
+
+
+def auth_headers():
+    token = create_access_token(settings.admin_email, settings.access_token_expires_minutes)[
+        "access_token"
+    ]
+    return {"Authorization": f"Bearer {token}"}
+
+
+def test_locations_require_auth(monkeypatch):
+    client, _, _ = make_client(monkeypatch)
+    r = client.get("/locations")
+    assert r.status_code == 401
+
+
+def test_locations_empty_list(monkeypatch):
+    client, _, _ = make_client(monkeypatch)
+    r = client.get("/locations", headers=auth_headers())
+    assert r.status_code == 200
+    assert r.json() == {"items": [], "total": 0, "page": 1, "limit": 10}
+
+
+def test_locations_simple_filter(monkeypatch):
+    client, session_module, models = make_client(monkeypatch)
+    session_gen = session_module.get_session()
+    session = next(session_gen)
+    try:
+        session.add(models.Location(name="Berlin", address="A"))
+        session.add(models.Location(name="Hamburg", address="B"))
+        session.commit()
+    finally:
+        session_gen.close()
+    r = client.get("/locations?q=Ber", headers=auth_headers())
+    assert r.status_code == 200
+    data = r.json()
+    assert data["total"] == 1
+    assert len(data["items"]) == 1
+    assert data["items"][0]["name"] == "Berlin"
