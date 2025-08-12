@@ -1,12 +1,16 @@
 import uuid
 
 import boto3
-from fastapi import APIRouter, Depends, File, UploadFile, status
-from fastapi.responses import JSONResponse, Response
+from fastapi import APIRouter, Depends, status
+from fastapi.responses import JSONResponse
+from sqlmodel import Session
+from workers.ingestion.queue import enqueue_ingest
 
-from app.api.schemas.upload import UploadIntent, UploadIntentRequest
+from app.api.schemas import PhotoIngest, PhotoRead, UploadIntent, UploadIntentRequest
 from app.core.config import settings
 from app.core.security import get_current_user
+from app.db.models import Photo
+from app.db.session import get_session
 from app.services.exif import normalize_orientation
 
 router = APIRouter(prefix="/photos", tags=["photos"], dependencies=[Depends(get_current_user)])
@@ -48,11 +52,21 @@ def list_photos():
     return JSONResponse({"status": "not_implemented"}, status_code=status.HTTP_501_NOT_IMPLEMENTED)
 
 
-@router.post("")
-async def ingest_photo(file: UploadFile = File(...)):
-    data = await file.read()
+@router.post("", response_model=PhotoRead, status_code=status.HTTP_201_CREATED)
+def ingest_photo(payload: PhotoIngest, session: Session = Depends(get_session)):
+    client = _s3_client()
+    obj = client.get_object(Bucket=settings.s3_bucket, Key=payload.object_key)
+    data = obj["Body"].read()
     normalized = normalize_orientation(data)
-    return Response(content=normalized, media_type=file.content_type)
+    client.put_object(Bucket=settings.s3_bucket, Key=payload.object_key, Body=normalized)
+
+    photo = Photo(object_key=payload.object_key, taken_at=payload.taken_at)
+    session.add(photo)
+    session.commit()
+    session.refresh(photo)
+
+    enqueue_ingest({"photo_id": photo.id, **payload.model_dump()})
+    return PhotoRead.model_validate(photo, from_attributes=True)
 
 
 @router.get("/{photo_id}")
