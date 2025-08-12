@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
+from sqlalchemy import Column, DateTime, func
 from sqlmodel import Field, SQLModel
 
 
@@ -10,6 +11,19 @@ class Location(SQLModel, table=True):
     name: str
     address: str
     active: bool = True
+    updated_at: datetime = Field(
+        default_factory=datetime.utcnow,
+        sa_column=Column(
+            DateTime(timezone=True),
+            nullable=False,
+            server_default=func.now(),
+            onupdate=func.now(),
+        ),
+    )
+    deleted_at: datetime | None = Field(
+        default=None,
+        sa_column=Column(DateTime(timezone=True), nullable=True),
+    )
 
 
 class Order(SQLModel, table=True):

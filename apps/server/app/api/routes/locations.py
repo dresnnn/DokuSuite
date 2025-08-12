@@ -1,5 +1,6 @@
-from fastapi import APIRouter, Depends, status
-from fastapi.responses import JSONResponse
+from datetime import datetime
+
+from fastapi import APIRouter, Depends
 from sqlalchemy import func
 from sqlmodel import Session, select
 
@@ -31,5 +32,18 @@ def list_locations(
 
 
 @router.get("/offline-delta")
-def offline_delta():
-    return JSONResponse({"status": "not_implemented"}, status_code=status.HTTP_501_NOT_IMPLEMENTED)
+def offline_delta(
+    since: datetime,
+    session: Session = Depends(get_session),
+):
+    upserts_query = select(Location).where(
+        Location.updated_at > since, Location.deleted_at.is_(None)
+    )
+    upserts = session.exec(upserts_query).all()
+    tombstones_query = select(Location.id).where(
+        Location.deleted_at.is_not(None), Location.deleted_at > since
+    )
+    tombstones = session.exec(tombstones_query).all()
+    upserts_data = [LocationRead.model_validate(r, from_attributes=True) for r in upserts]
+    tombstones_data = [{"id": t} for t in tombstones]
+    return {"upserts": upserts_data, "tombstones": tombstones_data}
