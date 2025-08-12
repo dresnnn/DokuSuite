@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException, status
-from pydantic import EmailStr, BaseModel
+from pydantic import BaseModel, EmailStr
 
 from ...core.config import settings
 from ...core.security import create_access_token, verify_password
