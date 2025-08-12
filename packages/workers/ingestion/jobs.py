@@ -56,8 +56,12 @@ def ingest(payload: dict[str, Any]) -> None:
         session_gen.close()
 
 
-def export_zip(payload: dict[str, Any] | None = None) -> str:
-    """Generate a ZIP archive and upload it to S3."""
+def export_zip(payload: dict[str, Any] | None = None) -> dict[str, str]:
+    """Generate a ZIP archive and upload it to S3.
+
+    The returned dictionary is stored as the job result so that the API can
+    expose a download link once the job has finished.
+    """
     client = _s3_client()
     buffer = io.BytesIO()
     with zipfile.ZipFile(buffer, "w") as zf:
@@ -65,11 +69,15 @@ def export_zip(payload: dict[str, Any] | None = None) -> str:
     buffer.seek(0)
     key = f"exports/{uuid.uuid4()}.zip"
     client.put_object(Bucket=settings.s3_bucket, Key=key, Body=buffer.getvalue())
-    return key
+    return {"result_key": key}
 
 
-def export_excel(payload: dict[str, Any] | None = None) -> str:
-    """Generate an Excel file and upload it to S3."""
+def export_excel(payload: dict[str, Any] | None = None) -> dict[str, str]:
+    """Generate an Excel file and upload it to S3.
+
+    The returned dictionary is stored as the job result so that the API can
+    expose a download link once the job has finished.
+    """
     client = _s3_client()
     wb = Workbook()
     ws = wb.active
@@ -82,5 +90,5 @@ def export_excel(payload: dict[str, Any] | None = None) -> str:
     buf.seek(0)
     key = f"exports/{uuid.uuid4()}.xlsx"
     client.put_object(Bucket=settings.s3_bucket, Key=key, Body=buf.getvalue())
-    return key
+    return {"result_key": key}
 
