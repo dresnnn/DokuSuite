@@ -1,12 +1,35 @@
 import importlib
 
 from fastapi.testclient import TestClient
+from sqlmodel import SQLModel
 
 from app.core.config import settings
 from app.core.security import create_access_token
 
 
 def make_client(monkeypatch):
+    monkeypatch.setenv("DOKUSUITE_DATABASE_URL", "sqlite:///:memory:")
+    import app.db.session as session_module
+    session_module = importlib.reload(session_module)
+    import app.db.models as models
+    SQLModel.metadata.clear()
+    models = importlib.reload(models)
+    SQLModel.metadata.create_all(session_module.engine)
+    session_gen = session_module.get_session()
+    session = next(session_gen)
+    try:
+        session.add(
+            models.User(
+                email=settings.admin_email,
+                password_hash="pw",
+                role=models.UserRole.ADMIN,
+                customer_id="c1",
+            )
+        )
+        session.commit()
+    finally:
+        session_gen.close()
+
     import app.api.routes.ingestion as ingestion_module
 
     calls: dict[str, dict] = {}

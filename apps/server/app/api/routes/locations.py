@@ -5,13 +5,11 @@ from sqlalchemy import func
 from sqlmodel import Session, select
 
 from app.api.schemas import LocationRead, Page
-from app.core.security import get_current_user
+from app.core.security import User, get_current_user
 from app.db.models import Location
 from app.db.session import get_session
 
-router = APIRouter(
-    prefix="/locations", tags=["locations"], dependencies=[Depends(get_current_user)]
-)
+router = APIRouter(prefix="/locations", tags=["locations"])
 
 
 @router.get("", response_model=Page[LocationRead])
@@ -20,8 +18,11 @@ def list_locations(
     page: int = 1,
     limit: int = 10,
     session: Session = Depends(get_session),
+    user: User = Depends(get_current_user),
 ):
     query = select(Location)
+    if user.customer_id:
+        query = query.where(Location.customer_id == user.customer_id)
     if q:
         query = query.where(Location.name.contains(q))
 
@@ -35,16 +36,19 @@ def list_locations(
 def offline_delta(
     since: datetime,
     session: Session = Depends(get_session),
+    user: User = Depends(get_current_user),
 ):
-    # Include records updated exactly at `since` to avoid missing items when
-    # the caller's timestamp matches the update time down to the microsecond.
     upserts_query = select(Location).where(
         Location.updated_at >= since, Location.deleted_at.is_(None)
     )
+    if user.customer_id:
+        upserts_query = upserts_query.where(Location.customer_id == user.customer_id)
     upserts = session.exec(upserts_query).all()
     tombstones_query = select(Location.id).where(
         Location.deleted_at.is_not(None), Location.deleted_at >= since
     )
+    if user.customer_id:
+        tombstones_query = tombstones_query.where(Location.customer_id == user.customer_id)
     tombstones = session.exec(tombstones_query).all()
     upserts_data = [LocationRead.model_validate(r, from_attributes=True) for r in upserts]
     tombstones_data = [{"id": t} for t in tombstones]

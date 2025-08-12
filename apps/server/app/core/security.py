@@ -62,9 +62,10 @@ def decode_token(token: str) -> dict[str, Any]:
 
 
 class User:
-    def __init__(self, email: str, role: str):
+    def __init__(self, email: str, role: str, customer_id: str | None = None):
         self.email = email
         self.role = role
+        self.customer_id = customer_id
 
 
 bearer_scheme = HTTPBearer(auto_error=False)
@@ -85,6 +86,8 @@ def get_current_user(
         )
     if sub == settings.admin_email:
         role = "ADMIN"
+        user = session.exec(select(UserModel).where(UserModel.email == sub)).first()
+        customer_id = getattr(user, "customer_id", None) if user else None
     else:
         user = session.exec(select(UserModel).where(UserModel.email == sub)).first()
         if user is None:
@@ -93,7 +96,8 @@ def get_current_user(
                 detail="Invalid token payload",
             )
         role = user.role.value if hasattr(user.role, "value") else str(user.role)
-    return User(email=str(sub), role=role)
+        customer_id = getattr(user, "customer_id", None)
+    return User(email=str(sub), role=role, customer_id=customer_id)
 
 
 def require_role(*roles: str):

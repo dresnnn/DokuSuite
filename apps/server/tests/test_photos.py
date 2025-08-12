@@ -17,6 +17,20 @@ def make_client(monkeypatch):
     SQLModel.metadata.clear()
     models = importlib.reload(models)
     SQLModel.metadata.create_all(session_module.engine)
+    session_gen = session_module.get_session()
+    session = next(session_gen)
+    try:
+        session.add(
+            models.User(
+                email=settings.admin_email,
+                password_hash="pw",
+                role=models.UserRole.ADMIN,
+                customer_id="c1",
+            )
+        )
+        session.commit()
+    finally:
+        session_gen.close()
 
     import app.api.routes.photos as photos_module
 
@@ -176,7 +190,12 @@ def test_photo_ingest_location_match(monkeypatch):
     session_gen = session_module.get_session()
     session = next(session_gen)
     try:
-        loc = models.Location(name="Site", address="Addr", geog="POINT(13.405 52.52)")
+        loc = models.Location(
+            name="Site",
+            address="Addr",
+            geog="POINT(13.405 52.52)",
+            customer_id="c1",
+        )
         session.add(loc)
         session.commit()
         session.refresh(loc)
@@ -206,7 +225,12 @@ def test_photo_ingest_location_no_match(monkeypatch):
     session_gen = session_module.get_session()
     session = next(session_gen)
     try:
-        loc = models.Location(name="Site", address="Addr", geog="POINT(13.405 52.52)")
+        loc = models.Location(
+            name="Site",
+            address="Addr",
+            geog="POINT(13.405 52.52)",
+            customer_id="c1",
+        )
         session.add(loc)
         session.commit()
     finally:
@@ -244,6 +268,7 @@ def test_photos_filter(monkeypatch):
                 hash="h1",
                 mode="FIXED_SITE",
                 uploader_id="u1",
+                customer_id="c1",
             )
         )
         session.add(
@@ -255,6 +280,7 @@ def test_photos_filter(monkeypatch):
                 hash="h2",
                 mode="MOBILE",
                 uploader_id="u2",
+                customer_id="c1",
             )
         )
         session.commit()
@@ -285,6 +311,7 @@ def test_get_photo(monkeypatch):
             status="INGESTED",
             hash="h1",
             mode="FIXED_SITE",
+            customer_id="c1",
         )
         session.add(photo)
         session.commit()
@@ -311,6 +338,7 @@ def test_update_photo(monkeypatch):
             status="INGESTED",
             hash="h1",
             mode="FIXED_SITE",
+            customer_id="c1",
         )
         session.add(photo)
         session.commit()
@@ -344,6 +372,7 @@ def test_update_photo_creates_audit_log(monkeypatch):
             status="INGESTED",
             hash="h1",
             mode="FIXED_SITE",
+            customer_id="c1",
         )
         session.add(photo)
         session.commit()
@@ -380,6 +409,7 @@ def test_batch_assign_default_calendar_week(monkeypatch):
             status="INGESTED",
             hash="h1",
             mode="FIXED_SITE",
+            customer_id="c1",
         )
         p2 = models.Photo(
             object_key="k2",
@@ -387,6 +417,7 @@ def test_batch_assign_default_calendar_week(monkeypatch):
             status="INGESTED",
             hash="h2",
             mode="FIXED_SITE",
+            customer_id="c1",
         )
         session.add(p1)
         session.add(p2)
@@ -424,6 +455,7 @@ def test_batch_assign_override_calendar_week(monkeypatch):
             status="INGESTED",
             hash="h1",
             mode="FIXED_SITE",
+            customer_id="c1",
         )
         p2 = models.Photo(
             object_key="k2",
@@ -432,6 +464,7 @@ def test_batch_assign_override_calendar_week(monkeypatch):
             status="INGESTED",
             hash="h2",
             mode="FIXED_SITE",
+            customer_id="c1",
         )
         session.add(p1)
         session.add(p2)
@@ -551,6 +584,7 @@ def test_delete_photo(monkeypatch):
             status="INGESTED",
             hash="h1",
             mode="FIXED_SITE",
+            customer_id="c1",
         )
         session.add(photo)
         session.commit()
@@ -589,6 +623,7 @@ def test_photos_offline_delta_upserts(monkeypatch):
                 status="INGESTED",
                 hash="h1",
                 mode="FIXED_SITE",
+                customer_id="c1",
             )
         )
         session.commit()
@@ -600,6 +635,7 @@ def test_photos_offline_delta_upserts(monkeypatch):
                 status="INGESTED",
                 hash="h2",
                 mode="FIXED_SITE",
+                customer_id="c1",
             )
         )
         session.commit()
@@ -626,6 +662,7 @@ def test_photos_offline_delta_tombstones(monkeypatch):
             status="INGESTED",
             hash="h1",
             mode="FIXED_SITE",
+            customer_id="c1",
         )
         session.add(photo)
         session.commit()
@@ -645,3 +682,53 @@ def test_photos_offline_delta_tombstones(monkeypatch):
     assert data["upserts"] == []
     assert len(data["tombstones"]) == 1
     assert data["tombstones"][0]["id"] == photo_id
+
+
+def test_photos_customer_isolation(monkeypatch):
+    client, session_module, models, *_ = make_client(monkeypatch)
+    session_gen = session_module.get_session()
+    session = next(session_gen)
+    try:
+        session.add(
+            models.User(
+                email="admin2@example.com",
+                password_hash="pw",
+                role=models.UserRole.ADMIN,
+                customer_id="c2",
+            )
+        )
+        p1 = models.Photo(
+            object_key="k1",
+            taken_at=datetime.utcnow(),
+            mode="FIXED_SITE",
+            customer_id="c1",
+            hash="h1",
+        )
+        p2 = models.Photo(
+            object_key="k2",
+            taken_at=datetime.utcnow(),
+            mode="FIXED_SITE",
+            customer_id="c2",
+            hash="h2",
+        )
+        session.add(p1)
+        session.add(p2)
+        session.commit()
+        session.refresh(p2)
+        other_id = p2.id
+    finally:
+        session_gen.close()
+
+    token_c1 = create_access_token(
+        settings.admin_email, settings.access_token_expires_minutes
+    )["access_token"]
+    r = client.get("/photos", headers={"Authorization": f"Bearer {token_c1}"})
+    assert r.status_code == 200
+    data = r.json()
+    assert data["total"] == 1
+    assert data["items"][0]["object_key"] == "k1"
+
+    r = client.get(
+        f"/photos/{other_id}", headers={"Authorization": f"Bearer {token_c1}"}
+    )
+    assert r.status_code == 404

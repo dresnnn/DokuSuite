@@ -3,6 +3,7 @@ import importlib
 from fastapi.testclient import TestClient
 from sqlmodel import SQLModel
 
+from app.core.config import settings
 from app.main import create_app
 
 
@@ -14,6 +15,20 @@ def make_client(monkeypatch):
     SQLModel.metadata.clear()
     models = importlib.reload(models)
     SQLModel.metadata.create_all(session_module.engine)
+    session_gen = session_module.get_session()
+    session = next(session_gen)
+    try:
+        session.add(
+            models.User(
+                email=settings.admin_email,
+                password_hash="pw",
+                role=models.UserRole.ADMIN,
+                customer_id="c1",
+            )
+        )
+        session.commit()
+    finally:
+        session_gen.close()
     import app.main as app_main
     app_main = importlib.reload(app_main)
     return TestClient(app_main.create_app()), session_module, models

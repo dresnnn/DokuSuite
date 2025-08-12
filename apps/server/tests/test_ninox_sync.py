@@ -26,10 +26,14 @@ def test_ninox_upsert(monkeypatch):
     session, session_gen, models = setup_db(monkeypatch)
     try:
         service = NinoxSyncService(session)
-        service.run({"locations": [{"id": "1", "name": "A", "address": "B"}]})
+        service.run(
+            {"locations": [{"id": "1", "customer_id": "c1", "name": "A", "address": "B"}]}
+        )
         loc = session.exec(select(models.Location)).one()
         assert loc.name == "A"
-        service.run({"locations": [{"id": "1", "name": "C", "address": "B"}]})
+        service.run(
+            {"locations": [{"id": "1", "customer_id": "c1", "name": "C", "address": "B"}]}
+        )
         loc = session.exec(select(models.Location)).one()
         assert loc.name == "C"
         ext = session.exec(select(models.ExtRef)).one()
@@ -43,8 +47,10 @@ def test_ninox_tombstone(monkeypatch):
     session, session_gen, models = setup_db(monkeypatch)
     try:
         service = NinoxSyncService(session)
-        service.run({"locations": [{"id": "1", "name": "A", "address": "B"}]})
-        service.run({"locations": [{"id": "1", "deleted": True}]})
+        service.run(
+            {"locations": [{"id": "1", "customer_id": "c1", "name": "A", "address": "B"}]}
+        )
+        service.run({"locations": [{"id": "1", "customer_id": "c1", "deleted": True}]})
         loc = session.exec(select(models.Location)).one()
         assert loc.deleted_at is not None
     finally:

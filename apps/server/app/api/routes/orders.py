@@ -10,15 +10,18 @@ from app.db.session import get_session
 router = APIRouter(prefix="/orders", tags=["orders"])
 
 
-@router.get("", response_model=Page[OrderRead], dependencies=[Depends(require_role("ADMIN"))])
+@router.get("", response_model=Page[OrderRead])
 def list_orders(
     customerId: str | None = None,
     page: int = 1,
     limit: int = 10,
     session: Session = Depends(get_session),
+    user: User = Depends(require_role("ADMIN")),
 ):
     query = select(Order)
-    if customerId:
+    if user.customer_id:
+        query = query.where(Order.customer_id == user.customer_id)
+    elif customerId:
         query = query.where(Order.customer_id == customerId)
 
     total = session.exec(select(func.count()).select_from(query.subquery())).one()
@@ -27,10 +30,14 @@ def list_orders(
     return Page(items=items, total=total, page=page, limit=limit)
 
 
-@router.get("/{order_id}", response_model=OrderRead, dependencies=[Depends(require_role("ADMIN"))])
-def get_order(order_id: int, session: Session = Depends(get_session)):
+@router.get("/{order_id}", response_model=OrderRead)
+def get_order(
+    order_id: int,
+    session: Session = Depends(get_session),
+    user: User = Depends(require_role("ADMIN")),
+):
     order = session.get(Order, order_id)
-    if not order:
+    if not order or (user.customer_id and order.customer_id != user.customer_id):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
     return OrderRead.model_validate(order, from_attributes=True)
 
