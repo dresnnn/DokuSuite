@@ -1,8 +1,8 @@
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, EmailStr
 
 from ...core.config import settings
-from ...core.security import create_access_token, verify_password
+from ...core.security import User, create_access_token, get_current_user, verify_password
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -23,3 +23,8 @@ def login(req: LoginRequest):
         )
     token = create_access_token(req.email, settings.access_token_expires_minutes)
     return token
+
+
+@router.get("/me")
+def me(user: User = Depends(get_current_user)):
+    return {"email": user.email}
