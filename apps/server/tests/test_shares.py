@@ -1,5 +1,5 @@
 import importlib
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 
 from fastapi.testclient import TestClient
 from sqlmodel import SQLModel, select
@@ -261,7 +261,7 @@ def test_public_share_photo(monkeypatch):
         session.refresh(order)
         photo = models.Photo(
             object_key="k1",
-            taken_at=datetime.utcnow(),
+            taken_at=datetime.now(UTC),
             mode="m",
             customer_id="c1",
             order_id=order.id,
@@ -298,7 +298,7 @@ def test_public_share_expired(monkeypatch):
         session.refresh(order)
         photo = models.Photo(
             object_key="k1",
-            taken_at=datetime.utcnow(),
+            taken_at=datetime.now(UTC),
             mode="m",
             customer_id="c1",
             order_id=order.id,
@@ -312,7 +312,7 @@ def test_public_share_expired(monkeypatch):
             order_id=order.id,
             customer_id="c1",
             url=f"{settings.share_base_url}/tok1",
-            expires_at=datetime.utcnow() - timedelta(seconds=1),
+            expires_at=datetime.now(UTC).replace(tzinfo=None) - timedelta(seconds=1),
         )
         session.add(share)
         session.commit()
@@ -334,7 +334,7 @@ def test_public_share_watermark(monkeypatch):
         session.refresh(order)
         photo = models.Photo(
             object_key="k1",
-            taken_at=datetime.utcnow(),
+            taken_at=datetime.now(UTC),
             mode="m",
             customer_id="c1",
             order_id=order.id,

@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import urllib.request
 from collections.abc import Iterable
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 
 from sqlmodel import Session, select
@@ -67,7 +67,7 @@ class NinoxSyncService:
             if ext:
                 obj = self.session.get(model_cls, ext.local_id)
                 if obj and getattr(obj, "deleted_at", None) is None:
-                    obj.deleted_at = datetime.utcnow()
+                    obj.deleted_at = datetime.now(UTC)
             return
 
         if ext:
@@ -94,4 +94,4 @@ class NinoxSyncService:
             self.session.add(ext)
 
         ext.etag = rec.get("etag")
-        ext.synced_at = datetime.utcnow()
+        ext.synced_at = datetime.now(UTC)

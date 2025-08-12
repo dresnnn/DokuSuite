@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import UTC, datetime
 from io import BytesIO
 
 from PIL import Image, ImageDraw, ImageFont
@@ -12,7 +12,7 @@ def apply_watermark(data: bytes) -> bytes:
         im = im.convert("RGBA")
         watermark = Image.new("RGBA", im.size)
         draw = ImageDraw.Draw(watermark)
-        text = f"DokuSuite {datetime.utcnow().date().isoformat()}"
+        text = f"DokuSuite {datetime.now(UTC).date().isoformat()}"
         try:
             font = ImageFont.load_default()
         except Exception:  # pragma: no cover - fallback

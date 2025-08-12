@@ -1,7 +1,8 @@
 import secrets
-from datetime import datetime
+from datetime import UTC, datetime
 
 import boto3
+
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlmodel import Session, select
 
@@ -113,7 +114,10 @@ def public_photo(
     share = session.exec(
         select(Share).where(Share.url == f"{settings.share_base_url}/{token}")
     ).one_or_none()
-    if not share or (share.expires_at and share.expires_at < datetime.utcnow()):
+    if not share:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+    now = datetime.now(UTC)
+    if share.expires_at and share.expires_at.replace(tzinfo=UTC) < now:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
     photo = session.get(Photo, photo_id)
     if not photo or photo.order_id != share.order_id:

@@ -1,5 +1,10 @@
+from __future__ import annotations
+
+import warnings
 from datetime import UTC, datetime, timedelta
 from typing import Any
+
+warnings.filterwarnings("ignore", "'crypt' is deprecated", DeprecationWarning)
 
 import jwt
 from fastapi import Depends, HTTPException, Security, status
