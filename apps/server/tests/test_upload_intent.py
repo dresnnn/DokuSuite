@@ -14,11 +14,12 @@ def auth_headers():
     return {"Authorization": f"Bearer {token}"}
 
 
-def test_presign_generates_url_and_expiry():
-    r = client.post("/uploads/presign", headers=auth_headers())
+def test_upload_intent_generates_url_and_expiry():
+    payload = {"contentType": "image/jpeg", "size": 1}
+    r = client.post("/photos/upload-intent", json=payload, headers=auth_headers())
     assert r.status_code == 200
     data = r.json()
     expected_url = f"{settings.s3_endpoint_url}/{settings.s3_bucket}"
     assert data["url"] == expected_url
     assert data["expires_in"] == settings.s3_presign_ttl
-    assert "key" in data["fields"]
+    assert data["fields"]["key"] == data["object_key"]
