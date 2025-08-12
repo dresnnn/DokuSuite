@@ -1,6 +1,7 @@
+import secrets
+
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlmodel import Session
-import secrets
 
 from app.api.schemas import ShareCreate, ShareRead
 from app.core.security import get_current_user
