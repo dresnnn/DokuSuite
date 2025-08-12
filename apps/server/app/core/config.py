@@ -12,6 +12,15 @@ class Settings(BaseSettings):
     # For development, default to plain 'admin'. Provide a bcrypt hash via env for production.
     admin_password_hash: str = "admin"
 
+    # Hetzner S3 configuration
+    s3_endpoint_url: str = "https://example.com"
+    s3_region: str = "us-east-1"
+    s3_bucket: str = "dokusuite"
+    s3_access_key: str = "test"
+    s3_secret_key: str = "test"
+    s3_presign_ttl: int = 3600  # seconds
+    s3_cors_origin: str = "*"
+
     # Pydantic v2 style config
     model_config = SettingsConfigDict(env_prefix="DOKUSUITE_")
 
