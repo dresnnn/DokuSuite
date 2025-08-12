@@ -1,4 +1,5 @@
 import importlib
+from datetime import datetime
 
 from fastapi.testclient import TestClient
 from sqlmodel import SQLModel
@@ -56,3 +57,52 @@ def test_locations_simple_filter(monkeypatch):
     assert data["total"] == 1
     assert len(data["items"]) == 1
     assert data["items"][0]["name"] == "Berlin"
+
+
+def test_locations_offline_delta_upserts(monkeypatch):
+    client, session_module, models = make_client(monkeypatch)
+    session_gen = session_module.get_session()
+    session = next(session_gen)
+    try:
+        session.add(models.Location(name="Old", address="A"))
+        session.commit()
+        since = datetime.utcnow()
+        session.add(models.Location(name="New", address="B"))
+        session.commit()
+    finally:
+        session_gen.close()
+    r = client.get(
+        f"/locations/offline-delta?since={since.isoformat()}",
+        headers=auth_headers(),
+    )
+    assert r.status_code == 200
+    data = r.json()
+    assert len(data["upserts"]) == 1
+    assert data["upserts"][0]["name"] == "New"
+    assert data["tombstones"] == []
+
+
+def test_locations_offline_delta_tombstones(monkeypatch):
+    client, session_module, models = make_client(monkeypatch)
+    session_gen = session_module.get_session()
+    session = next(session_gen)
+    try:
+        loc = models.Location(name="Temp", address="A")
+        session.add(loc)
+        session.commit()
+        loc_id = loc.id
+        since = datetime.utcnow()
+        loc.deleted_at = datetime.utcnow()
+        session.add(loc)
+        session.commit()
+    finally:
+        session_gen.close()
+    r = client.get(
+        f"/locations/offline-delta?since={since.isoformat()}",
+        headers=auth_headers(),
+    )
+    assert r.status_code == 200
+    data = r.json()
+    assert data["upserts"] == []
+    assert len(data["tombstones"]) == 1
+    assert data["tombstones"][0]["id"] == loc_id
