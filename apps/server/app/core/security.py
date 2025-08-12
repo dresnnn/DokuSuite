@@ -7,9 +7,10 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from passlib.context import CryptContext
 from sqlmodel import Session, select
 
-from .config import settings
 from app.db.models import User as UserModel
 from app.db.session import get_session
+
+from .config import settings
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
