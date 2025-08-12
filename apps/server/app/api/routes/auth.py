@@ -1,8 +1,17 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, EmailStr
+from sqlmodel import Session, select
 
 from app.core.config import settings
-from app.core.security import User, create_access_token, get_current_user, verify_password
+from app.core.security import (
+    User,
+    create_access_token,
+    get_current_user,
+    pwd_context,
+    verify_password,
+)
+from app.db.models import User as UserModel
+from app.db.session import get_session
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -12,16 +21,37 @@ class LoginRequest(BaseModel):
     password: str
 
 
+class RegisterRequest(BaseModel):
+    email: EmailStr
+    password: str
+
+
+@router.post("/register", status_code=status.HTTP_201_CREATED)
+def register(req: RegisterRequest, session: Session = Depends(get_session)):
+    email = req.email.lower()
+    existing = session.exec(select(UserModel).where(UserModel.email == email)).first()
+    if existing:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Email already registered",
+        )
+    user = UserModel(email=email, password_hash=pwd_context.hash(req.password))
+    session.add(user)
+    session.commit()
+    session.refresh(user)
+    return {"id": user.id, "email": user.email}
+
+
 @router.post("/login")
-def login(req: LoginRequest):
-    if req.email.lower() != settings.admin_email.lower() or not verify_password(
-        req.password, settings.admin_password_hash
-    ):
+def login(req: LoginRequest, session: Session = Depends(get_session)):
+    email = req.email.lower()
+    user = session.exec(select(UserModel).where(UserModel.email == email)).first()
+    if user is None or not verify_password(req.password, user.password_hash):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail={"code": "unauthorized", "message": "Invalid credentials"},
         )
-    token = create_access_token(req.email, settings.access_token_expires_minutes)
+    token = create_access_token(user.email, settings.access_token_expires_minutes)
     return token
 
 
