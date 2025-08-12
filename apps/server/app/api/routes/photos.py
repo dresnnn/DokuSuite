@@ -113,6 +113,24 @@ def list_photos(
     return Page(items=items, total=total, page=page, limit=limit)
 
 
+@router.get("/offline-delta")
+def offline_delta(
+    since: datetime,
+    session: Session = Depends(get_session),
+):
+    upserts_query = select(Photo).where(
+        Photo.updated_at >= since, Photo.deleted_at.is_(None)
+    )
+    upserts = session.exec(upserts_query).all()
+    tombstones_query = select(Photo.id).where(
+        Photo.deleted_at.is_not(None), Photo.deleted_at >= since
+    )
+    tombstones = session.exec(tombstones_query).all()
+    upserts_data = [PhotoRead.model_validate(r, from_attributes=True) for r in upserts]
+    tombstones_data = [{"id": t} for t in tombstones]
+    return {"upserts": upserts_data, "tombstones": tombstones_data}
+
+
 @router.post("", response_model=PhotoRead, status_code=status.HTTP_201_CREATED)
 def ingest_photo(
     payload: PhotoIngest,
@@ -251,3 +269,25 @@ def batch_assign(
     session.commit()
 
     return {"assigned": len(photos)}
+
+
+@router.delete("/{photo_id}")
+def delete_photo(
+    photo_id: int,
+    session: Session = Depends(get_session),
+    user: User = Depends(get_current_user),
+):
+    photo = session.get(Photo, photo_id)
+    if not photo:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+    photo.deleted_at = datetime.utcnow()
+    session.add(photo)
+    log = AuditLog(
+        action="delete",
+        entity="photo",
+        entity_id=photo.id,
+        user=user.email,
+    )
+    session.add(log)
+    session.commit()
+    return {"status": "deleted"}

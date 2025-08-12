@@ -538,3 +538,110 @@ def test_photo_ingest_geocoding_cache_hit(monkeypatch):
     r2 = client.post("/photos", json=payload2, headers=auth_headers())
     assert r2.status_code == 201
     assert stub.calls == 1
+
+
+def test_delete_photo(monkeypatch):
+    client, session_module, models, *_ = make_client(monkeypatch)
+    session_gen = session_module.get_session()
+    session = next(session_gen)
+    try:
+        photo = models.Photo(
+            object_key="k1",
+            taken_at=datetime(2024, 1, 1),
+            status="INGESTED",
+            hash="h1",
+            mode="FIXED_SITE",
+        )
+        session.add(photo)
+        session.commit()
+        session.refresh(photo)
+        photo_id = photo.id
+    finally:
+        session_gen.close()
+
+    r = client.delete(f"/photos/{photo_id}", headers=auth_headers())
+    assert r.status_code == 200
+
+    session_gen = session_module.get_session()
+    session = next(session_gen)
+    try:
+        deleted = session.get(models.Photo, photo_id)
+        assert deleted.deleted_at is not None
+        logs = session.exec(select(models.AuditLog)).all()
+        assert len(logs) == 1
+        log = logs[0]
+        assert log.action == "delete"
+        assert log.entity == "photo"
+        assert log.entity_id == photo_id
+    finally:
+        session_gen.close()
+
+
+def test_photos_offline_delta_upserts(monkeypatch):
+    client, session_module, models, *_ = make_client(monkeypatch)
+    session_gen = session_module.get_session()
+    session = next(session_gen)
+    try:
+        session.add(
+            models.Photo(
+                object_key="old",
+                taken_at=datetime(2024, 1, 1),
+                status="INGESTED",
+                hash="h1",
+                mode="FIXED_SITE",
+            )
+        )
+        session.commit()
+        since = datetime.utcnow()
+        session.add(
+            models.Photo(
+                object_key="new",
+                taken_at=datetime(2024, 1, 2),
+                status="INGESTED",
+                hash="h2",
+                mode="FIXED_SITE",
+            )
+        )
+        session.commit()
+    finally:
+        session_gen.close()
+    r = client.get(
+        f"/photos/offline-delta?since={since.isoformat()}", headers=auth_headers()
+    )
+    assert r.status_code == 200
+    data = r.json()
+    assert len(data["upserts"]) == 1
+    assert data["upserts"][0]["object_key"] == "new"
+    assert data["tombstones"] == []
+
+
+def test_photos_offline_delta_tombstones(monkeypatch):
+    client, session_module, models, *_ = make_client(monkeypatch)
+    session_gen = session_module.get_session()
+    session = next(session_gen)
+    try:
+        photo = models.Photo(
+            object_key="temp",
+            taken_at=datetime(2024, 1, 1),
+            status="INGESTED",
+            hash="h1",
+            mode="FIXED_SITE",
+        )
+        session.add(photo)
+        session.commit()
+        session.refresh(photo)
+        photo_id = photo.id
+        since = datetime.utcnow()
+        photo.deleted_at = datetime.utcnow()
+        session.add(photo)
+        session.commit()
+    finally:
+        session_gen.close()
+    r = client.get(
+        f"/photos/offline-delta?since={since.isoformat()}", headers=auth_headers()
+    )
+    assert r.status_code == 200
+    data = r.json()
+    assert data["upserts"] == []
+    assert len(data["tombstones"]) == 1
+    assert data["tombstones"][0]["id"] == photo_id
