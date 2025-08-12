@@ -1,10 +1,20 @@
-# Server/Backend (Skeleton)
+# DokuSuite Server (FastAPI)
 
-Noch kein Code – hier entsteht später die FastAPI‑App (modularer Monolith) mit Auth, Photos, Locations, Orders, Shares, Exports sowie Worker‑Integration.
+Minimaler Start für den Backend‑Service inkl. Health‑Endpoint.
 
-Struktur (geplant):
-- app/: FastAPI Router/Module
-- core/: Config, Logging, DB
-- migrations/: Alembic
-- tests/: API/Unit
+## Quickstart
+- Python 3.11+ installieren
+- Installation (dev):
+  - `pip install -e .[dev]`
+- Starten (lokal):
+  - `uvicorn app.main:app --reload --port 8000`
+- Testen:
+  - `pytest`
+- Lint:
+  - `ruff check .`
+
+## API
+- Health: `GET /healthz` → `{ "status": "ok" }`
+
+OpenAPI‑Spezifikation liegt in `packages/contracts/openapi.yaml` und wird sukzessive implementiert.
 
