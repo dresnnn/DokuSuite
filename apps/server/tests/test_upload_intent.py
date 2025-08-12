@@ -10,6 +10,7 @@ from sqlmodel import SQLModel
 
 from app.core.config import settings
 from app.core.security import create_access_token
+from app.api.schemas.upload import MAX_FILE_SIZE
 
 os.environ["DOKUSUITE_DATABASE_URL"] = "sqlite:///:memory:"
 import app.db.session as session_module  # noqa: E402
@@ -51,3 +52,15 @@ def test_upload_intent_generates_url_and_expiry():
     assert data["url"] == expected_url
     assert data["expires_in"] == settings.s3_presign_ttl
     assert data["fields"]["key"] == data["object_key"]
+
+
+def test_upload_intent_rejects_invalid_type():
+    payload = {"contentType": "text/plain", "size": 1}
+    r = client.post("/photos/upload-intent", json=payload, headers=auth_headers())
+    assert r.status_code == 400
+
+
+def test_upload_intent_rejects_large_file():
+    payload = {"contentType": "image/jpeg", "size": MAX_FILE_SIZE + 1}
+    r = client.post("/photos/upload-intent", json=payload, headers=auth_headers())
+    assert r.status_code == 400
