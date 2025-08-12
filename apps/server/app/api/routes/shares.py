@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, status
 from fastapi.responses import JSONResponse
 
-from ...core.security import get_current_user
+from app.core.security import get_current_user
 
 
 router = APIRouter(prefix="/shares", tags=["shares"], dependencies=[Depends(get_current_user)])

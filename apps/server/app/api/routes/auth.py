@@ -1,8 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, EmailStr
 
-from ...core.config import settings
-from ...core.security import User, create_access_token, get_current_user, verify_password
+from app.core.config import settings
+from app.core.security import User, create_access_token, get_current_user, verify_password
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
