@@ -23,8 +23,8 @@ from app.core.config import settings
 from app.core.security import get_current_user
 from app.db.models import Location, Photo
 from app.db.session import get_session
-from app.services.exif import normalize_orientation
 from app.services.calendar_week import calendar_week_from_taken_at
+from app.services.exif import normalize_orientation
 
 router = APIRouter(prefix="/photos", tags=["photos"], dependencies=[Depends(get_current_user)])
 
