@@ -12,6 +12,8 @@ dependencies = [
   "uvicorn[standard]>=0.30",
   "pydantic>=2.7",
   "pydantic-settings>=2.4",
+  "PyJWT>=2.8",
+  "passlib[bcrypt]>=1.7",
 ]
 
 [project.optional-dependencies]
