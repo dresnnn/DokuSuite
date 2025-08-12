@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-import warnings
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
+import bcrypt
 import jwt
 from fastapi import Depends, HTTPException, Security, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
@@ -14,17 +14,17 @@ from app.db.session import get_session
 
 from .config import settings
 
-warnings.filterwarnings("ignore", "'crypt' is deprecated", DeprecationWarning)
-from passlib.context import CryptContext  # noqa: E402
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+def hash_password(password: str) -> str:
+    """Hash a password using bcrypt."""
+    return bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
 
 
 def verify_password(plain_password: str, password_hash: str) -> bool:
     if password_hash.startswith("$2b$") or password_hash.startswith("$2a$"):
         try:
-            return pwd_context.verify(plain_password, password_hash)
-        except Exception:
+            return bcrypt.checkpw(plain_password.encode(), password_hash.encode())
+        except ValueError:
             return False
     # Fallback: allow plain text comparison for dev convenience
     return secrets_compare(plain_password, password_hash)
