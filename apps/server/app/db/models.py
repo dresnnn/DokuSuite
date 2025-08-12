@@ -19,6 +19,18 @@ else:  # SQLite fallback used in tests
     _geog_column = Column(String, nullable=True)
 
 
+class User(SQLModel, table=True):
+    id: int | None = Field(default=None, primary_key=True)
+    email: str = Field(sa_column=Column(String, nullable=False, unique=True))
+    password_hash: str = Field(sa_column=Column(String, nullable=False))
+    created_at: datetime = Field(
+        default_factory=datetime.utcnow,
+        sa_column=Column(
+            DateTime(timezone=True), nullable=False, server_default=func.now()
+        ),
+    )
+
+
 class Location(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
     name: str

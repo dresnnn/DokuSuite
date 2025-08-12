@@ -1,25 +1,49 @@
 import importlib
 
 from fastapi.testclient import TestClient
+from sqlmodel import SQLModel, select
 
 
-def make_client():
-    # Ensure settings pick up env values by reloading the app module
+def make_client(monkeypatch):
+    monkeypatch.setenv("DOKUSUITE_DATABASE_URL", "sqlite:///:memory:")
+    import app.db.session as session_module
+    session_module = importlib.reload(session_module)
+    import app.db.models as models
+    SQLModel.metadata.clear()
+    models = importlib.reload(models)
+    SQLModel.metadata.create_all(session_module.engine)
     import app.main as app_main
+    app_main = importlib.reload(app_main)
+    return TestClient(app_main.create_app()), session_module, models
 
-    importlib.reload(app_main)
-    return TestClient(app_main.create_app())
+
+def test_register(monkeypatch):
+    client, session_module, models = make_client(monkeypatch)
+    r = client.post(
+        "/auth/register",
+        json={"email": "user@example.com", "password": "secret"},
+    )
+    assert r.status_code == 201
+    session_gen = session_module.get_session()
+    session = next(session_gen)
+    try:
+        user = session.exec(select(models.User)).first()
+        assert user is not None
+        assert user.email == "user@example.com"
+        assert user.password_hash != "secret"
+    finally:
+        session_gen.close()
 
 
 def test_login_success(monkeypatch):
-    monkeypatch.setenv("DOKUSUITE_ADMIN_EMAIL", "admin@example.com")
-    # Use plain 'admin' to match default fallback
-    monkeypatch.setenv("DOKUSUITE_ADMIN_PASSWORD_HASH", "admin")
-
-    client = make_client()
+    client, _, _ = make_client(monkeypatch)
+    client.post(
+        "/auth/register",
+        json={"email": "user@example.com", "password": "secret"},
+    )
     r = client.post(
         "/auth/login",
-        json={"email": "admin@example.com", "password": "admin"},
+        json={"email": "user@example.com", "password": "secret"},
     )
     assert r.status_code == 200
     body = r.json()
@@ -27,11 +51,13 @@ def test_login_success(monkeypatch):
 
 
 def test_login_failure(monkeypatch):
-    monkeypatch.setenv("DOKUSUITE_ADMIN_EMAIL", "admin@example.com")
-    monkeypatch.setenv("DOKUSUITE_ADMIN_PASSWORD_HASH", "admin")
-    client = make_client()
+    client, _, _ = make_client(monkeypatch)
+    client.post(
+        "/auth/register",
+        json={"email": "user@example.com", "password": "secret"},
+    )
     r = client.post(
         "/auth/login",
-        json={"email": "admin@example.com", "password": "wrong"},
+        json={"email": "user@example.com", "password": "wrong"},
     )
     assert r.status_code == 401
