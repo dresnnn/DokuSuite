@@ -2,9 +2,13 @@ from datetime import UTC, datetime, timedelta
 from typing import Any
 
 import jwt
-from fastapi import HTTPException, Security, status
+from fastapi import Depends, HTTPException, Security, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from passlib.context import CryptContext
+from sqlmodel import Session, select
+
+from app.db.models import User as UserModel
+from app.db.session import get_session
 
 from .config import settings
 
@@ -58,8 +62,9 @@ def decode_token(token: str) -> dict[str, Any]:
 
 
 class User:
-    def __init__(self, email: str):
+    def __init__(self, email: str, role: str):
         self.email = email
+        self.role = role
 
 
 bearer_scheme = HTTPBearer(auto_error=False)
@@ -67,6 +72,7 @@ bearer_scheme = HTTPBearer(auto_error=False)
 
 def get_current_user(
     credentials: HTTPAuthorizationCredentials | None = Security(bearer_scheme),
+    session: Session = Depends(get_session),
 ) -> User:
     if credentials is None or credentials.scheme.lower() != "bearer":
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
@@ -77,4 +83,26 @@ def get_current_user(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid token payload",
         )
-    return User(email=str(sub))
+    if sub == settings.admin_email:
+        role = "ADMIN"
+    else:
+        user = session.exec(select(UserModel).where(UserModel.email == sub)).first()
+        if user is None:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid token payload",
+            )
+        role = user.role.value if hasattr(user.role, "value") else str(user.role)
+    return User(email=str(sub), role=role)
+
+
+def require_role(*roles: str):
+    def dependency(user: User = Depends(get_current_user)) -> User:
+        if user.role not in roles:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Forbidden",
+            )
+        return user
+
+    return dependency

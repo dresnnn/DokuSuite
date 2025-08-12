@@ -6,7 +6,7 @@ Kern-Entitäten:
 - Foto: Datei-Refs (Original, Thumbs), EXIF, Zeit, GPS, Qualität/Flags, pHash, Status.
 - Auftrag (Kundenauftrag/Kampagne): Kunde, Zeitraum(e), Ziele, Verknüpfung zu Standorten/Fotos.
 - Belegung/Platzierung: Zuordnung Foto ↔ Standort ↔ Belegungswoche/-fenster.
-- Nutzer: Rollen (Admin, Team, Plakatierer, Kunde), Organisation/Zugehörigkeit.
+- Nutzer: Rollen (z. B. `ADMIN`, `USER`), Organisation/Zugehörigkeit.
 - Lieferant/Partner: Subunternehmer, Zuordnung zu Nutzern/Teams.
  - Share/Freigabe: Kundenfreigaben inkl. Ablauf, Branding/Wasserzeichen-Policy, Download-Flags.
 

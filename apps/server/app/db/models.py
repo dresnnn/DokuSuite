@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 from datetime import datetime
+from enum import Enum
 
 from sqlalchemy import JSON, Column, DateTime, String, UniqueConstraint, func
 from sqlmodel import Field, SQLModel
@@ -19,10 +20,19 @@ else:  # SQLite fallback used in tests
     _geog_column = Column(String, nullable=True)
 
 
+class UserRole(str, Enum):
+    ADMIN = "ADMIN"
+    USER = "USER"
+
+
 class User(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
     email: str = Field(sa_column=Column(String, nullable=False, unique=True))
     password_hash: str = Field(sa_column=Column(String, nullable=False))
+    role: UserRole = Field(
+        default=UserRole.USER,
+        sa_column=Column(String, nullable=False),
+    )
     created_at: datetime = Field(
         default_factory=datetime.utcnow,
         sa_column=Column(

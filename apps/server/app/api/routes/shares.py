@@ -4,20 +4,18 @@ from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlmodel import Session
 
 from app.api.schemas import ShareCreate, ShareRead
-from app.core.security import User, get_current_user
+from app.core.security import User, require_role
 from app.db.models import AuditLog, Share
 from app.db.session import get_session
 
-router = APIRouter(
-    prefix="/shares", tags=["shares"], dependencies=[Depends(get_current_user)]
-)
+router = APIRouter(prefix="/shares", tags=["shares"])
 
 
 @router.post("", response_model=ShareRead, status_code=status.HTTP_201_CREATED)
 def create_share(
     payload: ShareCreate,
     session: Session = Depends(get_session),
-    user: User = Depends(get_current_user),
+    user: User = Depends(require_role("ADMIN")),
 ):
     share = Share(
         order_id=payload.order_id,
@@ -41,7 +39,7 @@ def create_share(
     return ShareRead.model_validate(share, from_attributes=True)
 
 
-@router.get("/{share_id}", response_model=ShareRead)
+@router.get("/{share_id}", response_model=ShareRead, dependencies=[Depends(require_role("ADMIN"))])
 def get_share(share_id: int, session: Session = Depends(get_session)):
     share = session.get(Share, share_id)
     if not share:
@@ -53,7 +51,7 @@ def get_share(share_id: int, session: Session = Depends(get_session)):
 def revoke_share(
     share_id: int,
     session: Session = Depends(get_session),
-    user: User = Depends(get_current_user),
+    user: User = Depends(require_role("ADMIN")),
 ):
     share = session.get(Share, share_id)
     if not share:
