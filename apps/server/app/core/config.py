@@ -21,6 +21,9 @@ class Settings(BaseSettings):
     s3_presign_ttl: int = 3600  # seconds
     s3_cors_origin: str = "*"
 
+    # Public share base URL
+    share_base_url: str = "https://example.com/share"
+
     # SMTP mail configuration
     smtp_host: str = "localhost"
     smtp_port: int = 25

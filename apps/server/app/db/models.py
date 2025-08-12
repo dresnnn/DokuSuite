@@ -135,6 +135,7 @@ class Share(SQLModel, table=True):
     url: str
     expires_at: datetime | None = None
     download_allowed: bool = True
+    watermark_policy: str | None = None
 
 
 class AuditLog(SQLModel, table=True):

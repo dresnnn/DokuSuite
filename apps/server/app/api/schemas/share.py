@@ -7,6 +7,7 @@ class ShareCreate(BaseModel):
     order_id: int
     expires_at: datetime | None = None
     download_allowed: bool = True
+    watermark_policy: str | None = None
     email: EmailStr | None = None
 
 
@@ -16,3 +17,4 @@ class ShareRead(BaseModel):
     url: str
     expires_at: datetime | None = None
     download_allowed: bool
+    watermark_policy: str | None = None
