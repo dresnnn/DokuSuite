@@ -5,7 +5,12 @@ app/main.py
 app/api/__init__.py
 app/api/routes/__init__.py
 app/api/routes/auth.py
+app/api/routes/exports.py
 app/api/routes/health.py
+app/api/routes/locations.py
+app/api/routes/orders.py
+app/api/routes/photos.py
+app/api/routes/shares.py
 app/core/config.py
 app/core/security.py
 dokusuite_server.egg-info/PKG-INFO
@@ -16,3 +21,4 @@ dokusuite_server.egg-info/top_level.txt
 tests/test_auth.py
 tests/test_auth_guard.py
 tests/test_health.py
+tests/test_protected_routes.py

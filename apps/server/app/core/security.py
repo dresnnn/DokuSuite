@@ -1,9 +1,9 @@
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
-import jwt
-from fastapi import Depends, HTTPException, Security, status
+from fastapi import HTTPException, Security, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+import jwt
 from passlib.context import CryptContext
 
 from .config import settings
@@ -74,5 +74,8 @@ def get_current_user(
     data = decode_token(credentials.credentials)
     sub = data.get("sub")
     if not sub:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token payload")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token payload",
+        )
     return User(email=str(sub))

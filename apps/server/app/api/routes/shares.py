@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, status
+from fastapi.responses import JSONResponse
 
 from ...core.security import get_current_user
 
@@ -8,15 +9,14 @@ router = APIRouter(prefix="/shares", tags=["shares"], dependencies=[Depends(get_
 
 @router.post("")
 def create_share():
-    return {"status": "not_implemented"}, status.HTTP_501_NOT_IMPLEMENTED
+    return JSONResponse({"status": "not_implemented"}, status_code=status.HTTP_501_NOT_IMPLEMENTED)
 
 
 @router.get("/{share_id}")
 def get_share(share_id: str):
-    return {"status": "not_implemented"}, status.HTTP_501_NOT_IMPLEMENTED
+    return JSONResponse({"status": "not_implemented"}, status_code=status.HTTP_501_NOT_IMPLEMENTED)
 
 
 @router.post("/{share_id}/revoke")
 def revoke_share(share_id: str):
-    return {"status": "not_implemented"}, status.HTTP_501_NOT_IMPLEMENTED
-
+    return JSONResponse({"status": "not_implemented"}, status_code=status.HTTP_501_NOT_IMPLEMENTED)
