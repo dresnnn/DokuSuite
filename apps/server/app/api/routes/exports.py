@@ -1,7 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from rq.exceptions import NoSuchJobError
 from rq.job import Job
-
 from workers.ingestion.queue import (
     _redis,
     enqueue_export_excel,
@@ -29,6 +28,8 @@ def export_excel():
 def get_export(export_id: str):
     try:
         job = Job.fetch(export_id, connection=_redis)
-    except NoSuchJobError:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Export not found")
+    except NoSuchJobError as err:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Export not found"
+        ) from err
     return {"status": job.get_status()}
