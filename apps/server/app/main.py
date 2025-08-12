@@ -26,6 +26,7 @@ def create_app() -> FastAPI:
     app.include_router(photo_routes.router)
     app.include_router(order_routes.router)
     app.include_router(share_routes.router)
+    app.include_router(share_routes.public_router)
     app.include_router(export_routes.router)
     return app
 

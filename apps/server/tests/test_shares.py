@@ -1,4 +1,5 @@
 import importlib
+from datetime import datetime, timedelta
 
 from fastapi.testclient import TestClient
 from sqlmodel import SQLModel, select
@@ -231,3 +232,140 @@ def test_shares_customer_isolation(monkeypatch):
         f"/shares/{share2_id}", headers={"Authorization": f"Bearer {token_c1}"}
     )
     assert r.status_code == 404
+
+
+class _FakeS3:
+    def __init__(self):
+        self.objects: dict[str, bytes] = {"k1": b"img"}
+
+    def generate_presigned_url(self, method, Params, ExpiresIn):  # pragma: no cover - stub
+        return f"http://example.com/{Params['Key']}"
+
+    def get_object(self, Bucket, Key):  # pragma: no cover - stub
+        from io import BytesIO
+
+        return {"Body": BytesIO(self.objects.get(Key, b""))}
+
+    def put_object(self, Bucket, Key, Body):  # pragma: no cover - stub
+        self.objects[Key] = Body
+
+
+def test_public_share_photo(monkeypatch):
+    client, session_module, models = make_client(monkeypatch)
+    session_gen = session_module.get_session()
+    session = next(session_gen)
+    try:
+        order = models.Order(customer_id="c1", name="o1", status="NEW")
+        session.add(order)
+        session.commit()
+        session.refresh(order)
+        photo = models.Photo(
+            object_key="k1",
+            taken_at=datetime.utcnow(),
+            mode="m",
+            customer_id="c1",
+            order_id=order.id,
+            hash="h",
+        )
+        session.add(photo)
+        session.commit()
+        session.refresh(photo)
+        photo_id = photo.id
+        share = models.Share(
+            order_id=order.id,
+            customer_id="c1",
+            url=f"{settings.share_base_url}/tok1",
+        )
+        session.add(share)
+        session.commit()
+    finally:
+        session_gen.close()
+    monkeypatch.setattr("app.api.routes.shares._s3_client", lambda: _FakeS3())
+    r = client.get(f"/public/shares/tok1/photos/{photo_id}")
+    assert r.status_code == 200
+    data = r.json()
+    assert data["original_url"].endswith("k1")
+
+
+def test_public_share_expired(monkeypatch):
+    client, session_module, models = make_client(monkeypatch)
+    session_gen = session_module.get_session()
+    session = next(session_gen)
+    try:
+        order = models.Order(customer_id="c1", name="o1", status="NEW")
+        session.add(order)
+        session.commit()
+        session.refresh(order)
+        photo = models.Photo(
+            object_key="k1",
+            taken_at=datetime.utcnow(),
+            mode="m",
+            customer_id="c1",
+            order_id=order.id,
+            hash="h",
+        )
+        session.add(photo)
+        session.commit()
+        session.refresh(photo)
+        photo_id = photo.id
+        share = models.Share(
+            order_id=order.id,
+            customer_id="c1",
+            url=f"{settings.share_base_url}/tok1",
+            expires_at=datetime.utcnow() - timedelta(seconds=1),
+        )
+        session.add(share)
+        session.commit()
+    finally:
+        session_gen.close()
+    monkeypatch.setattr("app.api.routes.shares._s3_client", lambda: _FakeS3())
+    r = client.get(f"/public/shares/tok1/photos/{photo_id}")
+    assert r.status_code == 404
+
+
+def test_public_share_watermark(monkeypatch):
+    client, session_module, models = make_client(monkeypatch)
+    session_gen = session_module.get_session()
+    session = next(session_gen)
+    try:
+        order = models.Order(customer_id="c1", name="o1", status="NEW")
+        session.add(order)
+        session.commit()
+        session.refresh(order)
+        photo = models.Photo(
+            object_key="k1",
+            taken_at=datetime.utcnow(),
+            mode="m",
+            customer_id="c1",
+            order_id=order.id,
+            hash="h",
+        )
+        session.add(photo)
+        session.commit()
+        session.refresh(photo)
+        photo_id = photo.id
+        share = models.Share(
+            order_id=order.id,
+            customer_id="c1",
+            url=f"{settings.share_base_url}/tok1",
+            download_allowed=False,
+        )
+        session.add(share)
+        session.commit()
+    finally:
+        session_gen.close()
+
+    fake_s3 = _FakeS3()
+    monkeypatch.setattr("app.api.routes.shares._s3_client", lambda: fake_s3)
+    called = {}
+
+    def fake_watermark(data):
+        called["ok"] = True
+        return b"wm"
+
+    monkeypatch.setattr("app.api.routes.shares.apply_watermark", fake_watermark)
+
+    r = client.get(f"/public/shares/tok1/photos/{photo_id}")
+    assert r.status_code == 200
+    assert called.get("ok")
+    assert fake_s3.objects.get("k1-wm") == b"wm"
