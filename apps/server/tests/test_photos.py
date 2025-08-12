@@ -223,8 +223,18 @@ def test_batch_assign(monkeypatch):
     session_gen = session_module.get_session()
     session = next(session_gen)
     try:
-        p1 = models.Photo(object_key="k1", taken_at=datetime(2024, 1, 1), status="INGESTED", hash="h1")
-        p2 = models.Photo(object_key="k2", taken_at=datetime(2024, 1, 2), status="INGESTED", hash="h2")
+        p1 = models.Photo(
+            object_key="k1",
+            taken_at=datetime(2024, 1, 1),
+            status="INGESTED",
+            hash="h1",
+        )
+        p2 = models.Photo(
+            object_key="k2",
+            taken_at=datetime(2024, 1, 2),
+            status="INGESTED",
+            hash="h2",
+        )
         session.add(p1)
         session.add(p2)
         session.commit()
