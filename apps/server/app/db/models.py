@@ -148,3 +148,15 @@ class AuditLog(SQLModel, table=True):
         ),
     )
     payload: dict | None = Field(default=None, sa_column=Column(JSON))
+
+
+class Invitation(SQLModel, table=True):
+    id: int | None = Field(default=None, primary_key=True)
+    email: str = Field(sa_column=Column(String, nullable=False))
+    token: str = Field(sa_column=Column(String, nullable=False, unique=True))
+    created_at: datetime = Field(
+        default_factory=datetime.utcnow,
+        sa_column=Column(
+            DateTime(timezone=True), nullable=False, server_default=func.now()
+        ),
+    )

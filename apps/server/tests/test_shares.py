@@ -58,6 +58,34 @@ def test_create_share(monkeypatch):
         session_gen.close()
 
 
+def test_create_share_with_email(monkeypatch):
+    client, session_module, models = make_client(monkeypatch)
+    session_gen = session_module.get_session()
+    session = next(session_gen)
+    try:
+        order = models.Order(customer_id="c1", name="o1", status="NEW")
+        session.add(order)
+        session.commit()
+        session.refresh(order)
+        order_id = order.id
+    finally:
+        session_gen.close()
+
+    sent: dict = {}
+
+    def fake_send_mail(to, subject, body):
+        sent["to"] = to
+        sent["subject"] = subject
+        sent["body"] = body
+
+    monkeypatch.setattr("app.api.routes.shares.send_mail", fake_send_mail)
+
+    payload = {"order_id": order_id, "email": "user@example.com"}
+    r = client.post("/shares", json=payload, headers=auth_headers())
+    assert r.status_code == 201
+    assert sent.get("to") == "user@example.com"
+
+
 def test_share_audit_logs(monkeypatch):
     client, session_module, models = make_client(monkeypatch)
     session_gen = session_module.get_session()
