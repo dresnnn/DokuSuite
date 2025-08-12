@@ -19,6 +19,7 @@ from app.api.schemas import (
     UploadIntent,
     UploadIntentRequest,
 )
+from app.api.schemas.upload import ALLOWED_MIME_PREFIX, MAX_FILE_SIZE
 from app.core.config import settings
 from app.core.security import User, get_current_user
 from app.db.models import AuditLog, Location, Photo
@@ -59,12 +60,19 @@ def _parse_point(point: str) -> tuple[float, float]:
 
 @router.post("/upload-intent", response_model=UploadIntent)
 def upload_intent(payload: UploadIntentRequest) -> JSONResponse:
+    if not payload.content_type.startswith(ALLOWED_MIME_PREFIX):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST)
+    if payload.size > MAX_FILE_SIZE:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST)
+
     client = _s3_client()
     key = str(uuid.uuid4())
     presigned = client.generate_presigned_post(
         Bucket=settings.s3_bucket,
         Key=key,
         ExpiresIn=settings.s3_presign_ttl,
+        Fields={"Content-Type": payload.content_type},
+        Conditions=[{"Content-Type": payload.content_type}],
     )
     data = UploadIntent(
         object_key=key,
