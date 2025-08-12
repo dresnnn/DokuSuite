@@ -13,6 +13,12 @@ Minimaler Start für den Backend‑Service inkl. Health‑Endpoint.
 - Lint:
   - `ruff check .`
 
+## Migrationen
+- Neue Revision erzeugen:
+  - `alembic revision --autogenerate -m "message"`
+- Migration ausführen:
+  - `alembic upgrade head`
+
 ## API
 - Health: `GET /healthz` → `{ "status": "ok" }`
 
