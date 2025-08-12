@@ -85,15 +85,28 @@ def test_get_export_status(monkeypatch):
         def get_status(self):
             return "finished"
 
+        @property
+        def result(self):  # pragma: no cover - simple attribute access
+            return {"result_key": "exports/test.zip"}
+
+    class S3Stub:
+        def generate_presigned_url(self, method, Params, ExpiresIn):  # pragma: no cover - stub
+            return "http://example.com/download"
+
     monkeypatch.setattr(
         exports_module.Job,
         "fetch",
         classmethod(lambda cls, job_id, connection=None: JobStub()),
     )
+    monkeypatch.setattr(exports_module, "_s3_client", lambda: S3Stub())
 
     r = client.get("/exports/any", headers=auth_headers())
     assert r.status_code == 200
-    assert r.json() == {"status": "finished"}
+    assert r.json() == {
+        "status": "finished",
+        "result_key": "exports/test.zip",
+        "result_url": "http://example.com/download",
+    }
 
 
 def test_export_zip_uploads_to_s3(monkeypatch):
@@ -108,11 +121,11 @@ def test_export_zip_uploads_to_s3(monkeypatch):
 
     stub = S3Stub()
     monkeypatch.setattr(jobs, "_s3_client", lambda: stub)
-    key = jobs.export_zip()
+    result = jobs.export_zip()
     assert stub.args is not None
     assert stub.args["Key"].endswith(".zip")
     assert stub.args["Body"]
-    assert key == stub.args["Key"]
+    assert result["result_key"] == stub.args["Key"]
 
 
 def test_export_excel_uploads_to_s3(monkeypatch):
@@ -127,8 +140,8 @@ def test_export_excel_uploads_to_s3(monkeypatch):
 
     stub = S3Stub()
     monkeypatch.setattr(jobs, "_s3_client", lambda: stub)
-    key = jobs.export_excel()
+    result = jobs.export_excel()
     assert stub.args is not None
     assert stub.args["Key"].endswith(".xlsx")
     assert stub.args["Body"]
-    assert key == stub.args["Key"]
+    assert result["result_key"] == stub.args["Key"]
