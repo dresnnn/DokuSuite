@@ -1,5 +1,6 @@
 import uuid
 from datetime import datetime
+import hashlib
 
 import boto3
 from fastapi import APIRouter, Depends, HTTPException, Query, status
@@ -97,7 +98,16 @@ def ingest_photo(payload: PhotoIngest, session: Session = Depends(get_session)):
     normalized = normalize_orientation(data)
     client.put_object(Bucket=settings.s3_bucket, Key=payload.object_key, Body=normalized)
 
-    photo = Photo(object_key=payload.object_key, taken_at=payload.taken_at)
+    photo_hash = hashlib.sha256(normalized).hexdigest()
+    is_dup = (
+        session.exec(select(Photo).where(Photo.hash == photo_hash)).first() is not None
+    )
+    photo = Photo(
+        object_key=payload.object_key,
+        taken_at=payload.taken_at,
+        hash=photo_hash,
+        is_duplicate=is_dup,
+    )
     session.add(photo)
     session.commit()
     session.refresh(photo)

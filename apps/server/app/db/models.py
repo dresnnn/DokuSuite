@@ -43,6 +43,8 @@ class Photo(SQLModel, table=True):
     quality_flag: str | None = Field(default=None)
     note: str | None = Field(default=None)
     calendar_week: str | None = Field(default=None)
+    hash: str
+    is_duplicate: bool = Field(default=False)
 
 
 class Share(SQLModel, table=True):
