@@ -1,8 +1,7 @@
-from fastapi.responses import JSONResponse
 from fastapi import APIRouter, Depends, status
+from fastapi.responses import JSONResponse
 
 from app.core.security import get_current_user
-
 
 router = APIRouter(
     prefix="/locations",
