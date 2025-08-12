@@ -1,4 +1,4 @@
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
@@ -6,9 +6,8 @@ class Settings(BaseSettings):
     environment: str = "dev"
     debug: bool = True
 
-    class Config:
-        env_prefix = "DOKUSUITE_"
+    # Pydantic v2 style config
+    model_config = SettingsConfigDict(env_prefix="DOKUSUITE_")
 
 
 settings = Settings()  # load from env at import time
-
