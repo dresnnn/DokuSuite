@@ -53,6 +53,10 @@ class Photo(SQLModel, table=True):
     object_key: str
     taken_at: datetime
     status: str = "INGESTED"
+    mode: str
+    uploader_id: str | None = None
+    device_id: str | None = None
+    site_id: str | None = None
     location_id: int | None = Field(default=None, foreign_key="location.id")
     order_id: int | None = Field(default=None, foreign_key="order.id")
     quality_flag: str | None = Field(default=None)
