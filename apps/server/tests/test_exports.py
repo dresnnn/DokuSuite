@@ -71,3 +71,41 @@ def test_get_export_status(monkeypatch):
     r = client.get("/exports/any", headers=auth_headers())
     assert r.status_code == 200
     assert r.json() == {"status": "finished"}
+
+
+def test_export_zip_uploads_to_s3(monkeypatch):
+    from workers.ingestion import jobs
+
+    class S3Stub:
+        def __init__(self):
+            self.args: dict | None = None
+
+        def put_object(self, Bucket, Key, Body):
+            self.args = {"Bucket": Bucket, "Key": Key, "Body": Body}
+
+    stub = S3Stub()
+    monkeypatch.setattr(jobs, "_s3_client", lambda: stub)
+    key = jobs.export_zip()
+    assert stub.args is not None
+    assert stub.args["Key"].endswith(".zip")
+    assert stub.args["Body"]
+    assert key == stub.args["Key"]
+
+
+def test_export_excel_uploads_to_s3(monkeypatch):
+    from workers.ingestion import jobs
+
+    class S3Stub:
+        def __init__(self):
+            self.args: dict | None = None
+
+        def put_object(self, Bucket, Key, Body):
+            self.args = {"Bucket": Bucket, "Key": Key, "Body": Body}
+
+    stub = S3Stub()
+    monkeypatch.setattr(jobs, "_s3_client", lambda: stub)
+    key = jobs.export_excel()
+    assert stub.args is not None
+    assert stub.args["Key"].endswith(".xlsx")
+    assert stub.args["Body"]
+    assert key == stub.args["Key"]
