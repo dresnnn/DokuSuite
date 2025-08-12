@@ -9,10 +9,16 @@ from .api.routes import orders as order_routes
 from .api.routes import photos as photo_routes
 from .api.routes import shares as share_routes
 from .core.config import settings
+from .core.logging import configure_logging
+from .core.metrics import router as metrics_router
+from .core.middleware import RequestMetricsMiddleware
 
 
 def create_app() -> FastAPI:
+    configure_logging()
     app = FastAPI(title=settings.app_name)
+    app.add_middleware(RequestMetricsMiddleware)
+    app.include_router(metrics_router)
     app.include_router(health_routes.router)
     app.include_router(ingestion_routes.router)
     app.include_router(auth_routes.router)
