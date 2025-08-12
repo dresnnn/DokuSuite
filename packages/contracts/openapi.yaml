@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: DokuSuite API
-  version: 0.1.0
+  version: 0.2.0
   description: |
     API für iOS-App, Web-Tool und Integrationen der DokuSuite.
     Zeitzone: Europe/Berlin. Datums-/Zeitangaben sind RFC3339 UTC, mit klarer Interpretation für Woche (ISO-8601 Kalenderwoche).
@@ -250,6 +250,16 @@ paths:
           schema: { type: string }
       responses:
         '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/Page_Order_' } } } }
+    post:
+      tags: [orders]
+      summary: Create order
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/OrderCreate' }
+      responses:
+        '201': { description: Created, content: { application/json: { schema: { $ref: '#/components/schemas/Order' } } } }
 
   /orders/{id}:
     get:
@@ -257,6 +267,19 @@ paths:
       summary: Get order by id (read-only)
       parameters:
         - $ref: '#/components/parameters/id'
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/Order' } } } }
+        '404': { $ref: '#/components/responses/NotFound' }
+    patch:
+      tags: [orders]
+      summary: Update order
+      parameters:
+        - $ref: '#/components/parameters/id'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/OrderUpdate' }
       responses:
         '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/Order' } } } }
         '404': { $ref: '#/components/responses/NotFound' }
@@ -483,6 +506,28 @@ components:
         flag_bad: { type: boolean }
         flag_best_of: { type: boolean }
         status: { $ref: '#/components/schemas/PhotoStatus' }
+    OrderCreate:
+      type: object
+      required: [customer_id, name, service_period]
+      properties:
+        customer_id: { type: string }
+        name: { type: string }
+        status: { type: string, enum: [reserved, booked, cancelled], default: reserved }
+        service_period:
+          type: object
+          properties:
+            begin: { type: string, format: date }
+            end: { type: string, format: date }
+    OrderUpdate:
+      type: object
+      properties:
+        name: { type: string }
+        status: { type: string, enum: [reserved, booked, cancelled] }
+        service_period:
+          type: object
+          properties:
+            begin: { type: string, format: date }
+            end: { type: string, format: date }
     Order:
       type: object
       properties:
