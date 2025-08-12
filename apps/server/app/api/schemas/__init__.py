@@ -6,6 +6,7 @@ from .photo import (
     PhotoRead,
     PhotoUpdate,
 )
+from .order import OrderRead
 from .upload import UploadIntent, UploadIntentRequest
 
 __all__ = [
@@ -17,4 +18,5 @@ __all__ = [
     "PhotoUpdate",
     "UploadIntent",
     "UploadIntentRequest",
+    "OrderRead",
 ]
