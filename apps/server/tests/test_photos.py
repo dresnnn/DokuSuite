@@ -374,3 +374,76 @@ def test_batch_assign_validation_error(monkeypatch):
         headers=auth_headers(),
     )
     assert r.status_code == 422
+
+
+def test_photo_ingest_geocoding_cache_miss(monkeypatch):
+    client, session_module, models, *_ = make_client(monkeypatch)
+    import app.api.routes.photos as photos_module
+
+    class StubGeocoder:
+        def __init__(self):
+            self.calls = 0
+            self.cache: dict[str, str] = {}
+
+        def reverse_geocode(self, lat, lon):
+            key = f"{lat},{lon}"
+            if key in self.cache:
+                return self.cache[key]
+            self.calls += 1
+            addr = "Stub Address"
+            self.cache[key] = addr
+            return addr
+
+    stub = StubGeocoder()
+    monkeypatch.setattr(photos_module, "_geocoder", stub)
+    payload = {
+        "object_key": "k5",
+        "taken_at": "2024-01-01T00:00:00Z",
+        "mode": "FIXED_SITE",
+        "ad_hoc_spot": {"lat": 1.0, "lon": 2.0},
+    }
+    r = client.post("/photos", json=payload, headers=auth_headers())
+    assert r.status_code == 201
+    assert stub.calls == 1
+    data = r.json()
+    session_gen = session_module.get_session()
+    session = next(session_gen)
+    try:
+        photo = session.get(models.Photo, data["id"])
+        assert photo.note == "Stub Address"
+    finally:
+        session_gen.close()
+
+
+def test_photo_ingest_geocoding_cache_hit(monkeypatch):
+    client, *_ = make_client(monkeypatch)
+    import app.api.routes.photos as photos_module
+
+    class StubGeocoder:
+        def __init__(self):
+            self.calls = 0
+            self.cache: dict[str, str] = {}
+
+        def reverse_geocode(self, lat, lon):
+            key = f"{lat},{lon}"
+            if key in self.cache:
+                return self.cache[key]
+            self.calls += 1
+            addr = "Stub Address"
+            self.cache[key] = addr
+            return addr
+
+    stub = StubGeocoder()
+    monkeypatch.setattr(photos_module, "_geocoder", stub)
+    payload1 = {
+        "object_key": "k6",
+        "taken_at": "2024-01-01T00:00:00Z",
+        "mode": "FIXED_SITE",
+        "ad_hoc_spot": {"lat": 1.0, "lon": 2.0},
+    }
+    payload2 = {**payload1, "object_key": "k7"}
+    r1 = client.post("/photos", json=payload1, headers=auth_headers())
+    assert r1.status_code == 201
+    r2 = client.post("/photos", json=payload2, headers=auth_headers())
+    assert r2.status_code == 201
+    assert stub.calls == 1

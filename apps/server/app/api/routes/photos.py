@@ -25,8 +25,12 @@ from app.db.models import Location, Photo
 from app.db.session import get_session
 from app.services.calendar_week import calendar_week_from_taken_at
 from app.services.exif import normalize_orientation
+from app.services.geocoding import GeocodingService
 
 router = APIRouter(prefix="/photos", tags=["photos"], dependencies=[Depends(get_current_user)])
+
+
+_geocoder = GeocodingService()
 
 
 def _s3_client():
@@ -129,6 +133,9 @@ def ingest_photo(payload: PhotoIngest, session: Session = Depends(get_session)):
     # Find nearest location within 50m
     lat = payload.ad_hoc_spot.lat
     lon = payload.ad_hoc_spot.lon
+    address = _geocoder.reverse_geocode(lat, lon)
+    if address:
+        photo.note = address
     locations = session.exec(select(Location)).all()
     nearest_id: int | None = None
     min_dist = 50.0
