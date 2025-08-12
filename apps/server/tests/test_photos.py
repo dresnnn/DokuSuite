@@ -58,6 +58,7 @@ def test_photo_ingest_happy_path(monkeypatch):
         "object_key": "k1",
         "taken_at": "2024-01-01T00:00:00Z",
         "mode": "FIXED_SITE",
+        "ad_hoc_spot": {"lat": 52.52, "lon": 13.405},
     }
     r = client.post("/photos", json=payload, headers=auth_headers())
     assert r.status_code == 201
@@ -85,6 +86,7 @@ def test_photo_ingest_validation_error(monkeypatch):
     payload = {
         "object_key": "k1",
         "mode": "FIXED_SITE",
+        "ad_hoc_spot": {"lat": 52.52, "lon": 13.405},
     }
     r = client.post("/photos", json=payload, headers=auth_headers())
     assert r.status_code == 422
@@ -96,11 +98,13 @@ def test_photo_ingest_duplicate(monkeypatch):
         "object_key": "k1",
         "taken_at": "2024-01-01T00:00:00Z",
         "mode": "FIXED_SITE",
+        "ad_hoc_spot": {"lat": 52.52, "lon": 13.405},
     }
     payload2 = {
         "object_key": "k2",
         "taken_at": "2024-01-01T00:00:00Z",
         "mode": "FIXED_SITE",
+        "ad_hoc_spot": {"lat": 52.52, "lon": 13.405},
     }
     r1 = client.post("/photos", json=payload1, headers=auth_headers())
     assert r1.status_code == 201
@@ -124,6 +128,65 @@ def test_photos_empty_list(monkeypatch):
     r = client.get("/photos", headers=auth_headers())
     assert r.status_code == 200
     assert r.json() == {"items": [], "total": 0, "page": 1, "limit": 10}
+
+
+def test_photo_ingest_location_match(monkeypatch):
+    client, session_module, models, *_ = make_client(monkeypatch)
+    session_gen = session_module.get_session()
+    session = next(session_gen)
+    try:
+        loc = models.Location(name="Site", address="Addr", geog="POINT(13.405 52.52)")
+        session.add(loc)
+        session.commit()
+        session.refresh(loc)
+    finally:
+        session_gen.close()
+
+    payload = {
+        "object_key": "k3",
+        "taken_at": "2024-01-01T00:00:00Z",
+        "mode": "FIXED_SITE",
+        "ad_hoc_spot": {"lat": 52.5203, "lon": 13.4053},
+    }
+    r = client.post("/photos", json=payload, headers=auth_headers())
+    assert r.status_code == 201
+    data = r.json()
+    session_gen = session_module.get_session()
+    session = next(session_gen)
+    try:
+        photo = session.get(models.Photo, data["id"])
+        assert photo.location_id == loc.id
+    finally:
+        session_gen.close()
+
+
+def test_photo_ingest_location_no_match(monkeypatch):
+    client, session_module, models, *_ = make_client(monkeypatch)
+    session_gen = session_module.get_session()
+    session = next(session_gen)
+    try:
+        loc = models.Location(name="Site", address="Addr", geog="POINT(13.405 52.52)")
+        session.add(loc)
+        session.commit()
+    finally:
+        session_gen.close()
+
+    payload = {
+        "object_key": "k4",
+        "taken_at": "2024-01-01T00:00:00Z",
+        "mode": "FIXED_SITE",
+        "ad_hoc_spot": {"lat": 52.53, "lon": 13.42},
+    }
+    r = client.post("/photos", json=payload, headers=auth_headers())
+    assert r.status_code == 201
+    data = r.json()
+    session_gen = session_module.get_session()
+    session = next(session_gen)
+    try:
+        photo = session.get(models.Photo, data["id"])
+        assert photo.location_id is None
+    finally:
+        session_gen.close()
 
 
 def test_photos_filter(monkeypatch):

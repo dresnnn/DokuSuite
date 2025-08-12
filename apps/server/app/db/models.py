@@ -1,15 +1,29 @@
 from __future__ import annotations
 
+import os
 from datetime import datetime
 
-from sqlalchemy import Column, DateTime, func
+from sqlalchemy import Column, DateTime, String, func
 from sqlmodel import Field, SQLModel
+
+try:  # geospatial support for PostGIS
+    from geoalchemy2 import Geography
+except Exception:  # pragma: no cover - fallback when geoalchemy2 missing
+    Geography = None
+
+DATABASE_URL = os.getenv("DOKUSUITE_DATABASE_URL", "sqlite:///:memory:")
+
+if Geography is not None and not DATABASE_URL.startswith("sqlite"):
+    _geog_column = Column(Geography(geometry_type="POINT", srid=4326), nullable=True)
+else:  # SQLite fallback used in tests
+    _geog_column = Column(String, nullable=True)
 
 
 class Location(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
     name: str
     address: str
+    geog: str | None = Field(default=None, sa_column=_geog_column)
     active: bool = True
     updated_at: datetime = Field(
         default_factory=datetime.utcnow,
@@ -24,6 +38,7 @@ class Location(SQLModel, table=True):
         default=None,
         sa_column=Column(DateTime(timezone=True), nullable=True),
     )
+    model_config = {"arbitrary_types_allowed": True}
 
 
 class Order(SQLModel, table=True):
