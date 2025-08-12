@@ -26,6 +26,9 @@ class Photo(SQLModel, table=True):
     status: str = "INGESTED"
     location_id: int | None = Field(default=None, foreign_key="location.id")
     order_id: int | None = Field(default=None, foreign_key="order.id")
+    quality_flag: str | None = Field(default=None)
+    note: str | None = Field(default=None)
+    calendar_week: str | None = Field(default=None)
 
 
 class Share(SQLModel, table=True):
