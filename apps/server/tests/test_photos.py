@@ -82,6 +82,31 @@ def test_photo_ingest_happy_path(monkeypatch):
     assert called["payload"]["object_key"] == "k1"
 
 
+def test_photo_ingest_creates_audit_log(monkeypatch):
+    client, session_module, models, *_ = make_client(monkeypatch)
+    payload = {
+        "object_key": "k1",
+        "taken_at": "2024-01-01T00:00:00Z",
+        "mode": "FIXED_SITE",
+        "ad_hoc_spot": {"lat": 52.52, "lon": 13.405},
+    }
+    r = client.post("/photos", json=payload, headers=auth_headers())
+    assert r.status_code == 201
+    photo_id = r.json()["id"]
+
+    session_gen = session_module.get_session()
+    session = next(session_gen)
+    try:
+        logs = session.exec(select(models.AuditLog)).all()
+        assert len(logs) == 1
+        log = logs[0]
+        assert log.action == "create"
+        assert log.entity == "photo"
+        assert log.entity_id == photo_id
+    finally:
+        session_gen.close()
+
+
 def test_photo_ingest_validation_error(monkeypatch):
     client, *_ = make_client(monkeypatch)
     payload = {
@@ -278,6 +303,41 @@ def test_update_photo(monkeypatch):
         updated = session.get(models.Photo, photo_id)
         assert updated.quality_flag == "bad"
         assert updated.note == "blurry"
+    finally:
+        session_gen.close()
+
+
+def test_update_photo_creates_audit_log(monkeypatch):
+    client, session_module, models, *_ = make_client(monkeypatch)
+    session_gen = session_module.get_session()
+    session = next(session_gen)
+    try:
+        photo = models.Photo(
+            object_key="k1",
+            taken_at=datetime(2024, 1, 1),
+            status="INGESTED",
+            hash="h1",
+        )
+        session.add(photo)
+        session.commit()
+        session.refresh(photo)
+        photo_id = photo.id
+    finally:
+        session_gen.close()
+
+    payload = {"quality_flag": "bad"}
+    r = client.patch(f"/photos/{photo_id}", json=payload, headers=auth_headers())
+    assert r.status_code == 200
+
+    session_gen = session_module.get_session()
+    session = next(session_gen)
+    try:
+        logs = session.exec(select(models.AuditLog)).all()
+        assert len(logs) == 1
+        log = logs[0]
+        assert log.action == "update"
+        assert log.entity == "photo"
+        assert log.entity_id == photo_id
     finally:
         session_gen.close()
 

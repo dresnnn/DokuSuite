@@ -20,8 +20,8 @@ from app.api.schemas import (
     UploadIntentRequest,
 )
 from app.core.config import settings
-from app.core.security import get_current_user
-from app.db.models import Location, Photo
+from app.core.security import User, get_current_user
+from app.db.models import AuditLog, Location, Photo
 from app.db.session import get_session
 from app.services.calendar_week import calendar_week_from_taken_at
 from app.services.exif import normalize_orientation
@@ -111,7 +111,11 @@ def list_photos(
 
 
 @router.post("", response_model=PhotoRead, status_code=status.HTTP_201_CREATED)
-def ingest_photo(payload: PhotoIngest, session: Session = Depends(get_session)):
+def ingest_photo(
+    payload: PhotoIngest,
+    session: Session = Depends(get_session),
+    user: User = Depends(get_current_user),
+):
     client = _s3_client()
     obj = client.get_object(Bucket=settings.s3_bucket, Key=payload.object_key)
     data = obj["Body"].read()
@@ -156,6 +160,16 @@ def ingest_photo(payload: PhotoIngest, session: Session = Depends(get_session)):
     session.commit()
     session.refresh(photo)
 
+    log = AuditLog(
+        action="create",
+        entity="photo",
+        entity_id=photo.id,
+        user=user.email,
+        payload=payload.model_dump(mode="json"),
+    )
+    session.add(log)
+    session.commit()
+
     enqueue_ingest({"photo_id": photo.id, **payload.model_dump()})
     return PhotoRead.model_validate(photo, from_attributes=True)
 
@@ -173,6 +187,7 @@ def update_photo(
     photo_id: int,
     payload: PhotoUpdate,
     session: Session = Depends(get_session),
+    user: User = Depends(get_current_user),
 ):
     photo = session.get(Photo, photo_id)
     if not photo:
@@ -182,12 +197,24 @@ def update_photo(
     session.add(photo)
     session.commit()
     session.refresh(photo)
+
+    log = AuditLog(
+        action="update",
+        entity="photo",
+        entity_id=photo.id,
+        user=user.email,
+        payload=payload.model_dump(exclude_unset=True, mode="json"),
+    )
+    session.add(log)
+    session.commit()
     return PhotoRead.model_validate(photo, from_attributes=True)
 
 
 @router.post("/batch/assign")
 def batch_assign(
-    payload: BatchAssignRequest, session: Session = Depends(get_session)
+    payload: BatchAssignRequest,
+    session: Session = Depends(get_session),
+    user: User = Depends(get_current_user),
 ):
     photos = session.exec(
         select(Photo).where(Photo.id.in_(payload.photo_ids))
@@ -201,4 +228,19 @@ def batch_assign(
         elif photo.calendar_week is None:
             photo.calendar_week = calendar_week_from_taken_at(photo.taken_at)
     session.commit()
+
+    for photo in photos:
+        log = AuditLog(
+            action="update",
+            entity="photo",
+            entity_id=photo.id,
+            user=user.email,
+            payload={
+                "order_id": payload.order_id,
+                "calendar_week": payload.calendar_week,
+            },
+        )
+        session.add(log)
+    session.commit()
+
     return {"assigned": len(photos)}

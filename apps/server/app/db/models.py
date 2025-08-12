@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 from datetime import datetime
 
-from sqlalchemy import Column, DateTime, String, func
+from sqlalchemy import JSON, Column, DateTime, String, func
 from sqlmodel import Field, SQLModel
 
 try:  # geospatial support for PostGIS
@@ -68,3 +68,20 @@ class Share(SQLModel, table=True):
     url: str
     expires_at: datetime | None = None
     download_allowed: bool = True
+
+
+class AuditLog(SQLModel, table=True):
+    id: int | None = Field(default=None, primary_key=True)
+    action: str
+    entity: str
+    entity_id: int
+    user: str
+    timestamp: datetime = Field(
+        default_factory=datetime.utcnow,
+        sa_column=Column(
+            DateTime(timezone=True),
+            nullable=False,
+            server_default=func.now(),
+        ),
+    )
+    payload: dict | None = Field(default=None, sa_column=Column(JSON))
