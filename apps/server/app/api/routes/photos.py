@@ -1,12 +1,14 @@
 import uuid
+from datetime import datetime
 
 import boto3
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from fastapi.responses import JSONResponse
-from sqlmodel import Session
+from sqlalchemy import func
+from sqlmodel import Session, select
 from workers.ingestion.queue import enqueue_ingest
 
-from app.api.schemas import PhotoIngest, PhotoRead, UploadIntent, UploadIntentRequest
+from app.api.schemas import Page, PhotoIngest, PhotoRead, UploadIntent, UploadIntentRequest
 from app.core.config import settings
 from app.core.security import get_current_user
 from app.db.models import Photo
@@ -47,9 +49,36 @@ def upload_intent(payload: UploadIntentRequest) -> JSONResponse:
     )
 
 
-@router.get("")
-def list_photos():
-    return JSONResponse({"status": "not_implemented"}, status_code=status.HTTP_501_NOT_IMPLEMENTED)
+@router.get("", response_model=Page[PhotoRead])
+def list_photos(
+    page: int = 1,
+    limit: int = 10,
+    from_: datetime | None = Query(None, alias="from"),
+    to: datetime | None = None,
+    mode: str | None = None,
+    siteId: int | None = None,
+    orderId: int | None = None,
+    uploaderId: str | None = None,
+    status: str | None = None,
+    session: Session = Depends(get_session),
+):
+    query = select(Photo)
+    if from_:
+        query = query.where(Photo.taken_at >= from_)
+    if to:
+        query = query.where(Photo.taken_at <= to)
+    if siteId is not None:
+        query = query.where(Photo.location_id == siteId)
+    if orderId is not None:
+        query = query.where(Photo.order_id == orderId)
+    if status:
+        query = query.where(Photo.status == status)
+    # mode and uploaderId are accepted but not stored in the current model
+
+    total = session.exec(select(func.count()).select_from(query.subquery())).one()
+    results = session.exec(query.offset((page - 1) * limit).limit(limit)).all()
+    items = [PhotoRead.model_validate(r, from_attributes=True) for r in results]
+    return Page(items=items, total=total, page=page, limit=limit)
 
 
 @router.post("", response_model=PhotoRead, status_code=status.HTTP_201_CREATED)
@@ -69,9 +98,12 @@ def ingest_photo(payload: PhotoIngest, session: Session = Depends(get_session)):
     return PhotoRead.model_validate(photo, from_attributes=True)
 
 
-@router.get("/{photo_id}")
-def get_photo(photo_id: str):
-    return JSONResponse({"status": "not_implemented"}, status_code=status.HTTP_501_NOT_IMPLEMENTED)
+@router.get("/{photo_id}", response_model=PhotoRead)
+def get_photo(photo_id: int, session: Session = Depends(get_session)):
+    photo = session.get(Photo, photo_id)
+    if not photo:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+    return PhotoRead.model_validate(photo, from_attributes=True)
 
 
 @router.patch("/{photo_id}")
