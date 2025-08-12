@@ -1,0 +1,6 @@
+extends: spectral:oas
+
+# Place custom rule tweaks here if needed, e.g.:
+# rules:
+#   operation-operationId: warn
+
