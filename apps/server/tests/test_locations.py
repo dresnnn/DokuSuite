@@ -16,6 +16,20 @@ def make_client(monkeypatch):
     SQLModel.metadata.clear()
     models = importlib.reload(models)
     SQLModel.metadata.create_all(session_module.engine)
+    session_gen = session_module.get_session()
+    session = next(session_gen)
+    try:
+        session.add(
+            models.User(
+                email=settings.admin_email,
+                password_hash="pw",
+                role=models.UserRole.ADMIN,
+                customer_id="c1",
+            )
+        )
+        session.commit()
+    finally:
+        session_gen.close()
     import app.main as app_main
     app_main = importlib.reload(app_main)
     return TestClient(app_main.create_app()), session_module, models
@@ -46,8 +60,8 @@ def test_locations_simple_filter(monkeypatch):
     session_gen = session_module.get_session()
     session = next(session_gen)
     try:
-        session.add(models.Location(name="Berlin", address="A"))
-        session.add(models.Location(name="Hamburg", address="B"))
+        session.add(models.Location(name="Berlin", address="A", customer_id="c1"))
+        session.add(models.Location(name="Hamburg", address="B", customer_id="c1"))
         session.commit()
     finally:
         session_gen.close()
@@ -64,10 +78,10 @@ def test_locations_offline_delta_upserts(monkeypatch):
     session_gen = session_module.get_session()
     session = next(session_gen)
     try:
-        session.add(models.Location(name="Old", address="A"))
+        session.add(models.Location(name="Old", address="A", customer_id="c1"))
         session.commit()
         since = datetime.utcnow()
-        session.add(models.Location(name="New", address="B"))
+        session.add(models.Location(name="New", address="B", customer_id="c1"))
         session.commit()
     finally:
         session_gen.close()
@@ -82,12 +96,41 @@ def test_locations_offline_delta_upserts(monkeypatch):
     assert data["tombstones"] == []
 
 
+def test_locations_customer_isolation(monkeypatch):
+    client, session_module, models = make_client(monkeypatch)
+    session_gen = session_module.get_session()
+    session = next(session_gen)
+    try:
+        session.add(
+            models.User(
+                email="admin2@example.com",
+                password_hash="pw",
+                role=models.UserRole.ADMIN,
+                customer_id="c2",
+            )
+        )
+        session.add(models.Location(name="L1", address="A", customer_id="c1"))
+        session.add(models.Location(name="L2", address="B", customer_id="c2"))
+        session.commit()
+    finally:
+        session_gen.close()
+
+    token_c1 = create_access_token(
+        settings.admin_email, settings.access_token_expires_minutes
+    )["access_token"]
+    r = client.get("/locations", headers={"Authorization": f"Bearer {token_c1}"})
+    assert r.status_code == 200
+    data = r.json()
+    assert data["total"] == 1
+    assert data["items"][0]["name"] == "L1"
+
+
 def test_locations_offline_delta_tombstones(monkeypatch):
     client, session_module, models = make_client(monkeypatch)
     session_gen = session_module.get_session()
     session = next(session_gen)
     try:
-        loc = models.Location(name="Temp", address="A")
+        loc = models.Location(name="Temp", address="A", customer_id="c1")
         session.add(loc)
         session.commit()
         loc_id = loc.id

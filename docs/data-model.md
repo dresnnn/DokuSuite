@@ -1,9 +1,9 @@
 # Datenmodell (konzeptionell)
 
 Kern-Entitäten:
-- Standort: Eigene Werbestandorte inkl. GPS, Adresse, Status, Medien.
+- Standort: Eigene Werbestandorte inkl. GPS, Adresse, Status, Medien, Kunde.
 - Ad-hoc-Spot: Dynamisch erfasster Ort (z. B. Laterne) inkl. Reverse-Geocoding-Daten.
-- Foto: Datei-Refs (Original, Thumbs), EXIF, Zeit, GPS, Qualität/Flags, pHash, Status.
+- Foto: Kunde, Datei-Refs (Original, Thumbs), EXIF, Zeit, GPS, Qualität/Flags, pHash, Status.
 - Auftrag (Kundenauftrag/Kampagne): Kunde, Zeitraum(e), Ziele, Verknüpfung zu Standorten/Fotos.
 - Belegung/Platzierung: Zuordnung Foto ↔ Standort ↔ Belegungswoche/-fenster.
 - Nutzer: Rollen (z. B. `ADMIN`, `USER`), Organisation/Zugehörigkeit.

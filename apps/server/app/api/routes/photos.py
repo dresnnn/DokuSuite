@@ -27,7 +27,7 @@ from app.services.calendar_week import calendar_week_from_taken_at
 from app.services.exif import normalize_orientation
 from app.services.geocoding import GeocodingService
 
-router = APIRouter(prefix="/photos", tags=["photos"], dependencies=[Depends(get_current_user)])
+router = APIRouter(prefix="/photos", tags=["photos"])
 
 
 _geocoder = GeocodingService()
@@ -90,8 +90,11 @@ def list_photos(
     uploaderId: str | None = None,
     status: str | None = None,
     session: Session = Depends(get_session),
+    user: User = Depends(get_current_user),
 ):
     query = select(Photo)
+    if user.customer_id:
+        query = query.where(Photo.customer_id == user.customer_id)
     if from_:
         query = query.where(Photo.taken_at >= from_)
     if to:
@@ -117,14 +120,19 @@ def list_photos(
 def offline_delta(
     since: datetime,
     session: Session = Depends(get_session),
+    user: User = Depends(get_current_user),
 ):
     upserts_query = select(Photo).where(
         Photo.updated_at >= since, Photo.deleted_at.is_(None)
     )
+    if user.customer_id:
+        upserts_query = upserts_query.where(Photo.customer_id == user.customer_id)
     upserts = session.exec(upserts_query).all()
     tombstones_query = select(Photo.id).where(
         Photo.deleted_at.is_not(None), Photo.deleted_at >= since
     )
+    if user.customer_id:
+        tombstones_query = tombstones_query.where(Photo.customer_id == user.customer_id)
     tombstones = session.exec(tombstones_query).all()
     upserts_data = [PhotoRead.model_validate(r, from_attributes=True) for r in upserts]
     tombstones_data = [{"id": t} for t in tombstones]
@@ -151,6 +159,7 @@ def ingest_photo(
         object_key=payload.object_key,
         taken_at=payload.taken_at,
         mode=payload.mode,
+        customer_id=user.customer_id,
         site_id=payload.site_id,
         device_id=payload.device_id,
         uploader_id=payload.uploader_id,
@@ -165,7 +174,10 @@ def ingest_photo(
     address = _geocoder.reverse_geocode(lat, lon)
     if address:
         photo.note = address
-    locations = session.exec(select(Location)).all()
+    loc_query = select(Location)
+    if user.customer_id:
+        loc_query = loc_query.where(Location.customer_id == user.customer_id)
+    locations = session.exec(loc_query).all()
     nearest_id: int | None = None
     min_dist = 50.0
     for loc in locations:
@@ -200,9 +212,13 @@ def ingest_photo(
 
 
 @router.get("/{photo_id}", response_model=PhotoRead)
-def get_photo(photo_id: int, session: Session = Depends(get_session)):
+def get_photo(
+    photo_id: int,
+    session: Session = Depends(get_session),
+    user: User = Depends(get_current_user),
+):
     photo = session.get(Photo, photo_id)
-    if not photo:
+    if not photo or (user.customer_id and photo.customer_id != user.customer_id):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
     return PhotoRead.model_validate(photo, from_attributes=True)
 
@@ -215,7 +231,7 @@ def update_photo(
     user: User = Depends(get_current_user),
 ):
     photo = session.get(Photo, photo_id)
-    if not photo:
+    if not photo or (user.customer_id and photo.customer_id != user.customer_id):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
     for key, value in payload.model_dump(exclude_unset=True).items():
         setattr(photo, key, value)
@@ -241,9 +257,10 @@ def batch_assign(
     session: Session = Depends(get_session),
     user: User = Depends(get_current_user),
 ):
-    photos = session.exec(
-        select(Photo).where(Photo.id.in_(payload.photo_ids))
-    ).all()
+    query = select(Photo).where(Photo.id.in_(payload.photo_ids))
+    if user.customer_id:
+        query = query.where(Photo.customer_id == user.customer_id)
+    photos = session.exec(query).all()
     if len(photos) != len(payload.photo_ids):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
     for photo in photos:
@@ -278,7 +295,7 @@ def delete_photo(
     user: User = Depends(get_current_user),
 ):
     photo = session.get(Photo, photo_id)
-    if not photo:
+    if not photo or (user.customer_id and photo.customer_id != user.customer_id):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
     photo.deleted_at = datetime.utcnow()
     session.add(photo)

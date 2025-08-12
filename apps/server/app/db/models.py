@@ -33,6 +33,7 @@ class User(SQLModel, table=True):
         default=UserRole.USER,
         sa_column=Column(String, nullable=False),
     )
+    customer_id: str | None = Field(default=None)
     created_at: datetime = Field(
         default_factory=datetime.utcnow,
         sa_column=Column(
@@ -45,6 +46,7 @@ class Location(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
     name: str
     address: str
+    customer_id: str
     geog: str | None = Field(default=None, sa_column=_geog_column)
     active: bool = True
     updated_at: datetime = Field(
@@ -100,6 +102,7 @@ class Photo(SQLModel, table=True):
     taken_at: datetime
     status: str = "INGESTED"
     mode: str
+    customer_id: str
     uploader_id: str | None = None
     device_id: str | None = None
     site_id: str | None = None
@@ -128,6 +131,7 @@ class Photo(SQLModel, table=True):
 class Share(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
     order_id: int = Field(foreign_key="order.id")
+    customer_id: str
     url: str
     expires_at: datetime | None = None
     download_allowed: bool = True

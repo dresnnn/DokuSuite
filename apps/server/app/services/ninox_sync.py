@@ -44,7 +44,9 @@ class NinoxSyncService:
     # --- syncing helpers ----------------------------------------------
     def sync_locations(self, records: Iterable[dict[str, Any]]) -> None:
         for rec in records:
-            self._sync_record(rec, "location", Location, ["name", "address", "active"])
+            self._sync_record(
+                rec, "location", Location, ["customer_id", "name", "address", "active"]
+            )
 
     def sync_orders(self, records: Iterable[dict[str, Any]]) -> None:
         for rec in records:

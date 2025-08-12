@@ -15,6 +15,20 @@ def make_client(monkeypatch):
     SQLModel.metadata.clear()
     models = importlib.reload(models)
     SQLModel.metadata.create_all(session_module.engine)
+    session_gen = session_module.get_session()
+    session = next(session_gen)
+    try:
+        session.add(
+            models.User(
+                email=settings.admin_email,
+                password_hash="pw",
+                role=models.UserRole.ADMIN,
+                customer_id="c1",
+            )
+        )
+        session.commit()
+    finally:
+        session_gen.close()
     import app.main as app_main
     app_main = importlib.reload(app_main)
     return TestClient(app_main.create_app()), session_module, models
@@ -137,7 +151,7 @@ def test_get_share(monkeypatch):
         session.commit()
         session.refresh(order)
         order_id = order.id
-        share = models.Share(order_id=order_id, url="u1")
+        share = models.Share(order_id=order_id, customer_id="c1", url="u1")
         session.add(share)
         session.commit()
         session.refresh(share)
@@ -161,7 +175,7 @@ def test_revoke_share(monkeypatch):
         session.add(order)
         session.commit()
         session.refresh(order)
-        share = models.Share(order_id=order.id, url="u1")
+        share = models.Share(order_id=order.id, customer_id="c1", url="u1")
         session.add(share)
         session.commit()
         session.refresh(share)
@@ -180,4 +194,40 @@ def test_revoke_share(monkeypatch):
         session_gen.close()
 
     r = client.get(f"/shares/{share_id}", headers=auth_headers())
+    assert r.status_code == 404
+
+
+def test_shares_customer_isolation(monkeypatch):
+    client, session_module, models = make_client(monkeypatch)
+    session_gen = session_module.get_session()
+    session = next(session_gen)
+    try:
+        session.add(
+            models.User(
+                email="admin2@example.com",
+                password_hash="pw",
+                role=models.UserRole.ADMIN,
+                customer_id="c2",
+            )
+        )
+        order1 = models.Order(customer_id="c1", name="o1", status="NEW")
+        order2 = models.Order(customer_id="c2", name="o2", status="NEW")
+        session.add(order1)
+        session.add(order2)
+        session.commit()
+        session.refresh(order2)
+        share2 = models.Share(order_id=order2.id, customer_id="c2", url="u2")
+        session.add(share2)
+        session.commit()
+        session.refresh(share2)
+        share2_id = share2.id
+    finally:
+        session_gen.close()
+
+    token_c1 = create_access_token(
+        settings.admin_email, settings.access_token_expires_minutes
+    )["access_token"]
+    r = client.get(
+        f"/shares/{share2_id}", headers={"Authorization": f"Bearer {token_c1}"}
+    )
     assert r.status_code == 404

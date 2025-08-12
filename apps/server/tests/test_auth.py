@@ -15,6 +15,20 @@ def make_client(monkeypatch):
     SQLModel.metadata.clear()
     models = importlib.reload(models)
     SQLModel.metadata.create_all(session_module.engine)
+    session_gen = session_module.get_session()
+    session = next(session_gen)
+    try:
+        session.add(
+            models.User(
+                email=settings.admin_email,
+                password_hash="pw",
+                role=models.UserRole.ADMIN,
+                customer_id="c1",
+            )
+        )
+        session.commit()
+    finally:
+        session_gen.close()
     import app.main as app_main
     app_main = importlib.reload(app_main)
     return TestClient(app_main.create_app()), session_module, models
@@ -37,7 +51,9 @@ def test_register(monkeypatch):
     session_gen = session_module.get_session()
     session = next(session_gen)
     try:
-        user = session.exec(select(models.User)).first()
+        user = session.exec(
+            select(models.User).where(models.User.email == "user@example.com")
+        ).first()
         assert user is not None
         assert user.email == "user@example.com"
         assert user.password_hash != "secret"
