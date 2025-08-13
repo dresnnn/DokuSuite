@@ -14,7 +14,7 @@ Kernfunktionen:
   (`PATCH /photos/{id}` aktualisiert die Koordinaten).
 - Bulk-Operationen: Multi-Select, Zuweisen, Ausblenden, Curate-Flag, Re-Matching, Export.
 - Mehrfachauswahl im Grid/Table mit Auftragszuweisung via `POST /photos/batch/assign`.
-- Kundenfreigaben: Links (ablaufbar), Kunden-Login, ZIP- und Excel-Export, PDF-Report, Karten-Sharing.
+- Kundenfreigaben: Links (ablaufbar), Kunden-Login, ZIP-, Excel- und PDF-Export (`POST /exports/zip`, `POST /exports/excel`, `POST /exports/pdf`), Karten-Sharing.
 - Freigabeverwaltung: bestehende Shares paginiert listen (`page`/`limit`), neue Links mit Ablaufdatum (`expires_at`) und Wasserzeichen-Policy (`watermark_policy`) erzeugen, Widerruf über `POST /shares/{id}/revoke`; die generierte URL wird nach Erstellung angezeigt.
 - Export-Workflow: Export-Jobs der aktuellen Sitzung lokal verfolgen, ZIP- und Excel-Exporte anstoßen (`POST /exports/zip`, `POST /exports/excel`), Status via Polling aktualisieren (`GET /exports/{id}`) und Download-Link bei abgeschlossenen Jobs (`status=done`).
 - Nutzer-/Rollenverwaltung; Einladungslinks, Passwort-Reset, 2FA (später).
@@ -37,6 +37,7 @@ Kernfunktionen:
 - Kunde öffnet einen Freigabe-Link `/public/{token}`.
 - Die Galerie lädt die Fotos inklusive URLs direkt über `/public/shares/{token}/photos`; keine Einzelrequests pro Bild.
 - Der Kunde kann einzelne Fotos auswählen und ZIP- (`POST /exports/zip`) oder Excel-Exporte (`POST /exports/excel`) starten; der Status wird über Polling von `/exports/{id}` aktualisiert.
+- Der Kunde kann zusätzlich einen PDF-Report (`POST /exports/pdf`) auslösen und eine Kartenansicht aufrufen, die Fotos abhängig vom Kartenausschnitt über `/public/shares/{token}/photos?bbox` lädt.
 
 ## Invite-Flow
 

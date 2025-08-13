@@ -550,6 +550,10 @@ paths:
           name: token
           required: true
           schema: { type: string }
+        - in: query
+          name: bbox
+          required: false
+          schema: { type: string }
       responses:
         '200':
           description: Photos with URLs
@@ -579,6 +583,21 @@ paths:
     post:
       tags: [exports]
       summary: Create Excel export (site list)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                orderId: { type: string }
+                photoIds: { type: array, items: { type: string } }
+      responses:
+        '202': { description: Accepted, content: { application/json: { schema: { $ref: '#/components/schemas/ExportJob' } } } }
+  /exports/pdf:
+    post:
+      tags: [exports]
+      summary: Create PDF export
       requestBody:
         required: true
         content:
