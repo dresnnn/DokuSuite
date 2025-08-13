@@ -31,6 +31,12 @@ Kernfunktionen:
 - Die Galerie lädt die Fotos des Auftrags und ruft für jedes Bild `/public/shares/{token}/photos/{id}` auf.
 - Der Kunde kann einzelne Fotos auswählen und ZIP- (`POST /exports/zip`) oder Excel-Exporte (`POST /exports/excel`) starten.
 
+## Invite-Flow
+- Ein Administrator lädt einen Nutzer über `POST /auth/invite` ein.
+- Der Nutzer erhält einen Link `/accept/{token}`.
+- Auf der Accept-Seite setzt der Nutzer ein neues Passwort; das Frontend sendet `POST /auth/accept` mit Token und Passwort.
+- Nach erfolgreichem Setzen des Passworts kann sich der Nutzer über `/login` anmelden.
+
 UX/Leistung:
 - Flüssige Interaktionen bei großen Datenmengen (Server-seitige Filter/Pagination, Streaming/Infinite Scroll).
 - Tastaturkürzel, Batch-Workflows, Undo.
