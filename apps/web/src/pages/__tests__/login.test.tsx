@@ -26,11 +26,13 @@ describe('LoginPage', () => {
   });
 
   it('stores token on successful login', async () => {
-    jest.spyOn(apiClient, 'POST').mockResolvedValue({
-      data: {
-        access_token: 'token123',
-      },
-    } as any);
+    jest.spyOn(apiClient, 'POST').mockResolvedValue(
+      {
+        data: {
+          access_token: 'token123',
+        },
+      } as unknown as Awaited<ReturnType<typeof apiClient.POST>>,
+    );
 
     render(<LoginPage />);
     fireEvent.change(screen.getByPlaceholderText('Email'), {
@@ -49,7 +51,11 @@ describe('LoginPage', () => {
   it('shows error on failed login', async () => {
     jest
       .spyOn(apiClient, 'POST')
-      .mockResolvedValue({ data: undefined, error: {} } as any);
+      .mockResolvedValue(
+        { data: undefined, error: {} } as unknown as Awaited<
+          ReturnType<typeof apiClient.POST>
+        >,
+      );
 
     render(<LoginPage />);
     fireEvent.change(screen.getByPlaceholderText('Email'), {
