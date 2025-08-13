@@ -24,7 +24,7 @@ export default function SharesPage() {
 
   const client = apiClient as unknown as {
     GET: typeof apiClient.GET
-    DELETE: typeof apiClient.DELETE
+    POST: typeof apiClient.POST
   }
 
   const fetchShares = async (page = meta.page, limit = meta.limit) => {
@@ -62,7 +62,7 @@ export default function SharesPage() {
   }
 
   const handleDelete = async (id: number) => {
-    await client.DELETE('/shares/{id}', {
+    await client.POST('/shares/{id}/revoke', {
       params: { path: { id } },
     })
     setShares((prev) => prev.filter((s) => s.id !== id))
