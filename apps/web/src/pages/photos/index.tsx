@@ -4,6 +4,7 @@ import { apiClient } from '../../../lib/api'
 import { undoStack } from '../../lib/undoStack'
 import PhotoMap from '../../components/PhotoMap'
 import PhotoUpload from '../../components/PhotoUpload'
+import { useAuth } from '../../context/AuthContext'
 
 type Photo = {
   id?: number
@@ -31,15 +32,23 @@ export default function PhotosPage() {
   const [assignOrder, setAssignOrder] = useState('')
   const [assignWeek, setAssignWeek] = useState('')
   const [view, setView] = useState<'table' | 'grid' | 'map'>('table')
+  const { role, userId } = useAuth()
+
+  useEffect(() => {
+    if (role === 'USER' && userId !== null) {
+      setUploaderId(String(userId))
+    }
+  }, [role, userId])
 
   const fetchPhotos = async (page = meta.page, limit = meta.limit) => {
+    const uploader = role === 'USER' ? String(userId ?? '') : uploaderId
     const { data } = await apiClient.GET('/photos', {
       params: {
         query: {
           page,
           limit,
           mode: mode || undefined,
-          uploaderId: uploaderId || undefined,
+          uploaderId: uploader || undefined,
           from: from || undefined,
           to: to || undefined,
           siteId: siteId || undefined,
@@ -55,8 +64,9 @@ export default function PhotosPage() {
   }
 
   useEffect(() => {
+    if (role === 'USER' && userId === null) return
     fetchPhotos()
-  }, [])
+  }, [role, userId])
 
   const totalPages = Math.ceil((meta.total || 0) / (meta.limit || 1)) || 1
 
@@ -173,13 +183,15 @@ export default function PhotosPage() {
             <option value="MOBILE">MOBILE</option>
           </select>
         </label>
-        <label>
-          Uploader ID:
-          <input
-            value={uploaderId}
-            onChange={(e) => setUploaderId(e.target.value)}
-          />
-        </label>
+        {role !== 'USER' && (
+          <label>
+            Uploader ID:
+            <input
+              value={uploaderId}
+              onChange={(e) => setUploaderId(e.target.value)}
+            />
+          </label>
+        )}
         <label>
           From:
           <input

@@ -8,6 +8,7 @@ import {
 interface AuthContextValue {
   token: string | null;
   role: 'ADMIN' | 'USER' | null;
+  userId: number | null;
   login: (token: string) => void;
   logout: () => void;
   isAuthenticated: boolean;
@@ -18,6 +19,7 @@ const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) => {
   const [token, setToken] = useState<string | null>(null);
   const [role, setRole] = useState<'ADMIN' | 'USER' | null>(null);
+  const [userId, setUserId] = useState<number | null>(null);
 
   useEffect(() => {
     const existing = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
@@ -25,6 +27,7 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
       setToken(existing);
       apiClient.GET('/auth/me').then(({ data }) => {
         setRole(data?.role ?? null);
+        setUserId(data?.id ?? null);
       });
     }
   }, []);
@@ -34,6 +37,7 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
     setToken(newToken);
     apiClient.GET('/auth/me').then(({ data }) => {
       setRole(data?.role ?? null);
+      setUserId(data?.id ?? null);
     });
   };
 
@@ -41,10 +45,11 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
     clearAuthToken();
     setToken(null);
     setRole(null);
+    setUserId(null);
   };
 
   return (
-    <AuthContext.Provider value={{ token, role, login, logout, isAuthenticated: !!token }}>
+    <AuthContext.Provider value={{ token, role, userId, login, logout, isAuthenticated: !!token }}>
       {children}
     </AuthContext.Provider>
   );

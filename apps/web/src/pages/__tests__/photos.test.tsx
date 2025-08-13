@@ -4,6 +4,7 @@ import PhotoDetailPage from '../photos/[id]'
 import { apiClient } from '../../../lib/api'
 import { undoStack } from '../../lib/undoStack'
 import L from 'leaflet'
+import { useAuth } from '../../context/AuthContext'
 
 jest.mock('../../../lib/api', () => ({
   apiClient: { GET: jest.fn(), POST: jest.fn(), PATCH: jest.fn() },
@@ -11,6 +12,10 @@ jest.mock('../../../lib/api', () => ({
 
 jest.mock('next/router', () => ({
   useRouter: () => ({ query: { id: '1' } }),
+}))
+
+jest.mock('../../context/AuthContext', () => ({
+  useAuth: jest.fn(),
 }))
 
 type MockMarker = {
@@ -68,6 +73,19 @@ jest.mock('leaflet', () => {
 })
 
 jest.mock('leaflet.markercluster', () => ({}), { virtual: true })
+
+const mockedUseAuth = useAuth as unknown as jest.Mock
+
+beforeEach(() => {
+  mockedUseAuth.mockReturnValue({
+    role: 'ADMIN',
+    userId: 1,
+    token: 't',
+    login: jest.fn(),
+    logout: jest.fn(),
+    isAuthenticated: true,
+  })
+})
 
 describe('PhotosPage', () => {
   it('displays photos and paginates', async () => {
@@ -146,6 +164,27 @@ describe('PhotosPage', () => {
         },
       }),
     )
+  })
+
+  it('filters by uploader for USER role', async () => {
+    mockedUseAuth.mockReturnValue({
+      role: 'USER',
+      userId: 5,
+      token: 't',
+      login: jest.fn(),
+      logout: jest.fn(),
+      isAuthenticated: true,
+    })
+    ;(apiClient.GET as jest.Mock).mockResolvedValue({ data: { items: [], meta: {} } })
+    render(<PhotosPage />)
+    await waitFor(() => expect(apiClient.GET).toHaveBeenCalled())
+    expect(apiClient.GET).toHaveBeenCalledWith(
+      '/photos',
+      expect.objectContaining({
+        params: { query: expect.objectContaining({ uploaderId: '5' }) },
+      }),
+    )
+    expect(screen.queryByLabelText('Uploader ID:')).not.toBeInTheDocument()
   })
 
   it('assigns selected photos', async () => {
@@ -301,6 +340,14 @@ describe('PhotosPage', () => {
 
   it('hides selected photos', async () => {
     jest.clearAllMocks()
+    mockedUseAuth.mockReturnValue({
+      role: 'ADMIN',
+      userId: 1,
+      token: 't',
+      login: jest.fn(),
+      logout: jest.fn(),
+      isAuthenticated: true,
+    })
     ;(apiClient.GET as jest.Mock).mockResolvedValue({
       data: { items: [{ id: 1 }], meta: {} },
     })
@@ -321,6 +368,14 @@ describe('PhotosPage', () => {
 
   it('curates selected photos', async () => {
     jest.clearAllMocks()
+    mockedUseAuth.mockReturnValue({
+      role: 'ADMIN',
+      userId: 1,
+      token: 't',
+      login: jest.fn(),
+      logout: jest.fn(),
+      isAuthenticated: true,
+    })
     ;(apiClient.GET as jest.Mock).mockResolvedValue({
       data: { items: [{ id: 1 }], meta: {} },
     })
@@ -341,6 +396,14 @@ describe('PhotosPage', () => {
 
   it('rematches selected photos', async () => {
     jest.clearAllMocks()
+    mockedUseAuth.mockReturnValue({
+      role: 'ADMIN',
+      userId: 1,
+      token: 't',
+      login: jest.fn(),
+      logout: jest.fn(),
+      isAuthenticated: true,
+    })
     ;(apiClient.GET as jest.Mock).mockResolvedValue({
       data: { items: [{ id: 1 }], meta: {} },
     })
@@ -391,6 +454,14 @@ describe('PhotoDetailPage', () => {
 
   it('sends updated coordinates on marker drag', async () => {
     jest.clearAllMocks()
+    mockedUseAuth.mockReturnValue({
+      role: 'ADMIN',
+      userId: 1,
+      token: 't',
+      login: jest.fn(),
+      logout: jest.fn(),
+      isAuthenticated: true,
+    })
     ;(apiClient.GET as jest.Mock)
       .mockResolvedValueOnce({ data: { items: [], meta: {} } })
       .mockResolvedValueOnce({
