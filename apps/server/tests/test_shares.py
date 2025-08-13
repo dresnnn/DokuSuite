@@ -236,6 +236,7 @@ def test_shares_customer_isolation(monkeypatch):
 class _FakeS3:
     def __init__(self):
         self.objects: dict[str, bytes] = {"k1": b"img"}
+        self.deleted: list[tuple[str, bytes | None]] = []
 
     def generate_presigned_url(self, method, Params, ExpiresIn):  # pragma: no cover - stub
         return f"http://example.com/{Params['Key']}"
@@ -247,6 +248,9 @@ class _FakeS3:
 
     def put_object(self, Bucket, Key, Body):  # pragma: no cover - stub
         self.objects[Key] = Body
+
+    def delete_object(self, Bucket, Key):  # pragma: no cover - stub
+        self.deleted.append((Key, self.objects.pop(Key, None)))
 
 
 def test_public_share_photo(monkeypatch):
@@ -363,8 +367,9 @@ def test_public_share_watermark(monkeypatch):
         return b"wm"
 
     monkeypatch.setattr("app.api.routes.shares.apply_watermark", fake_watermark)
+    monkeypatch.setattr("app.api.routes.shares.settings.s3_presign_ttl", 0)
 
     r = client.get(f"/public/shares/tok1/photos/{photo_id}")
     assert r.status_code == 200
     assert called.get("ok")
-    assert fake_s3.objects.get("k1-wm") == b"wm"
+    assert ("k1-wm", b"wm") in fake_s3.deleted

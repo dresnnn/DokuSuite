@@ -1,8 +1,16 @@
 import secrets
+import time
 from datetime import UTC, datetime
 
 import boto3
-from fastapi import APIRouter, Depends, HTTPException, Response, status
+from fastapi import (
+    APIRouter,
+    BackgroundTasks,
+    Depends,
+    HTTPException,
+    Response,
+    status,
+)
 from sqlmodel import Session, select
 
 from app.api.schemas import ShareCreate, ShareRead
@@ -25,6 +33,12 @@ def _s3_client():
         aws_access_key_id=settings.s3_access_key,
         aws_secret_access_key=settings.s3_secret_key,
     )
+
+
+def _delete_after_delay(key: str, delay: int) -> None:
+    time.sleep(delay)
+    client = _s3_client()
+    client.delete_object(Bucket=settings.s3_bucket, Key=key)
 
 
 @router.post("", response_model=ShareRead, status_code=status.HTTP_201_CREATED)
@@ -108,6 +122,7 @@ def revoke_share(
 def public_photo(
     token: str,
     photo_id: int,
+    background_tasks: BackgroundTasks,
     session: Session = Depends(get_session),
 ):
     share = session.exec(
@@ -130,6 +145,9 @@ def public_photo(
         wm_key = f"{photo.object_key}-wm"
         client.put_object(Bucket=settings.s3_bucket, Key=wm_key, Body=wm_bytes)
         key = wm_key
+        background_tasks.add_task(
+            _delete_after_delay, wm_key, settings.s3_presign_ttl
+        )
     original_url = client.generate_presigned_url(
         "get_object",
         Params={"Bucket": settings.s3_bucket, "Key": key},
