@@ -298,6 +298,66 @@ describe('PhotosPage', () => {
     )
     await waitFor(() => expect(undoFn).toHaveBeenCalled())
   })
+
+  it('hides selected photos', async () => {
+    jest.clearAllMocks()
+    ;(apiClient.GET as jest.Mock).mockResolvedValue({
+      data: { items: [{ id: 1 }], meta: {} },
+    })
+    render(<PhotosPage />)
+    await waitFor(() => expect(apiClient.GET).toHaveBeenCalled())
+    await waitFor(() =>
+      expect(screen.getAllByRole('checkbox')[0]).toBeInTheDocument(),
+    )
+    fireEvent.click(screen.getAllByRole('checkbox')[0])
+    fireEvent.click(screen.getByText('Hide'))
+    await waitFor(() =>
+      expect(apiClient.POST).toHaveBeenCalledWith(
+        '/photos/batch/hide',
+        expect.objectContaining({ body: { photoIds: ['1'] } }),
+      ),
+    )
+  })
+
+  it('curates selected photos', async () => {
+    jest.clearAllMocks()
+    ;(apiClient.GET as jest.Mock).mockResolvedValue({
+      data: { items: [{ id: 1 }], meta: {} },
+    })
+    render(<PhotosPage />)
+    await waitFor(() => expect(apiClient.GET).toHaveBeenCalled())
+    await waitFor(() =>
+      expect(screen.getAllByRole('checkbox')[0]).toBeInTheDocument(),
+    )
+    fireEvent.click(screen.getAllByRole('checkbox')[0])
+    fireEvent.click(screen.getByText('Curate'))
+    await waitFor(() =>
+      expect(apiClient.POST).toHaveBeenCalledWith(
+        '/photos/batch/curate',
+        expect.objectContaining({ body: { photoIds: ['1'] } }),
+      ),
+    )
+  })
+
+  it('rematches selected photos', async () => {
+    jest.clearAllMocks()
+    ;(apiClient.GET as jest.Mock).mockResolvedValue({
+      data: { items: [{ id: 1 }], meta: {} },
+    })
+    render(<PhotosPage />)
+    await waitFor(() => expect(apiClient.GET).toHaveBeenCalled())
+    await waitFor(() =>
+      expect(screen.getAllByRole('checkbox')[0]).toBeInTheDocument(),
+    )
+    fireEvent.click(screen.getAllByRole('checkbox')[0])
+    fireEvent.click(screen.getByText('Rematch'))
+    await waitFor(() =>
+      expect(apiClient.POST).toHaveBeenCalledWith(
+        '/photos/batch/rematch',
+        expect.objectContaining({ body: { photoIds: ['1'] } }),
+      ),
+    )
+  })
 })
 
 describe('PhotoDetailPage', () => {

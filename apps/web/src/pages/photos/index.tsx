@@ -91,6 +91,33 @@ export default function PhotosPage() {
     setAssignWeek('')
   }
 
+  const hideSelected = async () => {
+    if (selected.length === 0) return
+    const photoIds = selected.map(String)
+    await apiClient.POST('/photos/batch/hide', {
+      body: { photoIds },
+    })
+    setSelected([])
+  }
+
+  const curateSelected = async () => {
+    if (selected.length === 0) return
+    const photoIds = selected.map(String)
+    await apiClient.POST('/photos/batch/curate', {
+      body: { photoIds },
+    })
+    setSelected([])
+  }
+
+  const rematchSelected = async () => {
+    if (selected.length === 0) return
+    const photoIds = selected.map(String)
+    await apiClient.POST('/photos/batch/rematch', {
+      body: { photoIds },
+    })
+    setSelected([])
+  }
+
   const changePage = (newPage: number) => {
     setMeta((m) => ({ ...m, page: newPage }))
     fetchPhotos(newPage)
@@ -286,6 +313,14 @@ export default function PhotosPage() {
           />
         </label>
         <button onClick={assignSelected}>Assign</button>
+      </div>
+
+      <div style={{ marginTop: '1rem' }}>
+        <h3>Batch Actions</h3>
+        <div>Selected: {selected.length}</div>
+        <button onClick={hideSelected}>Hide</button>
+        <button onClick={curateSelected}>Curate</button>
+        <button onClick={rematchSelected}>Rematch</button>
       </div>
     </div>
   )

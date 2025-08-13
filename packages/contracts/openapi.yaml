@@ -424,6 +424,78 @@ paths:
                   updated: { type: integer }
                   errors: { type: array, items: { $ref: '#/components/schemas/Error' } }
 
+  /photos/batch/hide:
+    post:
+      tags: [photos]
+      summary: Hide multiple photos
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [photoIds]
+              properties:
+                photoIds: { type: array, items: { type: string }, minItems: 1 }
+      responses:
+        '200':
+          description: Hide results
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  updated: { type: integer }
+                  errors: { type: array, items: { $ref: '#/components/schemas/Error' } }
+
+  /photos/batch/curate:
+    post:
+      tags: [photos]
+      summary: Mark multiple photos as curated
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [photoIds]
+              properties:
+                photoIds: { type: array, items: { type: string }, minItems: 1 }
+      responses:
+        '200':
+          description: Curate results
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  updated: { type: integer }
+                  errors: { type: array, items: { $ref: '#/components/schemas/Error' } }
+
+  /photos/batch/rematch:
+    post:
+      tags: [photos]
+      summary: Rematch multiple photos
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [photoIds]
+              properties:
+                photoIds: { type: array, items: { type: string }, minItems: 1 }
+      responses:
+        '200':
+          description: Rematch results
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  updated: { type: integer }
+                  errors: { type: array, items: { $ref: '#/components/schemas/Error' } }
+
   /orders:
     get:
       tags: [orders]
