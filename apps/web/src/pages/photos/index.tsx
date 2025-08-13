@@ -1,6 +1,7 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import { useEffect, useState } from 'react'
 import { apiClient } from '../../../lib/api'
+import { undoStack } from '../../lib/undoStack'
 import PhotoMap from '../../components/PhotoMap'
 import PhotoUpload from '../../components/PhotoUpload'
 
@@ -72,13 +73,19 @@ export default function PhotosPage() {
 
   const assignSelected = async () => {
     if (!assignOrder || selected.length === 0) return
+    const photoIds = selected.map(String)
     await apiClient.POST('/photos/batch/assign', {
       body: {
-        photoIds: selected.map(String),
+        photoIds,
         orderId: assignOrder,
         calendarWeek: assignWeek || undefined,
       },
     })
+    undoStack.push(() =>
+      apiClient.POST('/photos/batch/assign', {
+        body: { photoIds, orderId: '' },
+      }),
+    )
     setSelected([])
     setAssignOrder('')
     setAssignWeek('')
@@ -89,9 +96,27 @@ export default function PhotosPage() {
     fetchPhotos(newPage)
   }
 
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowRight') {
+        if (meta.page! < totalPages) changePage((meta.page || 1) + 1)
+      } else if (e.key === 'ArrowLeft') {
+        if (meta.page! > 1) changePage((meta.page || 1) - 1)
+      } else if (e.key.toLowerCase() === 'a') {
+        setSelected((prev) =>
+          prev.length === photos.length ? [] : photos.map((p) => p.id!),
+        )
+      } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
+        undoStack.undo()
+      }
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [meta, totalPages, photos])
+
   return (
     <div>
-      <PhotoUpload onUploaded={fetchPhotos} />
+        <PhotoUpload onUploaded={fetchPhotos} />
       <form onSubmit={handleSubmit} style={{ marginBottom: '1rem' }}>
         <label>
           Page:

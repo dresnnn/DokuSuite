@@ -2,6 +2,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import PhotosPage from '../photos'
 import PhotoDetailPage from '../photos/[id]'
 import { apiClient } from '../../../lib/api'
+import { undoStack } from '../../lib/undoStack'
 import L from 'leaflet'
 
 jest.mock('../../../lib/api', () => ({
@@ -240,6 +241,62 @@ describe('PhotosPage', () => {
     await waitFor(() =>
       expect(screen.getAllByTestId('marker')).toHaveLength(2),
     )
+  })
+
+  it('handles keyboard shortcuts and undo', async () => {
+    undoStack.clear()
+    const page1 = {
+      items: [{ id: 1, mode: 'MOBILE', uploader_id: 'u1' }],
+      meta: { page: 1, limit: 1, total: 2 },
+    }
+    const page2 = {
+      items: [{ id: 2, mode: 'FIXED_SITE', uploader_id: 'u2' }],
+      meta: { page: 2, limit: 1, total: 2 },
+    }
+    ;(apiClient.GET as jest.Mock)
+      .mockResolvedValueOnce({ data: page1 })
+      .mockResolvedValueOnce({ data: page2 })
+
+    render(<PhotosPage />)
+
+    await waitFor(() =>
+      expect(screen.getByText('Photo 1')).toBeInTheDocument(),
+    )
+
+    window.dispatchEvent(
+      new KeyboardEvent('keydown', {
+        key: 'ArrowRight',
+        keyCode: 39,
+        which: 39,
+      }),
+    )
+    await waitFor(() =>
+      expect(screen.getByText('Photo 2')).toBeInTheDocument(),
+    )
+    expect(apiClient.GET).toHaveBeenLastCalledWith(
+      '/photos',
+      expect.objectContaining({
+        params: { query: expect.objectContaining({ page: 2 }) },
+      }),
+    )
+
+    window.dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'a', keyCode: 65, which: 65 }),
+    )
+    await waitFor(() =>
+      expect(screen.getAllByRole('checkbox')[0]).toBeChecked(),
+    )
+    const undoFn = jest.fn()
+    undoStack.push(undoFn)
+    window.dispatchEvent(
+      new KeyboardEvent('keydown', {
+        key: 'z',
+        ctrlKey: true,
+        keyCode: 90,
+        which: 90,
+      }),
+    )
+    await waitFor(() => expect(undoFn).toHaveBeenCalled())
   })
 })
 
