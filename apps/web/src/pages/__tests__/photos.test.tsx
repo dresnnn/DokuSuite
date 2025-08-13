@@ -6,6 +6,47 @@ jest.mock('../../../lib/api', () => ({
   apiClient: { GET: jest.fn(), POST: jest.fn() },
 }))
 
+jest.mock('leaflet', () => {
+  const map = {
+    setView: jest.fn().mockReturnThis(),
+    on: jest.fn(),
+    off: jest.fn(),
+    remove: jest.fn(),
+    getBounds: () => ({
+      getSouth: () => 0,
+      getWest: () => 0,
+      getNorth: () => 1,
+      getEast: () => 1,
+    }),
+    addLayer: jest.fn(),
+  }
+  return {
+    map: () => map,
+    tileLayer: () => ({ addTo: jest.fn() }),
+    divIcon: ({ html }: { html: string }) => html,
+    marker: (_: unknown, opts: { icon: string }) => {
+      const container = document.createElement('div')
+      container.innerHTML = opts.icon
+      const el = container.firstElementChild as HTMLElement
+      return {
+        getElement: () => el,
+      }
+    },
+    markerClusterGroup: () => ({
+      addLayer: (marker: { getElement: () => HTMLElement }) => {
+        document.body.appendChild(marker.getElement())
+      },
+      clearLayers: () => {
+        document
+          .querySelectorAll('[data-testid="marker"]')
+          .forEach((el) => el.remove())
+      },
+    }),
+  }
+})
+
+jest.mock('leaflet.markercluster', () => ({}), { virtual: true })
+
 describe('PhotosPage', () => {
   it('displays photos and paginates', async () => {
     const page1 = {
@@ -39,9 +80,9 @@ describe('PhotosPage', () => {
       }),
     );
 
-    fireEvent.click(screen.getByText(/Toggle/));
-    expect(screen.queryByRole('table')).not.toBeInTheDocument();
-    expect(screen.getByTestId('photo')).toHaveTextContent('Photo 2');
+    fireEvent.click(screen.getByText('Grid'))
+    expect(screen.queryByRole('table')).not.toBeInTheDocument()
+    expect(screen.getByTestId('photo')).toHaveTextContent('Photo 2')
   });
 
   it('submits filters', async () => {
@@ -117,6 +158,26 @@ describe('PhotosPage', () => {
           calendarWeek: '2025-W01',
         },
       }),
+    )
+  })
+
+  it('renders map markers', async () => {
+    ;(apiClient.GET as jest.Mock)
+      .mockResolvedValueOnce({ data: { items: [], meta: {} } })
+      .mockResolvedValueOnce({
+        data: {
+          items: [
+            { id: 1, ad_hoc_spot: { lat: 1, lon: 1 } },
+            { id: 2, ad_hoc_spot: { lat: 2, lon: 2 } },
+          ],
+          meta: {},
+        },
+      })
+    render(<PhotosPage />)
+    await waitFor(() => expect(apiClient.GET).toHaveBeenCalled())
+    fireEvent.click(screen.getByText('Map'))
+    await waitFor(() =>
+      expect(screen.getAllByTestId('marker')).toHaveLength(2),
     )
   })
 });

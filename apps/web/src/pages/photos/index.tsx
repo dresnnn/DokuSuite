@@ -1,6 +1,7 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import { useEffect, useState } from 'react'
 import { apiClient } from '../../../lib/api'
+import PhotoMap from '../../components/PhotoMap'
 
 type Photo = {
   id?: number
@@ -27,7 +28,7 @@ export default function PhotosPage() {
   const [selected, setSelected] = useState<number[]>([])
   const [assignOrder, setAssignOrder] = useState('')
   const [assignWeek, setAssignWeek] = useState('')
-  const [view, setView] = useState<'table' | 'grid'>('table')
+  const [view, setView] = useState<'table' | 'grid' | 'map'>('table')
 
   const fetchPhotos = async (page = meta.page, limit = meta.limit) => {
     const { data } = await apiClient.GET('/photos', {
@@ -162,9 +163,11 @@ export default function PhotosPage() {
         <button type="submit">Fetch</button>
       </form>
 
-      <button onClick={() => setView(view === 'table' ? 'grid' : 'table')}>
-        Toggle {view === 'table' ? 'Grid' : 'Table'}
-      </button>
+      <div>
+        <button onClick={() => setView('table')}>Table</button>
+        <button onClick={() => setView('grid')}>Grid</button>
+        <button onClick={() => setView('map')}>Map</button>
+      </div>
 
       {view === 'table' ? (
         <table>
@@ -193,7 +196,7 @@ export default function PhotosPage() {
             ))}
           </tbody>
         </table>
-      ) : (
+      ) : view === 'grid' ? (
         <div
           style={{
             display: 'grid',
@@ -216,6 +219,8 @@ export default function PhotosPage() {
             </label>
           ))}
         </div>
+      ) : (
+        <PhotoMap />
       )}
 
       <div style={{ marginTop: '1rem' }}>
