@@ -8,6 +8,7 @@ from .api.routes import locations as location_routes
 from .api.routes import orders as order_routes
 from .api.routes import photos as photo_routes
 from .api.routes import shares as share_routes
+from .api.routes import users as user_routes
 from .core.config import settings
 from .core.logging import configure_logging
 from .core.metrics import router as metrics_router
@@ -51,6 +52,7 @@ def create_app() -> FastAPI:
     app.include_router(order_routes.router)
     app.include_router(share_routes.router)
     app.include_router(share_routes.public_router)
+    app.include_router(user_routes.router)
     app.include_router(export_routes.router)
     configure_tracing(app)
     return app

@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.3 - 2025-08-13
+### Added
+- Admin user management endpoints `/users`, `PATCH /users/{id}`, `DELETE /users/{id}` in OpenAPI
+
 ## 0.2.2 - 2025-08-13
 ### Added
 - `/auth/register` and `/auth/invite` endpoints in OpenAPI

@@ -4,6 +4,7 @@ from .pagination import Page
 from .photo import BatchAssignRequest, PhotoIngest, PhotoRead, PhotoUpdate
 from .share import ShareCreate, ShareRead
 from .upload import UploadIntent, UploadIntentRequest
+from .user import UserRead, UserUpdate
 
 __all__ = [
     "LocationRead",
@@ -20,4 +21,6 @@ __all__ = [
     "OrderUpdate",
     "ShareCreate",
     "ShareRead",
+    "UserRead",
+    "UserUpdate",
 ]
