@@ -1,5 +1,4 @@
-from collections.abc import Sequence
-from typing import Generic, TypeVar
+from typing import Generic, Sequence, TypeVar
 
 from pydantic import BaseModel
 
