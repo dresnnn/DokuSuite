@@ -1,24 +1,25 @@
-import { useEffect, useState } from 'react';
-import { apiClient } from '../../../lib/api';
+/* eslint-disable react-hooks/exhaustive-deps */
+import { useEffect, useState } from 'react'
+import { apiClient } from '../../../lib/api'
 
 type Photo = {
-  id?: number;
-  mode?: string;
-  uploader_id?: string | null;
-};
+  id?: number
+  mode?: string
+  uploader_id?: string | null
+}
 
 type PageMeta = {
-  page?: number;
-  limit?: number;
-  total?: number;
-};
+  page?: number
+  limit?: number
+  total?: number
+}
 
 export default function PhotosPage() {
-  const [photos, setPhotos] = useState<Photo[]>([]);
-  const [meta, setMeta] = useState<PageMeta>({ page: 1, limit: 10, total: 0 });
-  const [mode, setMode] = useState('');
-  const [uploaderId, setUploaderId] = useState('');
-  const [view, setView] = useState<'table' | 'grid'>('table');
+  const [photos, setPhotos] = useState<Photo[]>([])
+  const [meta, setMeta] = useState<PageMeta>({ page: 1, limit: 10, total: 0 })
+  const [mode, setMode] = useState('')
+  const [uploaderId, setUploaderId] = useState('')
+  const [view, setView] = useState<'table' | 'grid'>('table')
 
   const fetchPhotos = async (page = meta.page, limit = meta.limit) => {
     const { data } = await apiClient.GET('/photos', {
@@ -30,28 +31,28 @@ export default function PhotosPage() {
           uploaderId: uploaderId || undefined,
         },
       },
-    });
+    })
     if (data) {
-      setPhotos(data.items || []);
-      setMeta(data.meta || { page: page, limit: limit, total: 0 });
+      setPhotos(data.items || [])
+      setMeta(data.meta || { page: page, limit: limit, total: 0 })
     }
-  };
+  }
 
   useEffect(() => {
-    fetchPhotos();
-  }, []);
+    fetchPhotos()
+  }, [])
 
-  const totalPages = Math.ceil((meta.total || 0) / (meta.limit || 1)) || 1;
+  const totalPages = Math.ceil((meta.total || 0) / (meta.limit || 1)) || 1
 
   const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    fetchPhotos();
-  };
+    e.preventDefault()
+    fetchPhotos()
+  }
 
   const changePage = (newPage: number) => {
-    setMeta((m) => ({ ...m, page: newPage }));
-    fetchPhotos(newPage);
-  };
+    setMeta((m) => ({ ...m, page: newPage }))
+    fetchPhotos(newPage)
+  }
 
   return (
     <div>
@@ -61,7 +62,9 @@ export default function PhotosPage() {
           <input
             type="number"
             value={meta.page}
-            onChange={(e) => setMeta((m) => ({ ...m, page: Number(e.target.value) }))}
+            onChange={(e) =>
+              setMeta((m) => ({ ...m, page: Number(e.target.value) }))
+            }
           />
         </label>
         <label>
@@ -69,7 +72,9 @@ export default function PhotosPage() {
           <input
             type="number"
             value={meta.limit}
-            onChange={(e) => setMeta((m) => ({ ...m, limit: Number(e.target.value) }))}
+            onChange={(e) =>
+              setMeta((m) => ({ ...m, limit: Number(e.target.value) }))
+            }
           />
         </label>
         <label>
@@ -130,7 +135,10 @@ export default function PhotosPage() {
       )}
 
       <div style={{ marginTop: '1rem' }}>
-        <button disabled={meta.page === 1} onClick={() => changePage((meta.page || 1) - 1)}>
+        <button
+          disabled={meta.page === 1}
+          onClick={() => changePage((meta.page || 1) - 1)}
+        >
           Prev
         </button>
         <span>
@@ -144,5 +152,5 @@ export default function PhotosPage() {
         </button>
       </div>
     </div>
-  );
+  )
 }
