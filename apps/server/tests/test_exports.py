@@ -31,22 +31,22 @@ def make_client(monkeypatch):
 
     import app.api.routes.exports as exports_module
 
-    calls: dict[str, bool] = {}
+    calls: dict[str, dict | None] = {}
 
     class JobStub:
         def __init__(self, id: str):
             self.id = id
 
-    def fake_zip():
-        calls["zip"] = True
+    def fake_zip(payload=None):
+        calls["zip"] = payload
         return JobStub("zip-id")
 
-    def fake_excel():
-        calls["excel"] = True
+    def fake_excel(payload=None):
+        calls["excel"] = payload
         return JobStub("excel-id")
 
-    monkeypatch.setattr(exports_module, "enqueue_export_zip", lambda: fake_zip())
-    monkeypatch.setattr(exports_module, "enqueue_export_excel", lambda: fake_excel())
+    monkeypatch.setattr(exports_module, "enqueue_export_zip", fake_zip)
+    monkeypatch.setattr(exports_module, "enqueue_export_excel", fake_excel)
 
     import app.main as app_main
     app_main = importlib.reload(app_main)
@@ -63,18 +63,20 @@ def auth_headers():
 
 def test_export_zip_job(monkeypatch):
     client, _exports, calls = make_client(monkeypatch)
-    r = client.post("/exports/zip", headers=auth_headers())
-    assert r.status_code == 200
+    payload = {"photoIds": ["p1", "p2"]}
+    r = client.post("/exports/zip", json=payload, headers=auth_headers())
+    assert r.status_code == 202
     assert r.json()["export_id"] == "zip-id"
-    assert calls["zip"]
+    assert calls["zip"] == payload
 
 
 def test_export_excel_job(monkeypatch):
     client, _exports, calls = make_client(monkeypatch)
-    r = client.post("/exports/excel", headers=auth_headers())
-    assert r.status_code == 200
+    payload = {"orderId": "o1"}
+    r = client.post("/exports/excel", json=payload, headers=auth_headers())
+    assert r.status_code == 202
     assert r.json()["export_id"] == "excel-id"
-    assert calls["excel"]
+    assert calls["excel"] == payload
 
 
 def test_get_export_status(monkeypatch):
