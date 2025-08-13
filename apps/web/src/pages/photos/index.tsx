@@ -17,6 +17,12 @@ type PageMeta = {
   total?: number
 }
 
+type ExportJob = {
+  id?: string
+  status?: string
+  url?: string
+}
+
 export default function PhotosPage() {
   const [photos, setPhotos] = useState<Photo[]>([])
   const [meta, setMeta] = useState<PageMeta>({ page: 1, limit: 10, total: 0 })
@@ -31,6 +37,12 @@ export default function PhotosPage() {
   const [assignOrder, setAssignOrder] = useState('')
   const [assignWeek, setAssignWeek] = useState('')
   const [view, setView] = useState<'table' | 'grid' | 'map'>('table')
+  const [jobs, setJobs] = useState<ExportJob[]>([])
+
+  const client = apiClient as unknown as {
+    GET: typeof apiClient.GET
+    POST: typeof apiClient.POST
+  }
 
   const fetchPhotos = async (page = meta.page, limit = meta.limit) => {
     const { data } = await apiClient.GET('/photos', {
@@ -118,6 +130,36 @@ export default function PhotosPage() {
     setSelected([])
   }
 
+  const triggerZipExport = async () => {
+    if (selected.length === 0) return
+    const photoIds = selected.map(String)
+    const { data } = await client.POST('/exports/zip', {
+      body: { photoIds },
+    })
+    if (data) setJobs((prev) => [...prev, data as ExportJob])
+    setSelected([])
+  }
+
+  const triggerExcelExport = async () => {
+    if (selected.length === 0) return
+    const photoIds = selected.map(String)
+    const { data } = await client.POST('/exports/excel', {
+      body: { photoIds },
+    })
+    if (data) setJobs((prev) => [...prev, data as ExportJob])
+    setSelected([])
+  }
+
+  const triggerPdfExport = async () => {
+    if (selected.length === 0) return
+    const photoIds = selected.map(String)
+    const { data } = await client.POST('/exports/pdf', {
+      body: { photoIds },
+    })
+    if (data) setJobs((prev) => [...prev, data as ExportJob])
+    setSelected([])
+  }
+
   const changePage = (newPage: number) => {
     setMeta((m) => ({ ...m, page: newPage }))
     fetchPhotos(newPage)
@@ -140,6 +182,26 @@ export default function PhotosPage() {
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
   }, [meta, totalPages, photos])
+
+  useEffect(() => {
+    const pending = jobs.filter((j) => j.status !== 'done')
+    if (pending.length === 0) return
+
+    const interval = setInterval(async () => {
+      for (const job of pending) {
+        if (!job.id) continue
+        const { data } = await client.GET('/exports/{id}', {
+          params: { path: { id: job.id } },
+        })
+        if (data)
+          setJobs((prev) =>
+            prev.map((j) => (j.id === job.id ? (data as ExportJob) : j)),
+          )
+      }
+    }, 2000)
+
+    return () => clearInterval(interval)
+  }, [jobs])
 
   return (
     <div>
@@ -322,6 +384,48 @@ export default function PhotosPage() {
         <button onClick={curateSelected}>Curate</button>
         <button onClick={rematchSelected}>Rematch</button>
       </div>
+
+      <div style={{ marginTop: '1rem' }}>
+        <h3>Export Selected</h3>
+        <div>Selected: {selected.length}</div>
+        <button onClick={triggerZipExport}>Export ZIP</button>
+        <button onClick={triggerExcelExport}>Export Excel</button>
+        <button onClick={triggerPdfExport}>Export PDF</button>
+      </div>
+
+      {jobs.length > 0 && (
+        <div style={{ marginTop: '1rem' }}>
+          <h3>Export Jobs</h3>
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Status</th>
+                <th>Result</th>
+              </tr>
+            </thead>
+            <tbody>
+              {jobs.map((job) => (
+                <tr key={job.id}>
+                  <td>{job.id}</td>
+                  <td>{job.status}</td>
+                  <td>
+                    {job.status === 'done' && job.url ? (
+                      <a
+                        href={job.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        Download
+                      </a>
+                    ) : null}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   )
 }
