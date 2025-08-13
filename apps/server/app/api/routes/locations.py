@@ -1,12 +1,12 @@
 from datetime import datetime
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import func
 from sqlmodel import Session, select
 
-from app.api.schemas import LocationRead, Page
+from app.api.schemas import LocationRead, LocationUpdate, Page
 from app.core.security import User, get_current_user
-from app.db.models import Location
+from app.db.models import AuditLog, Location
 from app.db.session import get_session
 
 router = APIRouter(prefix="/locations", tags=["locations"])
@@ -53,3 +53,33 @@ def offline_delta(
     upserts_data = [LocationRead.model_validate(r, from_attributes=True) for r in upserts]
     tombstones_data = [{"id": t} for t in tombstones]
     return {"upserts": upserts_data, "tombstones": tombstones_data}
+
+
+@router.patch("/{location_id}", response_model=LocationRead)
+def update_location(
+    location_id: int,
+    payload: LocationUpdate,
+    session: Session = Depends(get_session),
+    user: User = Depends(get_current_user),
+):
+    location = session.get(Location, location_id)
+    if not location or (user.customer_id and location.customer_id != user.customer_id):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+    data = payload.model_dump(exclude_unset=True)
+    for key, value in data.items():
+        setattr(location, key, value)
+    location.revision = (location.revision or 0) + 1
+    session.add(location)
+    session.commit()
+    session.refresh(location)
+
+    log = AuditLog(
+        action="update",
+        entity="location",
+        entity_id=location.id,
+        user=user.email,
+        payload=data,
+    )
+    session.add(log)
+    session.commit()
+    return LocationRead.model_validate(location, from_attributes=True)

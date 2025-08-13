@@ -4,7 +4,7 @@ import os
 from datetime import UTC, datetime
 from enum import Enum
 
-from sqlalchemy import JSON, Column, DateTime, String, UniqueConstraint, func
+from sqlalchemy import JSON, Column, DateTime, Integer, String, UniqueConstraint, func
 from sqlmodel import Field, SQLModel
 
 try:  # geospatial support for PostGIS
@@ -45,6 +45,8 @@ class User(SQLModel, table=True):
 class Location(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
     name: str
+    original_name: str | None = None
+    revision: int = Field(default=1, sa_column=Column(Integer, nullable=False))
     address: str
     customer_id: str
     geog: str | None = Field(default=None, sa_column=_geog_column)
