@@ -182,6 +182,46 @@ describe('PhotosPage', () => {
     )
   })
 
+  it('uploads a photo', async () => {
+    ;(apiClient.GET as jest.Mock).mockResolvedValue({ data: { items: [], meta: {} } })
+    const uploadIntent = {
+      url: 'http://upload',
+      fields: { key: 'abc' },
+    }
+    ;(apiClient.POST as jest.Mock).mockResolvedValue({ data: uploadIntent })
+    const originalFetch = global.fetch
+    const fetchMock = jest.fn().mockResolvedValue({ ok: true })
+    ;(global as unknown as { fetch: typeof fetch }).fetch = fetchMock
+
+    render(<PhotosPage />)
+    await waitFor(() => expect(apiClient.GET).toHaveBeenCalled())
+
+    const file = new File(['data'], 'test.jpg', { type: 'image/jpeg' })
+    fireEvent.change(screen.getByTestId('photo-upload-input'), {
+      target: { files: [file] },
+    })
+    fireEvent.click(screen.getByTestId('photo-upload-button'))
+
+    await waitFor(() =>
+      expect(apiClient.POST).toHaveBeenCalledWith(
+        '/photos/upload-intent',
+        expect.objectContaining({
+          body: { contentType: 'image/jpeg', size: file.size },
+        }),
+      ),
+    )
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      'http://upload',
+      expect.objectContaining({ method: 'POST', body: expect.any(FormData) }),
+    )
+    const form = fetchMock.mock.calls[0][1].body as FormData
+    expect(form.get('file')).toBe(file)
+    expect(form.get('key')).toBe('abc')
+
+    ;(global as unknown as { fetch: typeof fetch }).fetch = originalFetch
+  })
+
   it('renders map markers', async () => {
     ;(apiClient.GET as jest.Mock)
       .mockResolvedValueOnce({ data: { items: [], meta: {} } })

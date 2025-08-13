@@ -22,6 +22,7 @@ Kernfunktionen:
 - Standortpflege: Standorte suchen (`q`, `near`, `radius_m`), paginiert listen und Name, Adresse oder Aktivstatus bearbeiten (`PATCH /locations/{id}`).
 - Foto-Detailseite zur Bearbeitung von Metadaten (`quality_flag`, `note`, ...)
   über `PATCH /photos/{id}`.
+- Foto-Upload: Browser fordert über `POST /photos/upload-intent` eine signierte URL an und lädt die Datei direkt hoch.
 - Authentifizierung via Token: Browser speichert das Token und sendet es bei jeder API-Anfrage als `Authorization: Bearer <token>`.
 - `AuthContext` verwaltet Loginstatus und Token im Frontend.
 - `AuthGuard` schützt Seiten und leitet nicht authentifizierte Nutzer auf `/login`.
