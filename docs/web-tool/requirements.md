@@ -15,6 +15,7 @@ Kernfunktionen:
    - `AuthContext` verwaltet Loginstatus und Token im Frontend.
    - `AuthGuard` schützt Seiten und leitet nicht authentifizierte Nutzer auf `/login`.
    - Logout löscht das Token und navigiert zu `/login`.
+ - Navigationsleiste mit Links zu `Photos`, `Users`, `Orders` und `Shares`.
  - Branding/Wasserzeichen-Policy je Kunde/Share (Agenturkunden i. d. R. ohne Wasserzeichen).
 
 UX/Leistung:

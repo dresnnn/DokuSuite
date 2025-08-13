@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { ReactNode } from 'react';
 import { useRouter } from 'next/router';
 import { useAuth } from '../context/AuthContext';
@@ -11,12 +12,18 @@ export default function Layout({ children }: { children: ReactNode }) {
     router.push('/login');
   };
 
-  const showLogout = router.pathname !== '/login';
+  const showNav = router.pathname !== '/login';
 
   return (
     <div>
-      {showLogout && (
-        <button onClick={handleLogout}>Logout</button>
+      {showNav && (
+        <nav>
+          <Link href="/photos">Photos</Link> |{' '}
+          <Link href="/users">Users</Link> |{' '}
+          <Link href="/orders">Orders</Link> |{' '}
+          <Link href="/shares">Shares</Link> |{' '}
+          <button onClick={handleLogout}>Logout</button>
+        </nav>
       )}
       {children}
     </div>
