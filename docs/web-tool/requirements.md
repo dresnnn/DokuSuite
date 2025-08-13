@@ -17,13 +17,14 @@ Kernfunktionen:
 - Export-Workflow: Export-Jobs listen (`GET /exports`), ZIP- und Excel-Exporte anstoßen (`POST /exports/zip`, `POST /exports/excel`), Status via Polling aktualisieren (`GET /exports/{id}`) und Download-Link bei abgeschlossenen Jobs (`status=done`).
 - Nutzer-/Rollenverwaltung; Einladungslinks, Passwort-Reset, 2FA (später).
 - Auftragsverwaltung: Aufträge listen, nach Kunde und Status filtern sowie neue Aufträge anlegen.
+- Standortpflege: Standorte suchen (`q`, `near`, `radius_m`), paginiert listen und Name, Adresse oder Aktivstatus bearbeiten (`PATCH /locations/{id}`).
 - Foto-Detailseite zur Bearbeitung von Metadaten (`quality_flag`, `note`, ...)
-  über `PATCH /photos/{id}`.
- - Authentifizierung via Token: Browser speichert das Token und sendet es bei jeder API-Anfrage als `Authorization: Bearer <token>`.
-   - `AuthContext` verwaltet Loginstatus und Token im Frontend.
-   - `AuthGuard` schützt Seiten und leitet nicht authentifizierte Nutzer auf `/login`.
-   - Logout löscht das Token und navigiert zu `/login`.
- - Navigationsleiste mit Links zu `Photos`, `Users`, `Orders` und `Shares`.
+    über `PATCH /photos/{id}`.
+- Authentifizierung via Token: Browser speichert das Token und sendet es bei jeder API-Anfrage als `Authorization: Bearer <token>`.
+- `AuthContext` verwaltet Loginstatus und Token im Frontend.
+- `AuthGuard` schützt Seiten und leitet nicht authentifizierte Nutzer auf `/login`.
+- Logout löscht das Token und navigiert zu `/login`.
+- Navigationsleiste mit Links zu `Photos`, `Users`, `Orders` und `Shares`.
 - Branding/Wasserzeichen-Policy je Kunde/Share (Agenturkunden i. d. R. ohne Wasserzeichen).
 
 ## Kunden-Flow
