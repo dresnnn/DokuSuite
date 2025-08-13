@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react'
 import { apiClient } from '../../../lib/api'
 import PhotoMap from '../../components/PhotoMap'
+import PhotoUpload from '../../components/PhotoUpload'
 
 type Photo = {
   id?: number
@@ -90,6 +91,7 @@ export default function PhotosPage() {
 
   return (
     <div>
+      <PhotoUpload onUploaded={fetchPhotos} />
       <form onSubmit={handleSubmit} style={{ marginBottom: '1rem' }}>
         <label>
           Page:
