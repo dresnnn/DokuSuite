@@ -1,7 +1,14 @@
 from .location import LocationRead, LocationUpdate
 from .order import OrderCreate, OrderRead, OrderUpdate
 from .pagination import Page
-from .photo import BatchAssignRequest, PhotoIngest, PhotoRead, PhotoUpdate
+from .photo import (
+    BatchAssignRequest,
+    PhotoIngest,
+    PhotoRead,
+    PhotoUpdate,
+    PublicPhoto,
+    PublicPhotoList,
+)
 from .share import ShareCreate, ShareRead
 from .upload import UploadIntent, UploadIntentRequest
 from .user import UserRead, UserUpdate
@@ -14,6 +21,8 @@ __all__ = [
     "PhotoIngest",
     "PhotoRead",
     "PhotoUpdate",
+    "PublicPhoto",
+    "PublicPhotoList",
     "UploadIntent",
     "UploadIntentRequest",
     "OrderCreate",

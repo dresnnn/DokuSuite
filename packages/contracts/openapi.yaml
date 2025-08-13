@@ -491,6 +491,24 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
 
+  /public/shares/{token}/photos:
+    get:
+      tags: [public-shares]
+      summary: List public photos
+      security: []
+      parameters:
+        - in: path
+          name: token
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Photo ids
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PublicPhotoList' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
   /exports/zip:
     post:
       tags: [exports]
@@ -743,6 +761,16 @@ components:
         expires_at: { type: string, format: date-time, nullable: true }
         download_allowed: { type: boolean }
         watermark_policy: { $ref: '#/components/schemas/WatermarkPolicy', nullable: true }
+    PublicPhoto:
+      type: object
+      properties:
+        id: { type: integer }
+    PublicPhotoList:
+      type: object
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/PublicPhoto' }
     UploadIntent:
       type: object
       properties:

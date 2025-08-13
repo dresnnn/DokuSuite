@@ -15,7 +15,7 @@ from fastapi import (
 from sqlalchemy import func
 from sqlmodel import Session, select
 
-from app.api.schemas import Page, ShareCreate, ShareRead
+from app.api.schemas import Page, PublicPhotoList, ShareCreate, ShareRead
 from app.core.config import settings
 from app.core.limiter import limiter
 from app.core.security import User, require_role
@@ -184,3 +184,17 @@ def public_photo(
         ExpiresIn=settings.s3_presign_ttl,
     )
     return {"original_url": original_url, "thumbnail_url": thumb_url}
+
+
+@public_router.get("/{token}/photos", response_model=PublicPhotoList)
+def public_photos(token: str, session: Session = Depends(get_session)):
+    share = session.exec(
+        select(Share).where(Share.url == f"{settings.share_base_url}/{token}")
+    ).one_or_none()
+    if not share:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+    now = datetime.now(UTC)
+    if share.expires_at and share.expires_at.replace(tzinfo=UTC) < now:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+    photos = session.exec(select(Photo.id).where(Photo.order_id == share.order_id)).all()
+    return {"items": [{"id": pid} for pid in photos]}

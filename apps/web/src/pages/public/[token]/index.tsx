@@ -17,7 +17,9 @@ export default function PublicSharePage() {
   useEffect(() => {
     const load = async () => {
       if (!token || Array.isArray(token)) return
-      const list = await apiClient.GET('/photos', { params: { query: { limit: 10 } } })
+      const list = await apiClient.GET('/public/shares/{token}/photos', {
+        params: { path: { token } },
+      })
       const items = list.data?.items || []
       const results: Photo[] = []
       for (const p of items) {
