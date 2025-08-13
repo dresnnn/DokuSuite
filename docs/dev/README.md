@@ -6,7 +6,7 @@ Abläufe
 - Labels synchronisieren: Action „Sync labels“ starten.
 - Backlog anlegen: „Seed Backlog“ mit `path` auf `.github/backlog-p1.json` oder `.github/backlog-p2.json`.
 - P1‑Issues verfeinern: „Polish P1 Issues“ anhängen.
-- API-Typen generieren: `npm run generate` in `apps/web` vor `npm test`.
+- API-Typen generieren: `npm run generate` in `apps/web` (schreibt `lib/api-types.ts`) vor `npm test`.
 
 Branching & PRs
 - Trunk‑based (Branch `main` geschützt), kurze Feature‑Branches, PR‑Review.

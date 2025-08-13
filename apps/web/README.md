@@ -43,7 +43,8 @@ Generate TypeScript types from the shared OpenAPI contract:
 npm run generate
 ```
 
-This regenerates `lib/api.ts` based on `packages/contracts/openapi.yaml`.
+This regenerates `lib/api-types.ts` based on `packages/contracts/openapi.yaml`.
+The API client in `lib/api.ts` imports these types to stay in sync with the contract.
 
 ## Continuous Integration
 
