@@ -50,6 +50,14 @@ class PhotoUpdate(BaseModel):
     uploader_id: str | None = None
 
 
+class PublicPhoto(BaseModel):
+    id: int
+
+
+class PublicPhotoList(BaseModel):
+    items: list[PublicPhoto]
+
+
 class BatchAssignRequest(BaseModel):
     photo_ids: list[int]
     order_id: int

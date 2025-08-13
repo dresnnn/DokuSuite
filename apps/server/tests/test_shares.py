@@ -330,6 +330,67 @@ class _FakeS3:
         self.deleted.append((Key, self.objects.pop(Key, None)))
 
 
+def test_public_share_list(monkeypatch):
+    client, session_module, models = make_client(monkeypatch)
+    session_gen = session_module.get_session()
+    session = next(session_gen)
+    try:
+        order = models.Order(customer_id="c1", name="o1", status="NEW")
+        session.add(order)
+        session.commit()
+        session.refresh(order)
+        photo1 = models.Photo(
+            object_key="k1",
+            taken_at=datetime.now(UTC),
+            mode="m",
+            customer_id="c1",
+            order_id=order.id,
+            hash="h",
+        )
+        photo2 = models.Photo(
+            object_key="k2",
+            taken_at=datetime.now(UTC),
+            mode="m",
+            customer_id="c1",
+            order_id=order.id,
+            hash="h",
+        )
+        session.add(photo1)
+        session.add(photo2)
+        session.commit()
+        session.refresh(photo1)
+        session.refresh(photo2)
+        photo1_id = photo1.id
+        photo2_id = photo2.id
+        other_order = models.Order(customer_id="c1", name="o2", status="NEW")
+        session.add(other_order)
+        session.commit()
+        session.refresh(other_order)
+        other_photo = models.Photo(
+            object_key="k3",
+            taken_at=datetime.now(UTC),
+            mode="m",
+            customer_id="c1",
+            order_id=other_order.id,
+            hash="h",
+        )
+        session.add(other_photo)
+        session.commit()
+        share = models.Share(
+            order_id=order.id,
+            customer_id="c1",
+            url=f"{settings.share_base_url}/tok1",
+        )
+        session.add(share)
+        session.commit()
+    finally:
+        session_gen.close()
+    r = client.get("/public/shares/tok1/photos")
+    assert r.status_code == 200
+    data = r.json()
+    assert data["items"] == [{"id": photo1_id}, {"id": photo2_id}]
+
+
 def test_public_share_photo(monkeypatch):
     client, session_module, models = make_client(monkeypatch)
     session_gen = session_module.get_session()

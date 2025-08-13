@@ -34,6 +34,11 @@ describe('PublicSharePage', () => {
     })
 
     expect(apiClient.GET).toHaveBeenNthCalledWith(
+      1,
+      '/public/shares/{token}/photos',
+      { params: { path: { token: 'tok1' } } }
+    )
+    expect(apiClient.GET).toHaveBeenNthCalledWith(
       2,
       '/public/shares/{token}/photos/{id}',
       { params: { path: { token: 'tok1', id: 1 } } }
@@ -55,6 +60,12 @@ describe('PublicSharePage', () => {
     await waitFor(() => {
       expect(screen.getByRole('img')).toBeInTheDocument()
     })
+
+    expect(apiClient.GET).toHaveBeenNthCalledWith(
+      1,
+      '/public/shares/{token}/photos',
+      { params: { path: { token: 'tok1' } } }
+    )
 
     fireEvent.click(screen.getByRole('checkbox'))
     fireEvent.click(screen.getByText('Download ZIP'))

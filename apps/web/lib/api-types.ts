@@ -1005,6 +1005,45 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/public/shares/{token}/photos": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List public photos */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    token: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Photo ids */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["PublicPhotoList"];
+                    };
+                };
+                404: components["responses"]["NotFound"];
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/exports/zip": {
         parameters: {
             query?: never;
@@ -1293,6 +1332,12 @@ export interface components {
             expires_at?: string | null;
             download_allowed?: boolean;
             watermark_policy?: components["schemas"]["WatermarkPolicy"];
+        };
+        PublicPhoto: {
+            id?: number;
+        };
+        PublicPhotoList: {
+            items?: components["schemas"]["PublicPhoto"][];
         };
         UploadIntent: {
             object_key?: string;
