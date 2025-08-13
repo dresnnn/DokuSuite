@@ -17,6 +17,11 @@ Minimaler Start für den Backend‑Service inkl. Health‑Endpoint.
 - Logs werden im JSON‑Format ausgegeben.
 - Jeder Request erhält eine `X-Request-ID` und wird mit Dauer sowie Statuscode geloggt.
 - Prometheus‑Metrics unter `GET /metrics`, inkl. Request‑Counter und Gauge für laufende Requests.
+- Optionales Tracing mit OpenTelemetry:
+  - Installation: `pip install -e .[opentelemetry]`
+  - Aktivierung über Environment:
+    - `DOKUSUITE_TRACING_EXPORTER=otlp`
+    - optional `DOKUSUITE_TRACING_ENDPOINT=http://localhost:4317`
 
 ## Migrationen
 - Neue Revision erzeugen:

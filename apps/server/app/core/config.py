@@ -31,6 +31,10 @@ class Settings(BaseSettings):
     smtp_password: str | None = None
     smtp_from: str = "no-reply@example.com"
 
+    # OpenTelemetry tracing
+    tracing_exporter: str | None = None  # e.g. "otlp"
+    tracing_endpoint: str | None = None
+
     # Pydantic v2 style config
     model_config = SettingsConfigDict(env_prefix="DOKUSUITE_")
 
