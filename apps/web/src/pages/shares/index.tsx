@@ -8,19 +8,33 @@ type Share = {
   url?: string
 }
 
+type PageMeta = {
+  page?: number
+  limit?: number
+  total?: number
+}
+
 export default function SharesPage() {
   const [shares, setShares] = useState<Share[]>([])
+  const [meta, setMeta] = useState<PageMeta>({ page: 1, limit: 10, total: 0 })
   const [orderId, setOrderId] = useState('')
   const [email, setEmail] = useState('')
+  const [expiresAt, setExpiresAt] = useState('')
+  const [watermarkPolicy, setWatermarkPolicy] = useState('')
 
   const client = apiClient as unknown as {
     GET: typeof apiClient.GET
     DELETE: typeof apiClient.DELETE
   }
 
-  const fetchShares = async () => {
-    const { data } = await client.GET('/shares')
-    if (data) setShares(data)
+  const fetchShares = async (page = meta.page, limit = meta.limit) => {
+    const { data } = await client.GET('/shares', {
+      params: { query: { page, limit } },
+    })
+    if (data) {
+      setShares(data.items || [])
+      setMeta(data.meta || { page, limit, total: 0 })
+    }
   }
 
   useEffect(() => {
@@ -34,12 +48,16 @@ export default function SharesPage() {
         order_id: Number(orderId),
         email: email || null,
         download_allowed: true,
+        expires_at: expiresAt || null,
+        watermark_policy: watermarkPolicy || undefined,
       },
     })
     if (data) {
       setShares((prev) => [...prev, data])
       setOrderId('')
       setEmail('')
+      setExpiresAt('')
+      setWatermarkPolicy('')
     }
   }
 
@@ -63,6 +81,22 @@ export default function SharesPage() {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
         />
+        <input
+          type="datetime-local"
+          placeholder="Expires At"
+          value={expiresAt}
+          onChange={(e) => setExpiresAt(e.target.value)}
+        />
+        <select
+          aria-label="Watermark Policy"
+          value={watermarkPolicy}
+          onChange={(e) => setWatermarkPolicy(e.target.value)}
+        >
+          <option value="">Watermark Policy</option>
+          <option value="none">none</option>
+          <option value="default">default</option>
+          <option value="custom_text">custom_text</option>
+        </select>
         <button type="submit">Create</button>
       </form>
       <table>

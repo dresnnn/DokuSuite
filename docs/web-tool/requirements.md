@@ -12,7 +12,7 @@ Kernfunktionen:
 - Bulk-Operationen: Multi-Select, Zuweisen, Ausblenden, Curate-Flag, Re-Matching, Export.
 - Mehrfachauswahl im Grid/Table mit Auftragszuweisung via `POST /photos/batch/assign`.
 - Kundenfreigaben: Links (ablaufbar), Kunden-Login, ZIP- und Excel-Export, PDF-Report, Karten-Sharing.
-- Freigabeverwaltung: bestehende Shares listen, neue Links erzeugen, Widerruf über `DELETE /shares/{id}`; die generierte URL wird nach Erstellung angezeigt.
+- Freigabeverwaltung: bestehende Shares paginiert listen (`page`/`limit`), neue Links mit Ablaufdatum (`expires_at`) und Wasserzeichen-Policy (`watermark_policy`) erzeugen, Widerruf über `DELETE /shares/{id}`; die generierte URL wird nach Erstellung angezeigt.
 - Export-Workflow: Export-Jobs listen (`GET /exports`), neue Exporte anstoßen (`POST /exports`), Status anzeigen und Download-Link bei abgeschlossenen Jobs (`status=done`).
 - Nutzer-/Rollenverwaltung; Einladungslinks, Passwort-Reset, 2FA (später).
 - Auftragsverwaltung: Aufträge listen, nach Kunde und Status filtern sowie neue Aufträge anlegen.

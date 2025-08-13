@@ -13,7 +13,10 @@ describe('SharesPage', () => {
 
   it('lists and creates shares and shows URL', async () => {
     ;(apiClient.GET as jest.Mock).mockResolvedValue({
-      data: [{ id: 1, order_id: 2, url: 'http://u1' }],
+      data: {
+        items: [{ id: 1, order_id: 2, url: 'http://u1' }],
+        meta: { page: 1, limit: 10, total: 1 },
+      },
     })
     ;(apiClient.POST as jest.Mock).mockResolvedValue({
       data: { id: 2, order_id: 3, url: 'http://u2' },
@@ -22,6 +25,9 @@ describe('SharesPage', () => {
     render(<SharesPage />)
 
     await waitFor(() => {
+      expect(apiClient.GET).toHaveBeenCalledWith('/shares', {
+        params: { query: { page: 1, limit: 10 } },
+      })
       expect(screen.getByText('http://u1')).toBeInTheDocument()
     })
 
@@ -31,11 +37,23 @@ describe('SharesPage', () => {
     fireEvent.change(screen.getByPlaceholderText('Email'), {
       target: { value: 'a@b.c' },
     })
+    fireEvent.change(screen.getByPlaceholderText('Expires At'), {
+      target: { value: '2024-01-01T00:00' },
+    })
+    fireEvent.change(screen.getByLabelText('Watermark Policy'), {
+      target: { value: 'default' },
+    })
     fireEvent.click(screen.getByText('Create'))
 
     await waitFor(() => {
       expect(apiClient.POST).toHaveBeenCalledWith('/shares', {
-        body: { order_id: 3, email: 'a@b.c', download_allowed: true },
+        body: {
+          order_id: 3,
+          email: 'a@b.c',
+          download_allowed: true,
+          expires_at: '2024-01-01T00:00',
+          watermark_policy: 'default',
+        },
       })
       expect(screen.getByText('http://u2')).toBeInTheDocument()
     })
@@ -43,12 +61,18 @@ describe('SharesPage', () => {
 
   it('revokes share', async () => {
     ;(apiClient.GET as jest.Mock).mockResolvedValue({
-      data: [{ id: 1, order_id: 2, url: 'http://u1' }],
+      data: {
+        items: [{ id: 1, order_id: 2, url: 'http://u1' }],
+        meta: { page: 1, limit: 10, total: 1 },
+      },
     })
 
     render(<SharesPage />)
 
     await waitFor(() => {
+      expect(apiClient.GET).toHaveBeenCalledWith('/shares', {
+        params: { query: { page: 1, limit: 10 } },
+      })
       expect(screen.getByText('http://u1')).toBeInTheDocument()
     })
 
