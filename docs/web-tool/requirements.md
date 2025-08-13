@@ -13,6 +13,7 @@ Kernfunktionen:
 - Mehrfachauswahl im Grid/Table mit Auftragszuweisung via `POST /photos/batch/assign`.
 - Kundenfreigaben: Links (ablaufbar), Kunden-Login, ZIP- und Excel-Export, PDF-Report, Karten-Sharing.
 - Freigabeverwaltung: bestehende Shares listen, neue Links erzeugen, Widerruf über `DELETE /shares/{id}`; die generierte URL wird nach Erstellung angezeigt.
+- Export-Workflow: Export-Jobs listen (`GET /exports`), neue Exporte anstoßen (`POST /exports`), Status anzeigen und Download-Link bei abgeschlossenen Jobs (`status=done`).
 - Nutzer-/Rollenverwaltung; Einladungslinks, Passwort-Reset, 2FA (später).
 - Auftragsverwaltung: Aufträge listen, nach Kunde und Status filtern sowie neue Aufträge anlegen.
  - Authentifizierung via Token: Browser speichert das Token und sendet es bei jeder API-Anfrage als `Authorization: Bearer <token>`.
