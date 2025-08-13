@@ -1,10 +1,12 @@
 import { useState } from 'react';
-import { apiClient, setAuthToken } from '../../lib/api';
+import { apiClient } from '../../lib/api';
+import { useAuth } from '../context/AuthContext';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const { login } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -13,7 +15,7 @@ export default function LoginPage() {
       body: { email, password },
     });
     if (data) {
-      setAuthToken(data.access_token);
+      login(data.access_token);
     } else {
       setError('Login failed');
     }

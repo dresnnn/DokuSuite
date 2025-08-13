@@ -1,6 +1,16 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import LoginPage from '../login';
 import { apiClient, setAuthToken, authFetch } from '../../../lib/api';
+import { AuthProvider } from '../../context/AuthContext';
+import Layout from '../../components/Layout';
+import { AuthGuard } from '../_app';
+import { useRouter } from 'next/router';
+
+jest.mock('next/router', () => ({
+  useRouter: jest.fn(),
+}));
+
+const mockedUseRouter = useRouter as jest.Mock;
 
 let store: Record<string, string> = {};
 
@@ -19,6 +29,14 @@ describe('LoginPage', () => {
       },
       writable: true,
     });
+    mockedUseRouter.mockReturnValue({
+      pathname: '/login',
+      replace: jest.fn(),
+      push: jest.fn(),
+      prefetch: jest.fn(),
+      events: { on: jest.fn(), off: jest.fn() },
+      beforePopState: jest.fn(),
+    });
   });
 
   afterEach(() => {
@@ -34,7 +52,11 @@ describe('LoginPage', () => {
       } as unknown as Awaited<ReturnType<typeof apiClient.POST>>,
     );
 
-    render(<LoginPage />);
+    render(
+      <AuthProvider>
+        <LoginPage />
+      </AuthProvider>,
+    );
     fireEvent.change(screen.getByPlaceholderText('Email'), {
       target: { value: 'user@example.com' },
     });
@@ -57,7 +79,11 @@ describe('LoginPage', () => {
         >,
       );
 
-    render(<LoginPage />);
+    render(
+      <AuthProvider>
+        <LoginPage />
+      </AuthProvider>,
+    );
     fireEvent.change(screen.getByPlaceholderText('Email'), {
       target: { value: 'user@example.com' },
     });
@@ -71,22 +97,71 @@ describe('LoginPage', () => {
     });
   });
 
-  it('adds auth header to subsequent requests after login', async () => {
-    setAuthToken('token123');
+    it('adds auth header to subsequent requests after login', async () => {
+      setAuthToken('token123');
 
-    const fetchMock = jest.fn().mockResolvedValue({ ok: true });
-    const originalFetch = global.fetch;
-    // @ts-expect-error replace fetch for test
-    global.fetch = fetchMock;
+      const fetchMock = jest.fn().mockResolvedValue({ ok: true });
+      const originalFetch = global.fetch;
+      // @ts-expect-error replace fetch for test
+      global.fetch = fetchMock;
 
-    await authFetch('/api/photos');
+      await authFetch('/api/photos');
 
-    const [url, options] = fetchMock.mock.calls[0];
-    expect(url).toBe('/api/photos');
-    expect((options.headers as Headers).get('Authorization')).toBe(
-      'Bearer token123',
-    );
+      const [url, options] = fetchMock.mock.calls[0];
+      expect(url).toBe('/api/photos');
+      expect((options.headers as Headers).get('Authorization')).toBe(
+        'Bearer token123',
+      );
 
-    global.fetch = originalFetch;
+      global.fetch = originalFetch;
+    });
+
+    it('redirects unauthenticated users to /login', async () => {
+      const replace = jest.fn();
+      mockedUseRouter.mockReturnValue({
+        pathname: '/photos',
+        replace,
+        push: jest.fn(),
+        prefetch: jest.fn(),
+        events: { on: jest.fn(), off: jest.fn() },
+        beforePopState: jest.fn(),
+      });
+
+      render(
+        <AuthProvider>
+          <AuthGuard>
+            <div>protected</div>
+          </AuthGuard>
+        </AuthProvider>,
+      );
+
+      await waitFor(() => {
+        expect(replace).toHaveBeenCalledWith('/login');
+      });
+    });
+
+    it('clears token and redirects to login on logout', () => {
+      store['token'] = 'token123';
+      const push = jest.fn();
+      mockedUseRouter.mockReturnValue({
+        pathname: '/photos',
+        replace: push,
+        push,
+        prefetch: jest.fn(),
+        events: { on: jest.fn(), off: jest.fn() },
+        beforePopState: jest.fn(),
+      });
+
+      render(
+        <AuthProvider>
+          <Layout>
+            <div>content</div>
+          </Layout>
+        </AuthProvider>,
+      );
+
+      fireEvent.click(screen.getByText('Logout'));
+      expect(window.localStorage.removeItem).toHaveBeenCalledWith('token');
+      expect(push).toHaveBeenCalledWith('/login');
+    });
   });
-});
