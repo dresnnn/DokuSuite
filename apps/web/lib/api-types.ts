@@ -1143,7 +1143,7 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
-                /** @description Photo ids */
+                /** @description Photos with URLs */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -1454,6 +1454,10 @@ export interface components {
         };
         PublicPhoto: {
             id?: number;
+            /** Format: uri */
+            thumbnail_url?: string;
+            /** Format: uri */
+            original_url?: string;
         };
         PublicPhotoList: {
             items?: components["schemas"]["PublicPhoto"][];

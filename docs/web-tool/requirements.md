@@ -35,7 +35,7 @@ Kernfunktionen:
 ## Kunden-Flow
 
 - Kunde öffnet einen Freigabe-Link `/public/{token}`.
-- Die Galerie lädt die Foto-IDs über `/public/shares/{token}/photos` und ruft für jedes Bild `/public/shares/{token}/photos/{id}` auf.
+- Die Galerie lädt die Fotos inklusive URLs direkt über `/public/shares/{token}/photos`; keine Einzelrequests pro Bild.
 - Der Kunde kann einzelne Fotos auswählen und ZIP- (`POST /exports/zip`) oder Excel-Exporte (`POST /exports/excel`) starten; der Status wird über Polling von `/exports/{id}` aktualisiert.
 
 ## Invite-Flow

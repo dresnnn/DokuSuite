@@ -552,7 +552,7 @@ paths:
           schema: { type: string }
       responses:
         '200':
-          description: Photo ids
+          description: Photos with URLs
           content:
             application/json:
               schema: { $ref: '#/components/schemas/PublicPhotoList' }
@@ -814,6 +814,8 @@ components:
       type: object
       properties:
         id: { type: integer }
+        thumbnail_url: { type: string, format: uri }
+        original_url: { type: string, format: uri }
     PublicPhotoList:
       type: object
       properties:
