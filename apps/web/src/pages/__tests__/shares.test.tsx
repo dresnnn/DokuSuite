@@ -3,7 +3,7 @@ import SharesPage from '../shares'
 import { apiClient } from '../../../lib/api'
 
 jest.mock('../../../lib/api', () => ({
-  apiClient: { GET: jest.fn(), POST: jest.fn(), DELETE: jest.fn() },
+  apiClient: { GET: jest.fn(), POST: jest.fn() },
 }))
 
 describe('SharesPage', () => {
@@ -79,7 +79,7 @@ describe('SharesPage', () => {
     fireEvent.click(screen.getByText('Revoke'))
 
     await waitFor(() => {
-      expect(apiClient.DELETE).toHaveBeenCalledWith('/shares/{id}', {
+      expect(apiClient.POST).toHaveBeenCalledWith('/shares/{id}/revoke', {
         params: { path: { id: 1 } },
       })
       expect(screen.queryByText('http://u1')).not.toBeInTheDocument()
