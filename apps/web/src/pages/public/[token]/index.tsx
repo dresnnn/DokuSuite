@@ -20,15 +20,7 @@ export default function PublicSharePage() {
       const list = await apiClient.GET('/public/shares/{token}/photos', {
         params: { path: { token } },
       })
-      const items = list.data?.items || []
-      const results: Photo[] = []
-      for (const p of items) {
-        const { data } = await apiClient.GET('/public/shares/{token}/photos/{id}', {
-          params: { path: { token, id: p.id! } },
-        })
-        results.push({ id: p.id!, ...data })
-      }
-      setPhotos(results)
+      setPhotos((list.data?.items as Photo[]) || [])
     }
     load()
   }, [token])

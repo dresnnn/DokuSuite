@@ -22,10 +22,14 @@ describe('PublicSharePage', () => {
   })
 
   it('fetches and displays photos', async () => {
-    ;(apiClient.GET as jest.Mock)
-      .mockResolvedValueOnce({ data: { items: [{ id: 1 }, { id: 2 }] } })
-      .mockResolvedValueOnce({ data: { thumbnail_url: 't1', original_url: 'o1' } })
-      .mockResolvedValueOnce({ data: { thumbnail_url: 't2', original_url: 'o2' } })
+    ;(apiClient.GET as jest.Mock).mockResolvedValueOnce({
+      data: {
+        items: [
+          { id: 1, thumbnail_url: 't1', original_url: 'o1' },
+          { id: 2, thumbnail_url: 't2', original_url: 'o2' },
+        ],
+      },
+    })
 
     render(<PublicSharePage />)
 
@@ -33,27 +37,18 @@ describe('PublicSharePage', () => {
       expect(screen.getAllByRole('img')).toHaveLength(2)
     })
 
-    expect(apiClient.GET).toHaveBeenNthCalledWith(
-      1,
-      '/public/shares/{token}/photos',
-      { params: { path: { token: 'tok1' } } }
-    )
-    expect(apiClient.GET).toHaveBeenNthCalledWith(
-      2,
-      '/public/shares/{token}/photos/{id}',
-      { params: { path: { token: 'tok1', id: 1 } } }
-    )
-    expect(apiClient.GET).toHaveBeenNthCalledWith(
-      3,
-      '/public/shares/{token}/photos/{id}',
-      { params: { path: { token: 'tok1', id: 2 } } }
-    )
+    expect(apiClient.GET).toHaveBeenCalledTimes(1)
+    expect(apiClient.GET).toHaveBeenCalledWith('/public/shares/{token}/photos', {
+      params: { path: { token: 'tok1' } },
+    })
   })
 
   it('posts exports for selected photos', async () => {
-    ;(apiClient.GET as jest.Mock)
-      .mockResolvedValueOnce({ data: { items: [{ id: 1 }] } })
-      .mockResolvedValueOnce({ data: { thumbnail_url: 't1', original_url: 'o1' } })
+    ;(apiClient.GET as jest.Mock).mockResolvedValueOnce({
+      data: {
+        items: [{ id: 1, thumbnail_url: 't1', original_url: 'o1' }],
+      },
+    })
 
     render(<PublicSharePage />)
 
@@ -61,11 +56,10 @@ describe('PublicSharePage', () => {
       expect(screen.getByRole('img')).toBeInTheDocument()
     })
 
-    expect(apiClient.GET).toHaveBeenNthCalledWith(
-      1,
-      '/public/shares/{token}/photos',
-      { params: { path: { token: 'tok1' } } }
-    )
+    expect(apiClient.GET).toHaveBeenCalledTimes(1)
+    expect(apiClient.GET).toHaveBeenCalledWith('/public/shares/{token}/photos', {
+      params: { path: { token: 'tok1' } },
+    })
 
     fireEvent.click(screen.getByRole('checkbox'))
     fireEvent.click(screen.getByText('Download ZIP'))
