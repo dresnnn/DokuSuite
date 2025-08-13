@@ -1134,7 +1134,9 @@ export interface paths {
         /** List public photos */
         get: {
             parameters: {
-                query?: never;
+                query?: {
+                    bbox?: string;
+                };
                 header?: never;
                 path: {
                     token: string;
@@ -1219,6 +1221,49 @@ export interface paths {
         get?: never;
         put?: never;
         /** Create Excel export (site list) */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        orderId?: string;
+                        photoIds?: string[];
+                    };
+                };
+            };
+            responses: {
+                /** @description Accepted */
+                202: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ExportJob"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/exports/pdf": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create PDF export */
         post: {
             parameters: {
                 query?: never;

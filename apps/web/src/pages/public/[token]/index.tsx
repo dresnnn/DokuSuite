@@ -1,6 +1,7 @@
 import { useRouter } from 'next/router'
 import { useEffect, useState } from 'react'
 import { apiClient } from '../../../../lib/api'
+import PhotoMap from '../../../components/PhotoMap'
 
 type Photo = {
   id: number
@@ -13,6 +14,7 @@ export default function PublicSharePage() {
   const { token } = router.query
   const [photos, setPhotos] = useState<Photo[]>([])
   const [selected, setSelected] = useState<number[]>([])
+  const [view, setView] = useState<'grid' | 'map'>('grid')
 
   useEffect(() => {
     const load = async () => {
@@ -37,34 +39,49 @@ export default function PublicSharePage() {
     await apiClient.POST('/exports/excel', { body: { photoIds: selected.map(String) } })
   }
 
+  const exportPdf = async () => {
+    await apiClient.POST('/exports/pdf', { body: { photoIds: selected.map(String) } })
+  }
+
   return (
     <div>
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(3, 1fr)',
-          gap: '8px',
-          marginBottom: '1rem',
-        }}
-      >
-        {photos.map((p) => (
-          <label key={p.id} data-testid="photo" style={{ border: '1px solid #ccc', padding: '4px' }}>
-            <input
-              type="checkbox"
-              checked={selected.includes(p.id)}
-              onChange={() => toggleSelect(p.id)}
-            />
-            {p.thumbnail_url ? (
-              <img src={p.thumbnail_url} alt={`Photo ${p.id}`} />
-            ) : (
-              <span>Photo {p.id}</span>
-            )}
-          </label>
-        ))}
+      <div>
+        <button onClick={() => setView('grid')}>Grid</button>
+        <button onClick={() => setView('map')}>Map</button>
       </div>
+
+      {view === 'grid' ? (
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(3, 1fr)',
+            gap: '8px',
+            marginBottom: '1rem',
+          }}
+        >
+          {photos.map((p) => (
+            <label key={p.id} data-testid="photo" style={{ border: '1px solid #ccc', padding: '4px' }}>
+              <input
+                type="checkbox"
+                checked={selected.includes(p.id)}
+                onChange={() => toggleSelect(p.id)}
+              />
+              {p.thumbnail_url ? (
+                <img src={p.thumbnail_url} alt={`Photo ${p.id}`} />
+              ) : (
+                <span>Photo {p.id}</span>
+              )}
+            </label>
+          ))}
+        </div>
+      ) : (
+        typeof token === 'string' && <PhotoMap shareToken={token} />
+      )}
+
       <div>
         <button onClick={exportZip}>Download ZIP</button>
         <button onClick={exportExcel}>Download Excel</button>
+        <button onClick={exportPdf}>Download PDF</button>
       </div>
     </div>
   )
