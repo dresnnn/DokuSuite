@@ -38,6 +38,9 @@ def configure_tracing(app: FastAPI) -> None:
     FastAPIInstrumentor.instrument_app(app)
 
 
+from fastapi import FastAPI
+
+
 def create_app() -> FastAPI:
     configure_logging()
     app = FastAPI(title=settings.app_name)
