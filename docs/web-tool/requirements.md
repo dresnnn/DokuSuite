@@ -14,7 +14,7 @@ Kernfunktionen:
 - Mehrfachauswahl im Grid/Table mit Auftragszuweisung via `POST /photos/batch/assign`.
 - Kundenfreigaben: Links (ablaufbar), Kunden-Login, ZIP- und Excel-Export, PDF-Report, Karten-Sharing.
 - Freigabeverwaltung: bestehende Shares paginiert listen (`page`/`limit`), neue Links mit Ablaufdatum (`expires_at`) und Wasserzeichen-Policy (`watermark_policy`) erzeugen, Widerruf über `DELETE /shares/{id}`; die generierte URL wird nach Erstellung angezeigt.
-- Export-Workflow: Export-Jobs listen (`GET /exports`), neue Exporte anstoßen (`POST /exports`), Status anzeigen und Download-Link bei abgeschlossenen Jobs (`status=done`).
+- Export-Workflow: Export-Jobs listen (`GET /exports`), ZIP- und Excel-Exporte anstoßen (`POST /exports/zip`, `POST /exports/excel`), Status via Polling aktualisieren (`GET /exports/{id}`) und Download-Link bei abgeschlossenen Jobs (`status=done`).
 - Nutzer-/Rollenverwaltung; Einladungslinks, Passwort-Reset, 2FA (später).
 - Auftragsverwaltung: Aufträge listen, nach Kunde und Status filtern sowie neue Aufträge anlegen.
 - Foto-Detailseite zur Bearbeitung von Metadaten (`quality_flag`, `note`, ...)
@@ -29,7 +29,7 @@ Kernfunktionen:
 ## Kunden-Flow
 - Kunde öffnet einen Freigabe-Link `/public/{token}`.
 - Die Galerie lädt die Fotos des Auftrags und ruft für jedes Bild `/public/shares/{token}/photos/{id}` auf.
-- Der Kunde kann einzelne Fotos auswählen und ZIP- (`POST /exports/zip`) oder Excel-Exporte (`POST /exports/excel`) starten.
+- Der Kunde kann einzelne Fotos auswählen und ZIP- (`POST /exports/zip`) oder Excel-Exporte (`POST /exports/excel`) starten; der Status wird über Polling von `/exports/{id}` aktualisiert.
 
 UX/Leistung:
 - Flüssige Interaktionen bei großen Datenmengen (Server-seitige Filter/Pagination, Streaming/Infinite Scroll).
