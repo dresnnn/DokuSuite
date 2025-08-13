@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { apiClient } from '../../lib/api';
+import { apiClient, setAuthToken } from '../../lib/api';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -13,7 +13,7 @@ export default function LoginPage() {
       body: { email, password },
     });
     if (data) {
-      localStorage.setItem('token', data.access_token);
+      setAuthToken(data.access_token);
     } else {
       setError('Login failed');
     }

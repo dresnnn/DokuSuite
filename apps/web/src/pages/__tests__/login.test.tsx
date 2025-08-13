@@ -1,25 +1,37 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import LoginPage from '../login';
-import { apiClient } from '../../../lib/api';
+import { apiClient, setAuthToken, authFetch } from '../../../lib/api';
 
-jest.mock('../../../lib/api', () => ({
-  apiClient: { POST: jest.fn() },
-}));
+let store: Record<string, string> = {};
 
 describe('LoginPage', () => {
   beforeEach(() => {
+    store = {};
     Object.defineProperty(window, 'localStorage', {
-      value: { setItem: jest.fn() },
+      value: {
+        setItem: jest.fn((key, value) => {
+          store[key] = value;
+        }),
+        getItem: jest.fn((key) => store[key]),
+        removeItem: jest.fn((key) => {
+          delete store[key];
+        }),
+      },
       writable: true,
     });
   });
 
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
   it('stores token on successful login', async () => {
-    (apiClient.POST as jest.Mock).mockResolvedValue({
+    jest.spyOn(apiClient, 'POST').mockResolvedValue({
       data: {
         access_token: 'token123',
       },
-    });
+    } as any);
+
     render(<LoginPage />);
     fireEvent.change(screen.getByPlaceholderText('Email'), {
       target: { value: 'user@example.com' },
@@ -30,15 +42,15 @@ describe('LoginPage', () => {
     fireEvent.click(screen.getByText('Login'));
 
     await waitFor(() => {
-      expect(window.localStorage.setItem).toHaveBeenCalledWith(
-        'token',
-        'token123',
-      );
+      expect(window.localStorage.setItem).toHaveBeenCalledWith('token', 'token123');
     });
   });
 
   it('shows error on failed login', async () => {
-    (apiClient.POST as jest.Mock).mockResolvedValue({ data: undefined, error: {} });
+    jest
+      .spyOn(apiClient, 'POST')
+      .mockResolvedValue({ data: undefined, error: {} } as any);
+
     render(<LoginPage />);
     fireEvent.change(screen.getByPlaceholderText('Email'), {
       target: { value: 'user@example.com' },
@@ -51,5 +63,24 @@ describe('LoginPage', () => {
     await waitFor(() => {
       expect(screen.getByRole('alert')).toHaveTextContent('Login failed');
     });
+  });
+
+  it('adds auth header to subsequent requests after login', async () => {
+    setAuthToken('token123');
+
+    const fetchMock = jest.fn().mockResolvedValue({ ok: true });
+    const originalFetch = global.fetch;
+    // @ts-expect-error replace fetch for test
+    global.fetch = fetchMock;
+
+    await authFetch('/api/photos');
+
+    const [url, options] = fetchMock.mock.calls[0];
+    expect(url).toBe('/api/photos');
+    expect((options.headers as Headers).get('Authorization')).toBe(
+      'Bearer token123',
+    );
+
+    global.fetch = originalFetch;
   });
 });
