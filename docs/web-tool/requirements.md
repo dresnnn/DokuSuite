@@ -39,6 +39,12 @@ Kernfunktionen:
 - Der Kunde kann einzelne Fotos auswählen und ZIP- (`POST /exports/zip`) oder Excel-Exporte (`POST /exports/excel`) starten; der Status wird über Polling von `/exports/{id}` aktualisiert.
 - Der Kunde kann zusätzlich einen PDF-Report (`POST /exports/pdf`) auslösen und eine Kartenansicht aufrufen, die Fotos abhängig vom Kartenausschnitt über `/public/shares/{token}/photos?bbox` lädt.
 
+## Plakatierer-Flow
+
+- Ein Nutzer mit Rolle `USER` sieht nach dem Login ausschließlich eigene Uploads.
+- Das Frontend setzt den Filter `uploaderId` automatisch auf die eigene `userId` und blendet das Eingabefeld aus.
+- Status und Metadaten der eigenen Fotos sind einsehbar.
+
 ## Invite-Flow
 
 - Ein Administrator lädt einen Nutzer über `POST /auth/invite` ein.

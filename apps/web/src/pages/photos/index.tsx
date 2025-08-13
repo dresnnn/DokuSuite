@@ -4,6 +4,7 @@ import { apiClient } from '../../../lib/api'
 import { undoStack } from '../../lib/undoStack'
 import PhotoMap from '../../components/PhotoMap'
 import PhotoUpload from '../../components/PhotoUpload'
+import { useAuth } from '../../context/AuthContext'
 
 type Photo = {
   id?: number
@@ -15,6 +16,12 @@ type PageMeta = {
   page?: number
   limit?: number
   total?: number
+}
+
+type ExportJob = {
+  id?: string
+  status?: string
+  url?: string
 }
 
 export default function PhotosPage() {
@@ -31,15 +38,28 @@ export default function PhotosPage() {
   const [assignOrder, setAssignOrder] = useState('')
   const [assignWeek, setAssignWeek] = useState('')
   const [view, setView] = useState<'table' | 'grid' | 'map'>('table')
+  const [jobs, setJobs] = useState<ExportJob[]>([])
+  const client = apiClient as unknown as {
+    GET: typeof apiClient.GET
+    POST: typeof apiClient.POST
+  }
+  const { role, userId } = useAuth()
+
+  useEffect(() => {
+    if (role === 'USER' && userId !== null) {
+      setUploaderId(String(userId))
+    }
+  }, [role, userId])
 
   const fetchPhotos = async (page = meta.page, limit = meta.limit) => {
+    const uploader = role === 'USER' ? String(userId ?? '') : uploaderId
     const { data } = await apiClient.GET('/photos', {
       params: {
         query: {
           page,
           limit,
           mode: mode || undefined,
-          uploaderId: uploaderId || undefined,
+          uploaderId: uploader || undefined,
           from: from || undefined,
           to: to || undefined,
           siteId: siteId || undefined,
@@ -55,8 +75,9 @@ export default function PhotosPage() {
   }
 
   useEffect(() => {
+    if (role === 'USER' && userId === null) return
     fetchPhotos()
-  }, [])
+  }, [role, userId])
 
   const totalPages = Math.ceil((meta.total || 0) / (meta.limit || 1)) || 1
 
@@ -118,6 +139,36 @@ export default function PhotosPage() {
     setSelected([])
   }
 
+  const triggerZipExport = async () => {
+    const { data } = await client.POST('/exports/zip', {})
+    if (data) setJobs((prev) => [...prev, data as ExportJob])
+  }
+
+  const triggerExcelExport = async () => {
+    const { data } = await client.POST('/exports/excel', {})
+    if (data) setJobs((prev) => [...prev, data as ExportJob])
+  }
+
+  useEffect(() => {
+    const pending = jobs.filter((j) => j.status !== 'done')
+    if (pending.length === 0) return
+
+    const interval = setInterval(async () => {
+      for (const job of pending) {
+        if (!job.id) continue
+        const { data } = await client.GET('/exports/{id}', {
+          params: { path: { id: job.id } },
+        })
+        if (data)
+          setJobs((prev) =>
+            prev.map((j) => (j.id === job.id ? (data as ExportJob) : j)),
+          )
+      }
+    }, 2000)
+
+    return () => clearInterval(interval)
+  }, [jobs])
+
   const changePage = (newPage: number) => {
     setMeta((m) => ({ ...m, page: newPage }))
     fetchPhotos(newPage)
@@ -143,7 +194,43 @@ export default function PhotosPage() {
 
   return (
     <div>
-        <PhotoUpload onUploaded={fetchPhotos} />
+      <PhotoUpload onUploaded={fetchPhotos} />
+      <button type="button" onClick={triggerZipExport}>
+        Start ZIP Export
+      </button>
+      <button type="button" onClick={triggerExcelExport}>
+        Start Excel Export
+      </button>
+      {jobs.length > 0 && (
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Status</th>
+              <th>Result</th>
+            </tr>
+          </thead>
+          <tbody>
+            {jobs.map((job) => (
+              <tr key={job.id}>
+                <td>{job.id}</td>
+                <td>{job.status}</td>
+                <td>
+                  {job.status === 'done' && job.url ? (
+                    <a
+                      href={job.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      Download
+                    </a>
+                  ) : null}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
       <form onSubmit={handleSubmit} style={{ marginBottom: '1rem' }}>
         <label>
           Page:
@@ -173,13 +260,15 @@ export default function PhotosPage() {
             <option value="MOBILE">MOBILE</option>
           </select>
         </label>
-        <label>
-          Uploader ID:
-          <input
-            value={uploaderId}
-            onChange={(e) => setUploaderId(e.target.value)}
-          />
-        </label>
+        {role !== 'USER' && (
+          <label>
+            Uploader ID:
+            <input
+              value={uploaderId}
+              onChange={(e) => setUploaderId(e.target.value)}
+            />
+          </label>
+        )}
         <label>
           From:
           <input
