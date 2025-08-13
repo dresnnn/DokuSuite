@@ -12,6 +12,22 @@ Planning and specification documents live in the [`docs/`](docs/README.md) direc
 - Follow language-appropriate style conventions (PEP 8 for Python, Prettier/ESLint for JavaScript/TypeScript, Xcode conventions for Swift).
 - Use type hints and add or update unit tests alongside code changes.
 
+## Dependency Management
+
+Always install or resolve project dependencies before running checks:
+
+- **JavaScript/TypeScript**: `npm install` in the relevant directory.
+- **Python**: `pip install -r requirements.txt` or `pipenv install`.
+- **iOS/Swift**: `swift package resolve` or `pod install` where applicable.
+
+## Linting
+
+Run linters before committing:
+
+- **JavaScript/TypeScript**: `npm run lint`.
+- **Python**: `ruff` or `flake8`.
+- **iOS/Swift**: `swiftlint`.
+
 ## Testing
 
 Run tests before committing:
@@ -19,4 +35,3 @@ Run tests before committing:
 - **Python**: `pytest` (e.g. `pytest apps/server/tests`).
 - **JavaScript/TypeScript**: `npm test` inside the relevant project directory.
 - **iOS/Swift**: `xcodebuild test` where applicable.
-
