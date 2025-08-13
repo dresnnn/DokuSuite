@@ -29,7 +29,9 @@ def make_client(monkeypatch):
         session.commit()
     finally:
         session_gen.close()
+    import app.core.limiter as limiter_module
     import app.main as app_main
+    limiter_module = importlib.reload(limiter_module)
     app_main = importlib.reload(app_main)
     return TestClient(app_main.create_app()), session_module, models
 
@@ -448,3 +450,41 @@ def test_public_share_watermark(monkeypatch):
     assert r.status_code == 200
     assert called.get("ok")
     assert ("k1-wm", b"wm") in fake_s3.deleted
+
+
+def test_public_share_rate_limit(monkeypatch):
+    client, session_module, models = make_client(monkeypatch)
+    session_gen = session_module.get_session()
+    session = next(session_gen)
+    try:
+        order = models.Order(customer_id="c1", name="o1", status="NEW")
+        session.add(order)
+        session.commit()
+        session.refresh(order)
+        photo = models.Photo(
+            object_key="k1",
+            taken_at=datetime.now(UTC),
+            mode="m",
+            customer_id="c1",
+            order_id=order.id,
+            hash="h",
+        )
+        session.add(photo)
+        session.commit()
+        session.refresh(photo)
+        photo_id = photo.id
+        share = models.Share(
+            order_id=order.id,
+            customer_id="c1",
+            url=f"{settings.share_base_url}/tok1",
+        )
+        session.add(share)
+        session.commit()
+    finally:
+        session_gen.close()
+
+    monkeypatch.setattr("app.api.routes.shares._s3_client", lambda: _FakeS3())
+    for _ in range(5):
+        client.get(f"/public/shares/tok1/photos/{photo_id}")
+    r = client.get(f"/public/shares/tok1/photos/{photo_id}")
+    assert r.status_code == 429

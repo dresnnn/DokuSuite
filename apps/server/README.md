@@ -23,6 +23,11 @@ Minimaler Start für den Backend‑Service inkl. Health‑Endpoint.
     - `DOKUSUITE_TRACING_EXPORTER=otlp`
     - optional `DOKUSUITE_TRACING_ENDPOINT=http://localhost:4317`
 
+## Rate Limits
+- `POST /auth/login`: maximal 5 Anfragen pro Minute und IP.
+- `GET /public/shares/{token}/photos/{photo_id}`: maximal 5 Anfragen pro Minute und IP.
+  Bei Überschreitung wird HTTP 429 zurückgegeben.
+
 ## Migrationen
 - Neue Revision erzeugen:
   - `alembic revision --autogenerate -m "message"`

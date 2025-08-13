@@ -28,7 +28,9 @@ def make_client(monkeypatch):
         session.commit()
     finally:
         session_gen.close()
+    import app.core.limiter as limiter_module
     import app.main as app_main
+    limiter_module = importlib.reload(limiter_module)
     app_main = importlib.reload(app_main)
     return TestClient(app_main.create_app()), session_module, models
 
@@ -86,6 +88,24 @@ def test_login_failure(monkeypatch):
         json={"email": "user@example.com", "password": "wrong"},
     )
     assert r.status_code == 401
+
+
+def test_login_rate_limit(monkeypatch):
+    client, _, _ = make_client(monkeypatch)
+    client.post(
+        "/auth/register",
+        json={"email": "user@example.com", "password": "secret"},
+    )
+    for _ in range(5):
+        client.post(
+            "/auth/login",
+            json={"email": "user@example.com", "password": "wrong"},
+        )
+    r = client.post(
+        "/auth/login",
+        json={"email": "user@example.com", "password": "wrong"},
+    )
+    assert r.status_code == 429
 
 
 def test_invite_user(monkeypatch):
