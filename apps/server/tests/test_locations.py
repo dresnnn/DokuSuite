@@ -2,7 +2,7 @@ import importlib
 from datetime import UTC, datetime
 
 from fastapi.testclient import TestClient
-from sqlmodel import SQLModel
+from sqlmodel import SQLModel, select
 
 from app.core.config import settings
 from app.core.security import create_access_token
@@ -150,3 +150,71 @@ def test_locations_offline_delta_tombstones(monkeypatch):
     assert data["upserts"] == []
     assert len(data["tombstones"]) == 1
     assert data["tombstones"][0]["id"] == loc_id
+
+
+def test_update_location(monkeypatch):
+    client, session_module, models = make_client(monkeypatch)
+    session_gen = session_module.get_session()
+    session = next(session_gen)
+    try:
+        loc = models.Location(
+            name="Old",
+            address="A",
+            customer_id="c1",
+            original_name="Orig",
+        )
+        session.add(loc)
+        session.commit()
+        session.refresh(loc)
+        loc_id = loc.id
+        rev = loc.revision
+    finally:
+        session_gen.close()
+
+    payload = {"name": "New", "address": "B"}
+    r = client.patch(f"/locations/{loc_id}", json=payload, headers=auth_headers())
+    assert r.status_code == 200
+    data = r.json()
+    assert data["name"] == "New"
+    assert data["address"] == "B"
+    assert data["revision"] == rev + 1
+
+    session_gen = session_module.get_session()
+    session = next(session_gen)
+    try:
+        updated = session.get(models.Location, loc_id)
+        assert updated.name == "New"
+        assert updated.address == "B"
+        assert updated.revision == rev + 1
+    finally:
+        session_gen.close()
+
+
+def test_update_location_creates_audit_log(monkeypatch):
+    client, session_module, models = make_client(monkeypatch)
+    session_gen = session_module.get_session()
+    session = next(session_gen)
+    try:
+        loc = models.Location(name="Old", address="A", customer_id="c1")
+        session.add(loc)
+        session.commit()
+        session.refresh(loc)
+        loc_id = loc.id
+    finally:
+        session_gen.close()
+
+    payload = {"name": "New"}
+    r = client.patch(f"/locations/{loc_id}", json=payload, headers=auth_headers())
+    assert r.status_code == 200
+
+    session_gen = session_module.get_session()
+    session = next(session_gen)
+    try:
+        logs = session.exec(select(models.AuditLog)).all()
+        assert len(logs) == 1
+        log = logs[0]
+        assert log.action == "update"
+        assert log.entity == "location"
+        assert log.entity_id == loc_id
+    finally:
+        session_gen.close()

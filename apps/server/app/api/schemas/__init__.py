@@ -1,4 +1,4 @@
-from .location import LocationRead
+from .location import LocationRead, LocationUpdate
 from .order import OrderCreate, OrderRead, OrderUpdate
 from .pagination import Page
 from .photo import BatchAssignRequest, PhotoIngest, PhotoRead, PhotoUpdate
@@ -7,6 +7,7 @@ from .upload import UploadIntent, UploadIntentRequest
 
 __all__ = [
     "LocationRead",
+    "LocationUpdate",
     "Page",
     "BatchAssignRequest",
     "PhotoIngest",

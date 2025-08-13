@@ -112,6 +112,21 @@ paths:
                       properties:
                         id: { type: string }
 
+  /locations/{id}:
+    patch:
+      tags: [locations]
+      summary: Update location
+      parameters:
+        - $ref: '#/components/parameters/id'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/LocationUpdate' }
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/Location' } } } }
+        '404': { $ref: '#/components/responses/NotFound' }
+
   /photos/upload-intent:
     post:
       tags: [photos]
@@ -455,10 +470,19 @@ components:
       properties:
         id: { type: string }
         name: { type: string }
+        original_name: { type: string, nullable: true }
+        revision: { type: integer }
         address: { type: string }
         point: { $ref: '#/components/schemas/GeoPoint' }
         active: { type: boolean }
         ninox_id: { type: string }
+    LocationUpdate:
+      type: object
+      properties:
+        name: { type: string }
+        original_name: { type: string, nullable: true }
+        address: { type: string }
+        active: { type: boolean }
     Photo:
       type: object
       properties:
