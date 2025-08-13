@@ -64,6 +64,11 @@ class InviteRequest(BaseModel):
     email: EmailStr
 
 
+class InviteAcceptRequest(BaseModel):
+    token: str
+    password: str
+
+
 @router.post("/invite", status_code=status.HTTP_201_CREATED)
 def invite_user(
     req: InviteRequest,
@@ -77,6 +82,26 @@ def invite_user(
     session.commit()
     send_mail(email, "You're invited", f"Use this link: https://example.com/invite/{token}")
     return {"id": invitation.id, "email": invitation.email}
+
+
+@router.post("/accept")
+def accept_invite(req: InviteAcceptRequest, session: Session = Depends(get_session)):
+    invitation = session.exec(
+        select(Invitation).where(Invitation.token == req.token)
+    ).first()
+    if invitation is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Invalid token")
+    email = invitation.email.lower()
+    user = session.exec(select(UserModel).where(UserModel.email == email)).first()
+    if user:
+        user.password_hash = hash_password(req.password)
+    else:
+        user = UserModel(email=email, password_hash=hash_password(req.password))
+        session.add(user)
+    session.delete(invitation)
+    session.commit()
+    token = create_access_token(user.email, settings.access_token_expires_minutes)
+    return token
 
 
 @router.get("/me")

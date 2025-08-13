@@ -57,6 +57,27 @@ paths:
         '401':
           $ref: '#/components/responses/Unauthorized'
 
+  /auth/accept:
+    post:
+      tags: [auth]
+      summary: Accept invitation with token and password
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InviteAcceptRequest'
+      responses:
+        '200':
+          description: JWT access token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthToken'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
   /locations:
     get:
       tags: [locations]
@@ -465,6 +486,12 @@ components:
         access_token: { type: string }
         token_type: { type: string, example: Bearer }
         expires_in: { type: integer, example: 3600 }
+    InviteAcceptRequest:
+      type: object
+      required: [token, password]
+      properties:
+        token: { type: string }
+        password: { type: string, minLength: 1 }
     Location:
       type: object
       properties:
