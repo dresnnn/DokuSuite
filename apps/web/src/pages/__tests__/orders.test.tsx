@@ -1,9 +1,14 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import OrdersPage from '../orders'
+import OrderDetailPage from '../orders/[id]'
 import { apiClient } from '../../../lib/api'
 
 jest.mock('../../../lib/api', () => ({
-  apiClient: { GET: jest.fn(), POST: jest.fn() },
+  apiClient: { GET: jest.fn(), POST: jest.fn(), PATCH: jest.fn() },
+}))
+
+jest.mock('next/router', () => ({
+  useRouter: () => ({ query: { id: '1' } }),
 }))
 
 describe('OrdersPage', () => {
@@ -30,6 +35,11 @@ describe('OrdersPage', () => {
     await waitFor(() => {
       expect(screen.getByText('o1')).toBeInTheDocument()
     })
+
+    expect(screen.getByRole('link', { name: '1' })).toHaveAttribute(
+      'href',
+      '/orders/1',
+    )
 
     fireEvent.click(screen.getByText('Next'))
 
@@ -87,5 +97,32 @@ describe('OrdersPage', () => {
 
     expect(screen.getByPlaceholderText('Customer ID')).toHaveValue('')
     expect(screen.getByPlaceholderText('Name')).toHaveValue('')
+  })
+})
+
+describe('OrderDetailPage', () => {
+  it('updates order', async () => {
+    jest.clearAllMocks()
+    ;(apiClient.GET as jest.Mock).mockResolvedValue({
+      data: { customer_id: 'c1', name: 'Order 1', status: 'reserved' },
+    })
+
+    render(<OrderDetailPage />)
+    await waitFor(() => expect(apiClient.GET).toHaveBeenCalled())
+
+    fireEvent.change(screen.getByLabelText('Status:'), {
+      target: { value: 'booked' },
+    })
+    fireEvent.click(screen.getByText('Save'))
+
+    await waitFor(() =>
+      expect(apiClient.PATCH).toHaveBeenCalledWith(
+        '/orders/{id}',
+        expect.objectContaining({
+          params: { path: { id: 1 } },
+          body: expect.objectContaining({ status: 'booked' }),
+        }),
+      ),
+    )
   })
 })

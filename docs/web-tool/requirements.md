@@ -18,7 +18,7 @@ Kernfunktionen:
 - Freigabeverwaltung: bestehende Shares paginiert listen (`page`/`limit`), neue Links mit Ablaufdatum (`expires_at`) und Wasserzeichen-Policy (`watermark_policy`) erzeugen, Widerruf über `POST /shares/{id}/revoke`; die generierte URL wird nach Erstellung angezeigt.
 - Export-Workflow: Export-Jobs der aktuellen Sitzung lokal verfolgen, ZIP- und Excel-Exporte anstoßen (`POST /exports/zip`, `POST /exports/excel`), Status via Polling aktualisieren (`GET /exports/{id}`) und Download-Link bei abgeschlossenen Jobs (`status=done`).
 - Nutzer-/Rollenverwaltung; Einladungslinks, Passwort-Reset, 2FA (später).
-- Auftragsverwaltung: Aufträge listen, nach Kunde und Status filtern sowie neue Aufträge anlegen.
+- Auftragsverwaltung: Aufträge listen, nach Kunde und Status filtern, neue Aufträge anlegen sowie Details ansehen und den Status bearbeiten (`GET /orders/{id}`, `PATCH /orders/{id}`).
 - Standortpflege: Standorte suchen (`q`, `near`, `radius_m`), paginiert listen und Name, Adresse oder Aktivstatus bearbeiten (`PATCH /locations/{id}`).
 - Foto-Detailseite zur Bearbeitung von Metadaten (`quality_flag`, `note`, ...)
   über `PATCH /photos/{id}`.
