@@ -385,6 +385,11 @@ paths:
         - in: query
           name: customerId
           schema: { type: string }
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum: [reserved, booked, cancelled]
       responses:
         '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/Page_Order_' } } } }
     post:

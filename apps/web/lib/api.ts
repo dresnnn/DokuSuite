@@ -603,6 +603,7 @@ export interface paths {
                     page?: components["parameters"]["page"];
                     limit?: components["parameters"]["limit"];
                     customerId?: string;
+                    status?: "reserved" | "booked" | "cancelled";
                 };
                 header?: never;
                 path?: never;
