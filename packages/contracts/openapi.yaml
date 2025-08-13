@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: DokuSuite API
-  version: 0.2.3
+  version: 0.2.4
   description: |
     API für iOS-App, Web-Tool und Integrationen der DokuSuite.
     Zeitzone: Europe/Berlin. Datums-/Zeitangaben sind RFC3339 UTC, mit klarer Interpretation für Woche (ISO-8601 Kalenderwoche).
@@ -85,6 +85,18 @@ paths:
                 $ref: '#/components/schemas/AuthToken'
         '401':
           $ref: '#/components/responses/Unauthorized'
+
+  /auth/me:
+    get:
+      tags: [auth]
+      summary: Get current user
+      responses:
+        '200':
+          description: Current user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
 
   /auth/accept:
     post:

@@ -5,14 +5,22 @@ import { AuthProvider, useAuth } from '../context/AuthContext';
 import Layout from '../components/Layout';
 
 export function AuthGuard({ children }: { children: ReactNode }) {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, role } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
+    const adminPaths = ['/users', '/shares', '/locations'];
     if (!isAuthenticated && router.pathname !== '/login') {
       router.replace('/login');
+    } else if (
+      isAuthenticated &&
+      role &&
+      adminPaths.some((p) => router.pathname.startsWith(p)) &&
+      role !== 'ADMIN'
+    ) {
+      router.replace('/photos');
     }
-  }, [isAuthenticated, router]);
+  }, [isAuthenticated, role, router]);
 
   return <>{children}</>;
 }

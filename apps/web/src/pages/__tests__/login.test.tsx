@@ -37,6 +37,9 @@ describe('LoginPage', () => {
       events: { on: jest.fn(), off: jest.fn() },
       beforePopState: jest.fn(),
     });
+    jest.spyOn(apiClient, 'GET').mockResolvedValue({
+      data: { id: 1, email: 'user@example.com', role: 'ADMIN' },
+    } as unknown as Awaited<ReturnType<typeof apiClient.GET>>);
   });
 
   afterEach(() => {
@@ -135,18 +138,24 @@ describe('LoginPage', () => {
         </AuthProvider>,
       );
 
-      await waitFor(() => {
-        expect(replace).toHaveBeenCalledWith('/login');
-      });
+    await waitFor(() => {
+      expect(replace).toHaveBeenCalledWith('/login');
     });
+  });
 
-    it('clears token and redirects to login on logout', () => {
+  it.each(['/users', '/shares', '/locations'])(
+    'redirects normal users from %s',
+    async (path) => {
       store['token'] = 'token123';
-      const push = jest.fn();
+      (apiClient.GET as jest.Mock).mockResolvedValueOnce({
+        data: { id: 1, email: 'user@example.com', role: 'USER' },
+      } as unknown as Awaited<ReturnType<typeof apiClient.GET>>);
+
+      const replace = jest.fn();
       mockedUseRouter.mockReturnValue({
-        pathname: '/photos',
-        replace: push,
-        push,
+        pathname: path,
+        replace,
+        push: jest.fn(),
         prefetch: jest.fn(),
         events: { on: jest.fn(), off: jest.fn() },
         beforePopState: jest.fn(),
@@ -154,16 +163,42 @@ describe('LoginPage', () => {
 
       render(
         <AuthProvider>
-          <Layout>
-            <div>content</div>
-          </Layout>
+          <AuthGuard>
+            <div>admin</div>
+          </AuthGuard>
         </AuthProvider>,
       );
 
-      fireEvent.click(screen.getByText('Logout'));
-      expect(window.localStorage.removeItem).toHaveBeenCalledWith('token');
-      expect(push).toHaveBeenCalledWith('/login');
+      await waitFor(() => {
+        expect(replace).toHaveBeenCalledWith('/photos');
+      });
+    },
+  );
+
+  it('clears token and redirects to login on logout', () => {
+    store['token'] = 'token123';
+    const push = jest.fn();
+    mockedUseRouter.mockReturnValue({
+      pathname: '/photos',
+      replace: push,
+      push,
+      prefetch: jest.fn(),
+      events: { on: jest.fn(), off: jest.fn() },
+      beforePopState: jest.fn(),
     });
+
+    render(
+      <AuthProvider>
+        <Layout>
+          <div>content</div>
+        </Layout>
+      </AuthProvider>,
+    );
+
+    fireEvent.click(screen.getByText('Logout'));
+    expect(window.localStorage.removeItem).toHaveBeenCalledWith('token');
+    expect(push).toHaveBeenCalledWith('/login');
+  });
 
     it('renders exports link in navigation', () => {
       const push = jest.fn();
