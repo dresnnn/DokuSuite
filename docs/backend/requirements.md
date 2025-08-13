@@ -6,7 +6,7 @@ Scope:
 - Integrationen: Ninox (Standorte, Aufträge, Lieferanten), Geocoding, Mail.
 
 APIs (High-Level):
-- Auth & Nutzer: Login/Token, Rollen, Einladungen.
+- Auth & Nutzer: Login/Token, Rollen, Einladungen, Nutzerverwaltung (Liste, Rollen ändern, löschen).
 - Fotos: Anlegen (Metadaten), Presigned Upload, Status, Suche/Filter, Bulk-Aktionen.
 - Standorte: Lesen/Suchen (inkl. Offline-Deltas für iOS), Korrekturen, Historie.
 - Aufträge: Lesen/Schreiben, Zuweisung von Fotos, Exporte.

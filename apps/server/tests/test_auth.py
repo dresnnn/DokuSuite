@@ -148,3 +148,70 @@ def test_accept_invite_invalid_token(monkeypatch):
         json={"token": "bad", "password": "secret"},
     )
     assert r.status_code == 404
+
+
+def test_list_users(monkeypatch):
+    client, _, _ = make_client(monkeypatch)
+    client.post(
+        "/auth/register",
+        json={"email": "user@example.com", "password": "secret"},
+    )
+    r = client.get("/users", headers=auth_headers())
+    assert r.status_code == 200
+    users = r.json()
+    assert any(u["email"] == "user@example.com" for u in users)
+
+
+def test_update_user_role(monkeypatch):
+    client, session_module, models = make_client(monkeypatch)
+    client.post(
+        "/auth/register",
+        json={"email": "user@example.com", "password": "secret"},
+    )
+    session_gen = session_module.get_session()
+    session = next(session_gen)
+    try:
+        user = session.exec(
+            select(models.User).where(models.User.email == "user@example.com")
+        ).first()
+        user_id = user.id
+    finally:
+        session_gen.close()
+    r = client.patch(
+        f"/users/{user_id}",
+        json={"role": "ADMIN"},
+        headers=auth_headers(),
+    )
+    assert r.status_code == 200
+    session_gen = session_module.get_session()
+    session = next(session_gen)
+    try:
+        user = session.get(models.User, user_id)
+        assert user.role == models.UserRole.ADMIN
+    finally:
+        session_gen.close()
+
+
+def test_delete_user(monkeypatch):
+    client, session_module, models = make_client(monkeypatch)
+    client.post(
+        "/auth/register",
+        json={"email": "user@example.com", "password": "secret"},
+    )
+    session_gen = session_module.get_session()
+    session = next(session_gen)
+    try:
+        user = session.exec(
+            select(models.User).where(models.User.email == "user@example.com")
+        ).first()
+        user_id = user.id
+    finally:
+        session_gen.close()
+    r = client.delete(f"/users/{user_id}", headers=auth_headers())
+    assert r.status_code == 204
+    session_gen = session_module.get_session()
+    session = next(session_gen)
+    try:
+        assert session.get(models.User, user_id) is None
+    finally:
+        session_gen.close()
