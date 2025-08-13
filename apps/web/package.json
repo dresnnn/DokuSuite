@@ -12,7 +12,8 @@
   "dependencies": {
     "next": "15.4.6",
     "react": "19.1.0",
-    "react-dom": "19.1.0"
+    "react-dom": "19.1.0",
+    "openapi-fetch": "^0.14.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
@@ -29,6 +30,7 @@
     "jest-environment-jsdom": "^30.0.5",
     "prettier": "^3.6.2",
     "ts-node": "^10.9.2",
-    "typescript": "^5"
+    "typescript": "^5",
+    "openapi-typescript": "^7.9.1"
   }
 }
