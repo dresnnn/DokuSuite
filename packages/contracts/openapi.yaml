@@ -145,6 +145,43 @@ paths:
         '401':
           $ref: '#/components/responses/Unauthorized'
 
+  /auth/reset-request:
+    post:
+      tags: [auth]
+      summary: Request password reset email
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email]
+              properties:
+                email: { type: string, format: email }
+      responses:
+        '204': { description: No Content }
+
+  /auth/reset:
+    post:
+      tags: [auth]
+      summary: Reset password with token
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token, password]
+              properties:
+                token: { type: string }
+                password: { type: string, minLength: 1 }
+      responses:
+        '204': { description: No Content }
+        '404':
+          $ref: '#/components/responses/NotFound'
+
   /users:
     get:
       tags: [users]
