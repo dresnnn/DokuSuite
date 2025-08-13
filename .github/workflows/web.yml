@@ -26,5 +26,7 @@ jobs:
         run: npm ci
       - name: Lint
         run: npm run lint
+      - name: Generate API types
+        run: npm run generate
       - name: Test
         run: npm test
