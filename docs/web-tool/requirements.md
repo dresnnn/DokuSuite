@@ -38,6 +38,12 @@ Kernfunktionen:
 - Auf der Accept-Seite setzt der Nutzer ein neues Passwort; das Frontend sendet `POST /auth/accept` mit Token und Passwort.
 - Nach erfolgreichem Setzen des Passworts kann sich der Nutzer über `/login` anmelden.
 
+## Invite-Flow
+- Ein Administrator lädt einen Nutzer über `POST /auth/invite` ein.
+- Der Nutzer erhält einen Link `/accept/{token}`.
+- Auf der Accept-Seite setzt der Nutzer ein neues Passwort; das Frontend sendet `POST /auth/accept` mit Token und Passwort.
+- Nach erfolgreichem Setzen des Passworts kann sich der Nutzer über `/login` anmelden.
+
 UX/Leistung:
 - Flüssige Interaktionen bei großen Datenmengen (Server-seitige Filter/Pagination, Streaming/Infinite Scroll).
 - Tastaturkürzel, Batch-Workflows, Undo.
