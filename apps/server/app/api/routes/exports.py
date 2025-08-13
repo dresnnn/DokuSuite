@@ -1,3 +1,5 @@
+from typing import Any
+
 import boto3
 from fastapi import APIRouter, Depends, HTTPException, status
 from rq.exceptions import NoSuchJobError
@@ -24,15 +26,15 @@ def _s3_client():
     )
 
 
-@router.post("/zip")
-def export_zip():
-    job = enqueue_export_zip()
+@router.post("/zip", status_code=status.HTTP_202_ACCEPTED)
+def export_zip(payload: dict[str, Any] | None = None):
+    job = enqueue_export_zip(payload)
     return {"export_id": job.id}
 
 
-@router.post("/excel")
-def export_excel():
-    job = enqueue_export_excel()
+@router.post("/excel", status_code=status.HTTP_202_ACCEPTED)
+def export_excel(payload: dict[str, Any] | None = None):
+    job = enqueue_export_excel(payload)
     return {"export_id": job.id}
 
 
