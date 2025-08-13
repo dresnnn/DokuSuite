@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: DokuSuite API
-  version: 0.2.0
+  version: 0.2.1
   description: |
     API für iOS-App, Web-Tool und Integrationen der DokuSuite.
     Zeitzone: Europe/Berlin. Datums-/Zeitangaben sind RFC3339 UTC, mit klarer Interpretation für Woche (ISO-8601 Kalenderwoche).
@@ -382,7 +382,7 @@ components:
       in: path
       name: id
       required: true
-      schema: { type: string }
+      schema: { type: integer }
     page:
       in: query
       name: page
@@ -468,122 +468,90 @@ components:
     Location:
       type: object
       properties:
-        id: { type: string }
+        id: { type: integer }
         name: { type: string }
         original_name: { type: string, nullable: true }
         revision: { type: integer }
         address: { type: string }
-        point: { $ref: '#/components/schemas/GeoPoint' }
         active: { type: boolean }
-        ninox_id: { type: string }
     LocationUpdate:
       type: object
       properties:
-        name: { type: string }
+        name: { type: string, nullable: true }
         original_name: { type: string, nullable: true }
-        address: { type: string }
-        active: { type: boolean }
+        address: { type: string, nullable: true }
+        active: { type: boolean, nullable: true }
     Photo:
       type: object
       properties:
-        id: { type: string }
+        id: { type: integer }
         object_key: { type: string }
         taken_at: { type: string, format: date-time }
+        status: { $ref: '#/components/schemas/PhotoStatus' }
         mode: { $ref: '#/components/schemas/Mode' }
         site_id: { type: string, nullable: true }
-        ad_hoc_spot: { $ref: '#/components/schemas/GeoPoint', nullable: true }
-        uploader_id: { type: string }
-        device_id: { type: string }
-        hash: { type: string }
-        is_duplicate: { type: boolean }
-        quality_score: { type: number, nullable: true }
-        flag_bad: { type: boolean, default: false }
-        flag_best_of: { type: boolean, default: false }
-        status: { $ref: '#/components/schemas/PhotoStatus' }
-        assignments:
-          type: array
-          items:
-            type: object
-            properties:
-              order_id: { type: string }
-              calendar_week: { type: string, example: '2025-W32' }
-              assigned_by: { type: string }
-              assigned_at: { type: string, format: date-time }
+        device_id: { type: string, nullable: true }
+        uploader_id: { type: string, nullable: true }
     PhotoIngest:
       type: object
-      required: [object_key, taken_at, mode]
+      required: [object_key, taken_at, mode, ad_hoc_spot]
       properties:
         object_key: { type: string, description: Vom Upload-Intent erhalten }
         taken_at: { type: string, format: date-time }
         mode: { $ref: '#/components/schemas/Mode' }
         site_id: { type: string, nullable: true }
-        ad_hoc_spot: { $ref: '#/components/schemas/GeoPoint', nullable: true }
-        device_id: { type: string }
-        uploader_id: { type: string }
-        quality_flag: { type: string, nullable: true, enum: [bad, best_of] }
+        ad_hoc_spot: { $ref: '#/components/schemas/GeoPoint' }
+        device_id: { type: string, nullable: true }
+        uploader_id: { type: string, nullable: true }
+        quality_flag: { type: string, nullable: true }
         note: { type: string, nullable: true }
     PhotoUpdate:
       type: object
       properties:
+        quality_flag: { type: string, nullable: true }
+        note: { type: string, nullable: true }
+        mode: { $ref: '#/components/schemas/Mode', nullable: true }
         site_id: { type: string, nullable: true }
-        ad_hoc_spot: { $ref: '#/components/schemas/GeoPoint', nullable: true }
-        flag_bad: { type: boolean }
-        flag_best_of: { type: boolean }
-        status: { $ref: '#/components/schemas/PhotoStatus' }
+        device_id: { type: string, nullable: true }
+        uploader_id: { type: string, nullable: true }
     OrderCreate:
       type: object
-      required: [customer_id, name, service_period]
+      required: [customer_id, name, status]
       properties:
         customer_id: { type: string }
         name: { type: string }
-        status: { type: string, enum: [reserved, booked, cancelled], default: reserved }
-        service_period:
-          type: object
-          properties:
-            begin: { type: string, format: date }
-            end: { type: string, format: date }
+        status: { type: string, enum: [reserved, booked, cancelled] }
     OrderUpdate:
       type: object
       properties:
-        name: { type: string }
-        status: { type: string, enum: [reserved, booked, cancelled] }
-        service_period:
-          type: object
-          properties:
-            begin: { type: string, format: date }
-            end: { type: string, format: date }
+        customer_id: { type: string, nullable: true }
+        name: { type: string, nullable: true }
+        status: { type: string, enum: [reserved, booked, cancelled], nullable: true }
     Order:
       type: object
       properties:
-        id: { type: string }
+        id: { type: integer }
         customer_id: { type: string }
         name: { type: string }
         status: { type: string, enum: [reserved, booked, cancelled] }
-        service_period:
-          type: object
-          properties:
-            begin: { type: string, format: date }
-            end: { type: string, format: date }
     ShareCreate:
       type: object
       required: [order_id]
       properties:
-        order_id: { type: string }
+        order_id: { type: integer }
         expires_at: { type: string, format: date-time, nullable: true }
-        watermark_policy: { $ref: '#/components/schemas/WatermarkPolicy' }
-        branding_theme: { type: string, nullable: true }
         download_allowed: { type: boolean, default: true }
+        watermark_policy: { $ref: '#/components/schemas/WatermarkPolicy', nullable: true }
+        email: { type: string, format: email, nullable: true }
     Share:
       type: object
       properties:
-        id: { type: string }
-        order_id: { type: string }
+        id: { type: integer }
+        order_id: { type: integer }
         url: { type: string, format: uri }
         expires_at: { type: string, format: date-time, nullable: true }
-        watermark_policy: { $ref: '#/components/schemas/WatermarkPolicy' }
-        branding_theme: { type: string, nullable: true }
         download_allowed: { type: boolean }
-        created_at: { type: string, format: date-time }
+        watermark_policy: { $ref: '#/components/schemas/WatermarkPolicy', nullable: true }
     UploadIntent:
       type: object
       properties:
