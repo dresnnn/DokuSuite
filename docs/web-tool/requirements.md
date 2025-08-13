@@ -51,6 +51,13 @@ Kernfunktionen:
 - Auf der Accept-Seite setzt der Nutzer ein neues Passwort; das Frontend sendet `POST /auth/accept` mit Token und Passwort.
 - Nach erfolgreichem Setzen des Passworts kann sich der Nutzer über `/login` anmelden.
 
+## Password-Reset-Flow
+
+- Nutzer fordert über `/forgot-password` einen Reset an (`POST /auth/reset-request`).
+- Er erhält einen Link `/reset/{token}` per E-Mail.
+- Auf der Reset-Seite setzt der Nutzer ein neues Passwort; das Frontend sendet `POST /auth/reset` mit Token und Passwort.
+- Nach erfolgreichem Reset kann sich der Nutzer mit dem neuen Passwort anmelden.
+
 UX/Leistung:
 
 - Flüssige Interaktionen bei großen Datenmengen (Server-seitige Filter/Pagination, Streaming/Infinite Scroll).
