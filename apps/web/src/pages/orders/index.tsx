@@ -1,5 +1,6 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import { useEffect, useState } from 'react'
+import Link from 'next/link'
 import { apiClient } from '../../../lib/api'
 
 type Order = {
@@ -144,7 +145,11 @@ export default function OrdersPage() {
         <tbody>
           {orders.map((o) => (
             <tr key={o.id}>
-              <td>{o.id}</td>
+              <td>
+                {o.id !== undefined && (
+                  <Link href={`/orders/${o.id}`}>{o.id}</Link>
+                )}
+              </td>
               <td>{o.name}</td>
               <td>{o.status}</td>
               <td>{o.customer_id}</td>
