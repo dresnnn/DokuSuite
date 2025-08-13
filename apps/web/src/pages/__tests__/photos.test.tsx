@@ -358,6 +358,26 @@ describe('PhotosPage', () => {
       ),
     )
   })
+
+  it('exports selected photos as ZIP', async () => {
+    jest.clearAllMocks()
+    ;(apiClient.GET as jest.Mock).mockResolvedValue({
+      data: { items: [{ id: 1 }], meta: {} },
+    })
+    render(<PhotosPage />)
+    await waitFor(() => expect(apiClient.GET).toHaveBeenCalled())
+    await waitFor(() =>
+      expect(screen.getAllByRole('checkbox')[0]).toBeInTheDocument(),
+    )
+    fireEvent.click(screen.getAllByRole('checkbox')[0])
+    fireEvent.click(screen.getByText('Export ZIP'))
+    await waitFor(() =>
+      expect(apiClient.POST).toHaveBeenCalledWith(
+        '/exports/zip',
+        expect.objectContaining({ body: { photoIds: ['1'] } }),
+      ),
+    )
+  })
 })
 
 describe('PhotoDetailPage', () => {
