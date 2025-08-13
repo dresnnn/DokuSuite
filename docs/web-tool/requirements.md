@@ -21,7 +21,12 @@ Kernfunktionen:
    - `AuthGuard` schützt Seiten und leitet nicht authentifizierte Nutzer auf `/login`.
    - Logout löscht das Token und navigiert zu `/login`.
  - Navigationsleiste mit Links zu `Photos`, `Users`, `Orders` und `Shares`.
- - Branding/Wasserzeichen-Policy je Kunde/Share (Agenturkunden i. d. R. ohne Wasserzeichen).
+- Branding/Wasserzeichen-Policy je Kunde/Share (Agenturkunden i. d. R. ohne Wasserzeichen).
+
+## Kunden-Flow
+- Kunde öffnet einen Freigabe-Link `/public/{token}`.
+- Die Galerie lädt die Fotos des Auftrags und ruft für jedes Bild `/public/shares/{token}/photos/{id}` auf.
+- Der Kunde kann einzelne Fotos auswählen und ZIP- (`POST /exports/zip`) oder Excel-Exporte (`POST /exports/excel`) starten.
 
 UX/Leistung:
 - Flüssige Interaktionen bei großen Datenmengen (Server-seitige Filter/Pagination, Streaming/Infinite Scroll).
