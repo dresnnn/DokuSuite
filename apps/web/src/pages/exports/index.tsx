@@ -25,14 +25,40 @@ export default function ExportsPage() {
     fetchExports()
   }, [])
 
-  const triggerExport = async () => {
-    const { data } = await client.POST('/exports', {})
+  const triggerZipExport = async () => {
+    const { data } = await client.POST('/exports/zip', {})
     if (data) setJobs((prev) => [...prev, data as ExportJob])
   }
 
+  const triggerExcelExport = async () => {
+    const { data } = await client.POST('/exports/excel', {})
+    if (data) setJobs((prev) => [...prev, data as ExportJob])
+  }
+
+  useEffect(() => {
+    const pending = jobs.filter((j) => j.status !== 'done')
+    if (pending.length === 0) return
+
+    const interval = setInterval(async () => {
+      for (const job of pending) {
+        if (!job.id) continue
+        const { data } = await client.GET('/exports/{id}', {
+          params: { path: { id: job.id } },
+        })
+        if (data)
+          setJobs((prev) =>
+            prev.map((j) => (j.id === job.id ? (data as ExportJob) : j)),
+          )
+      }
+    }, 2000)
+
+    return () => clearInterval(interval)
+  }, [jobs])
+
   return (
     <div>
-      <button onClick={triggerExport}>Start Export</button>
+      <button onClick={triggerZipExport}>Start ZIP Export</button>
+      <button onClick={triggerExcelExport}>Start Excel Export</button>
       <table>
         <thead>
           <tr>
