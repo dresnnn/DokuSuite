@@ -114,6 +114,7 @@ class Photo(SQLModel, table=True):
     note: str | None = Field(default=None)
     calendar_week: str | None = Field(default=None)
     hash: str
+    phash: str | None = Field(default=None)
     is_duplicate: bool = Field(default=False)
     updated_at: datetime = Field(
         default_factory=lambda: datetime.now(UTC),

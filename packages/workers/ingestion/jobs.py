@@ -10,6 +10,8 @@ import boto3
 from openpyxl import Workbook
 from PIL import Image
 
+from app.services.phash import compute_phash
+
 from app.core.config import settings
 from app.db.models import Photo
 from app.db.session import get_session
@@ -40,8 +42,9 @@ def ingest(payload: dict[str, Any]) -> None:
     thumb_key = f"thumbnails/{key}.jpg"
     client.put_object(Bucket=settings.s3_bucket, Key=thumb_key, Body=buf.getvalue())
 
-    # Compute hash
+    # Compute hash values
     digest = hashlib.sha256(data).hexdigest()
+    phash = compute_phash(data)
 
     # Persist hash to database
     session_gen = get_session()
@@ -50,6 +53,7 @@ def ingest(payload: dict[str, Any]) -> None:
         photo = session.get(Photo, payload.get("photo_id"))
         if photo:
             photo.hash = digest
+            photo.phash = phash
             session.add(photo)
             session.commit()
     finally:
