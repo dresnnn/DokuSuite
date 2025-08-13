@@ -17,9 +17,10 @@ Pipelines/JOBS:
 - Medienverarbeitung: Thumbnails, pHash, EXIF/Orientierung, Validierungen.
 - Matching: Fixed-Site-Abgleich, Reverse Geocoding (Ad-hoc), Belegungsfenster-Regeln.
 - Sync: Ninox-Deltas (idempotent), Konfliktauflösung, Audit-Log.
- - Duplikate: Hash-only-Strategie für Erkennung/Markierung (keine Distanz-/Zeit-Heuristik im MVP).
+- Duplikate: Hash-only-Strategie für Erkennung/Markierung (keine Distanz-/Zeit-Heuristik im MVP).
 
 - Python (z. B. FastAPI), PostgreSQL + PostGIS, Redis, Celery/RQ, S3-kompatibler Storage (Hetzner/MinIO/S3).
+- GIST-Index auf `location.geog` für effiziente Geo-Abfragen.
 - Migrations/Schema-Versionierung, seeding für Dev.
 - Observability: strukturierte Logs, Metriken, Traces; Korrelation über Request-/Upload-IDs.
 
