@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: DokuSuite API
-  version: 0.2.1
+  version: 0.2.2
   description: |
     API für iOS-App, Web-Tool und Integrationen der DokuSuite.
     Zeitzone: Europe/Berlin. Datums-/Zeitangaben sind RFC3339 UTC, mit klarer Interpretation für Woche (ISO-8601 Kalenderwoche).
@@ -14,6 +14,7 @@ tags:
   - name: locations
   - name: orders
   - name: shares
+  - name: public-shares
   - name: exports
 security:
   - bearerAuth: []
@@ -32,6 +33,33 @@ paths:
                 type: object
                 properties:
                   status: { type: string, example: ok }
+  /auth/register:
+    post:
+      tags: [auth]
+      summary: Register with email and password
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email: { type: string, format: email }
+                password: { type: string, minLength: 1 }
+      responses:
+        '201':
+          description: User registered
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id: { type: integer }
+                  email: { type: string, format: email }
+        '400':
+          $ref: '#/components/responses/BadRequest'
   /auth/login:
     post:
       tags: [auth]
@@ -77,6 +105,32 @@ paths:
                 $ref: '#/components/schemas/AuthToken'
         '404':
           $ref: '#/components/responses/NotFound'
+
+  /auth/invite:
+    post:
+      tags: [auth]
+      summary: Invite user via email
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email]
+              properties:
+                email: { type: string, format: email }
+      responses:
+        '201':
+          description: Invitation created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id: { type: integer }
+                  email: { type: string, format: email }
+        '401':
+          $ref: '#/components/responses/Unauthorized'
 
   /locations:
     get:
@@ -350,6 +404,30 @@ paths:
         '204': { description: Revoked }
         '404': { $ref: '#/components/responses/NotFound' }
 
+  /public/shares/{token}/photos/{id}:
+    get:
+      tags: [public-shares]
+      summary: Get public photo URLs
+      security: []
+      parameters:
+        - in: path
+          name: token
+          required: true
+          schema: { type: string }
+        - $ref: '#/components/parameters/id'
+      responses:
+        '200':
+          description: Pre-signed URLs
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  original_url: { type: string, format: uri }
+                  thumbnail_url: { type: string, format: uri }
+        '404':
+          $ref: '#/components/responses/NotFound'
+
   /exports/zip:
     post:
       tags: [exports]
@@ -519,6 +597,12 @@ components:
         site_id: { type: string, nullable: true }
         device_id: { type: string, nullable: true }
         uploader_id: { type: string, nullable: true }
+        location_id: { type: integer, nullable: true }
+        order_id: { type: integer, nullable: true }
+        calendar_week: { type: string, nullable: true }
+        hash: { type: string }
+        phash: { type: string, nullable: true }
+        is_duplicate: { type: boolean }
     PhotoIngest:
       type: object
       required: [object_key, taken_at, mode, ad_hoc_spot]
