@@ -110,3 +110,41 @@ def test_invite_user(monkeypatch):
         assert "invite" in sent.get("subject", "")
     finally:
         session_gen.close()
+
+
+def test_accept_invite(monkeypatch):
+    client, session_module, models = make_client(monkeypatch)
+    monkeypatch.setattr("app.api.routes.auth.send_mail", lambda *_, **__: None)
+    client.post("/auth/invite", json={"email": "invitee@example.com"}, headers=auth_headers())
+    session_gen = session_module.get_session()
+    session = next(session_gen)
+    try:
+        invitation = session.exec(select(models.Invitation)).first()
+        token = invitation.token
+    finally:
+        session_gen.close()
+    r = client.post("/auth/accept", json={"token": token, "password": "secret"})
+    assert r.status_code == 200
+    session_gen = session_module.get_session()
+    session = next(session_gen)
+    try:
+        user = session.exec(
+            select(models.User).where(models.User.email == "invitee@example.com")
+        ).first()
+        assert user is not None
+        assert user.password_hash != "secret"
+        assert (
+            session.exec(select(models.Invitation).where(models.Invitation.token == token)).first()
+            is None
+        )
+    finally:
+        session_gen.close()
+
+
+def test_accept_invite_invalid_token(monkeypatch):
+    client, _, _ = make_client(monkeypatch)
+    r = client.post(
+        "/auth/accept",
+        json={"token": "bad", "password": "secret"},
+    )
+    assert r.status_code == 404
