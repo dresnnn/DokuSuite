@@ -6,9 +6,10 @@ Hauptnutzergruppen:
 - Plakatierer (optional): Eigene Uploads sichten, Status einsehen.
 
 Kernfunktionen:
-- Galerie mit schneller Filterung (Plakatierer, Woche, Standort, Modus, Qualität, Auftrag, Kunde, Zeitraum, Status).
+- Galerie mit schneller Filterung (Plakatierer, Woche, Standort, Modus, Qualität, Auftrag, Kunde, Zeitraum, Status) sowie spezifischen Parametern `from`, `to`, `orderId`, `status`, `siteId`.
 - Kartenansicht mit Clustering, Bounding-Box-Filter, Standortkorrektur.
 - Bulk-Operationen: Multi-Select, Zuweisen, Ausblenden, Curate-Flag, Re-Matching, Export.
+- Mehrfachauswahl im Grid/Table mit Auftragszuweisung via `POST /photos/batch/assign`.
 - Kundenfreigaben: Links (ablaufbar), Kunden-Login, ZIP- und Excel-Export, PDF-Report, Karten-Sharing.
 - Freigabeverwaltung: bestehende Shares listen, neue Links erzeugen, Widerruf über `DELETE /shares/{id}`; die generierte URL wird nach Erstellung angezeigt.
 - Nutzer-/Rollenverwaltung; Einladungslinks, Passwort-Reset, 2FA (später).

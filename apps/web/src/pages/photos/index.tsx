@@ -19,6 +19,14 @@ export default function PhotosPage() {
   const [meta, setMeta] = useState<PageMeta>({ page: 1, limit: 10, total: 0 })
   const [mode, setMode] = useState('')
   const [uploaderId, setUploaderId] = useState('')
+  const [from, setFrom] = useState('')
+  const [to, setTo] = useState('')
+  const [siteId, setSiteId] = useState('')
+  const [orderId, setOrderId] = useState('')
+  const [status, setStatus] = useState('')
+  const [selected, setSelected] = useState<number[]>([])
+  const [assignOrder, setAssignOrder] = useState('')
+  const [assignWeek, setAssignWeek] = useState('')
   const [view, setView] = useState<'table' | 'grid'>('table')
 
   const fetchPhotos = async (page = meta.page, limit = meta.limit) => {
@@ -29,6 +37,11 @@ export default function PhotosPage() {
           limit,
           mode: mode || undefined,
           uploaderId: uploaderId || undefined,
+          from: from || undefined,
+          to: to || undefined,
+          siteId: siteId || undefined,
+          orderId: orderId || undefined,
+          status: status || undefined,
         },
       },
     })
@@ -47,6 +60,26 @@ export default function PhotosPage() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     fetchPhotos()
+  }
+
+  const toggleSelect = (id: number) => {
+    setSelected((prev) =>
+      prev.includes(id) ? prev.filter((p) => p !== id) : [...prev, id]
+    )
+  }
+
+  const assignSelected = async () => {
+    if (!assignOrder || selected.length === 0) return
+    await apiClient.POST('/photos/batch/assign', {
+      body: {
+        photoIds: selected.map(String),
+        orderId: assignOrder,
+        calendarWeek: assignWeek || undefined,
+      },
+    })
+    setSelected([])
+    setAssignOrder('')
+    setAssignWeek('')
   }
 
   const changePage = (newPage: number) => {
@@ -92,6 +125,40 @@ export default function PhotosPage() {
             onChange={(e) => setUploaderId(e.target.value)}
           />
         </label>
+        <label>
+          From:
+          <input
+            type="datetime-local"
+            value={from}
+            onChange={(e) => setFrom(e.target.value)}
+          />
+        </label>
+        <label>
+          To:
+          <input
+            type="datetime-local"
+            value={to}
+            onChange={(e) => setTo(e.target.value)}
+          />
+        </label>
+        <label>
+          Site ID:
+          <input value={siteId} onChange={(e) => setSiteId(e.target.value)} />
+        </label>
+        <label>
+          Order ID:
+          <input value={orderId} onChange={(e) => setOrderId(e.target.value)} />
+        </label>
+        <label>
+          Status:
+          <select value={status} onChange={(e) => setStatus(e.target.value)}>
+            <option value="">Any</option>
+            <option value="INGESTED">INGESTED</option>
+            <option value="PROCESSED">PROCESSED</option>
+            <option value="REVIEWED">REVIEWED</option>
+            <option value="SHARED">SHARED</option>
+          </select>
+        </label>
         <button type="submit">Fetch</button>
       </form>
 
@@ -103,6 +170,7 @@ export default function PhotosPage() {
         <table>
           <thead>
             <tr>
+              <th></th>
               <th>ID</th>
               <th>Mode</th>
               <th>Uploader</th>
@@ -111,6 +179,13 @@ export default function PhotosPage() {
           <tbody>
             {photos.map((p) => (
               <tr key={p.id}>
+                <td>
+                  <input
+                    type="checkbox"
+                    checked={selected.includes(p.id!)}
+                    onChange={() => toggleSelect(p.id!)}
+                  />
+                </td>
                 <td>Photo {p.id}</td>
                 <td>{p.mode}</td>
                 <td>{p.uploader_id}</td>
@@ -127,9 +202,18 @@ export default function PhotosPage() {
           }}
         >
           {photos.map((p) => (
-            <div key={p.id} data-testid="photo">
+            <label
+              key={p.id}
+              data-testid="photo"
+              style={{ border: '1px solid #ccc', padding: '4px' }}
+            >
+              <input
+                type="checkbox"
+                checked={selected.includes(p.id!)}
+                onChange={() => toggleSelect(p.id!)}
+              />
               Photo {p.id}
-            </div>
+            </label>
           ))}
         </div>
       )}
@@ -150,6 +234,26 @@ export default function PhotosPage() {
         >
           Next
         </button>
+      </div>
+
+      <div style={{ marginTop: '1rem' }}>
+        <h3>Assign Selected</h3>
+        <div>Selected: {selected.length}</div>
+        <label>
+          Order ID:
+          <input
+            value={assignOrder}
+            onChange={(e) => setAssignOrder(e.target.value)}
+          />
+        </label>
+        <label>
+          Calendar Week:
+          <input
+            value={assignWeek}
+            onChange={(e) => setAssignWeek(e.target.value)}
+          />
+        </label>
+        <button onClick={assignSelected}>Assign</button>
       </div>
     </div>
   )
