@@ -41,6 +41,81 @@ def auth_headers():
     return {"Authorization": f"Bearer {token}"}
 
 
+def test_shares_list(monkeypatch):
+    client, session_module, models = make_client(monkeypatch)
+    session_gen = session_module.get_session()
+    session = next(session_gen)
+    try:
+        order1 = models.Order(customer_id="c1", name="o1", status="NEW")
+        order2 = models.Order(customer_id="c1", name="o2", status="NEW")
+        session.add(order1)
+        session.add(order2)
+        session.commit()
+        session.refresh(order1)
+        session.refresh(order2)
+        order1_id = order1.id
+        session.add(models.Share(order_id=order1_id, customer_id="c1", url="u1"))
+        session.add(models.Share(order_id=order2.id, customer_id="c1", url="u2"))
+        session.commit()
+    finally:
+        session_gen.close()
+
+    r = client.get("/shares", headers=auth_headers())
+    assert r.status_code == 200
+    data = r.json()
+    assert data["total"] == 2
+    assert len(data["items"]) == 2
+
+
+def test_shares_pagination(monkeypatch):
+    client, session_module, models = make_client(monkeypatch)
+    session_gen = session_module.get_session()
+    session = next(session_gen)
+    try:
+        order = models.Order(customer_id="c1", name="o1", status="NEW")
+        session.add(order)
+        session.commit()
+        session.refresh(order)
+        for i in range(3):
+            session.add(models.Share(order_id=order.id, customer_id="c1", url=f"u{i}"))
+        session.commit()
+    finally:
+        session_gen.close()
+
+    r = client.get("/shares?page=2&limit=2", headers=auth_headers())
+    assert r.status_code == 200
+    data = r.json()
+    assert data["total"] == 3
+    assert len(data["items"]) == 1
+
+
+def test_shares_order_filter(monkeypatch):
+    client, session_module, models = make_client(monkeypatch)
+    session_gen = session_module.get_session()
+    session = next(session_gen)
+    try:
+        order1 = models.Order(customer_id="c1", name="o1", status="NEW")
+        order2 = models.Order(customer_id="c1", name="o2", status="NEW")
+        session.add(order1)
+        session.add(order2)
+        session.commit()
+        session.refresh(order1)
+        session.refresh(order2)
+        order1_id = order1.id
+        session.add(models.Share(order_id=order1_id, customer_id="c1", url="u1"))
+        session.add(models.Share(order_id=order2.id, customer_id="c1", url="u2"))
+        session.commit()
+    finally:
+        session_gen.close()
+
+    r = client.get(f"/shares?orderId={order1_id}", headers=auth_headers())
+    assert r.status_code == 200
+    data = r.json()
+    assert data["total"] == 1
+    assert len(data["items"]) == 1
+    assert data["items"][0]["order_id"] == order1_id
+
+
 def test_create_share(monkeypatch):
     client, session_module, models = make_client(monkeypatch)
     session_gen = session_module.get_session()

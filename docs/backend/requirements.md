@@ -10,6 +10,7 @@ APIs (High-Level):
 - Fotos: Anlegen (Metadaten), Presigned Upload, Status, Suche/Filter, Bulk-Aktionen.
 - Standorte: Lesen/Suchen (inkl. Offline-Deltas für iOS), Korrekturen, Historie.
 - Aufträge: Lesen/Schreiben, Zuweisung von Fotos, Exporte.
+- Shares: Erstellen, Listen und Widerrufen von Freigabe-Links.
 - Exporte: ZIP/Excel erzeugen, asynchron, Ergebnis-Download.
 
 Pipelines/JOBS:

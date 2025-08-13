@@ -11,9 +11,10 @@ from fastapi import (
     Response,
     status,
 )
+from sqlalchemy import func
 from sqlmodel import Session, select
 
-from app.api.schemas import ShareCreate, ShareRead
+from app.api.schemas import Page, ShareCreate, ShareRead
 from app.core.config import settings
 from app.core.security import User, require_role
 from app.db.models import AuditLog, Order, Photo, Share
@@ -80,6 +81,26 @@ def create_share(
     session.add(log)
     session.commit()
     return ShareRead.model_validate(share, from_attributes=True)
+
+
+@router.get("", response_model=Page[ShareRead])
+def list_shares(
+    orderId: int | None = None,
+    page: int = 1,
+    limit: int = 10,
+    session: Session = Depends(get_session),
+    user: User = Depends(require_role("ADMIN")),
+):
+    query = select(Share)
+    if user.customer_id:
+        query = query.where(Share.customer_id == user.customer_id)
+    if orderId is not None:
+        query = query.where(Share.order_id == orderId)
+
+    total = session.exec(select(func.count()).select_from(query.subquery())).one()
+    results = session.exec(query.offset((page - 1) * limit).limit(limit)).all()
+    items = [ShareRead.model_validate(r, from_attributes=True) for r in results]
+    return Page(items=items, total=total, page=page, limit=limit)
 
 
 @router.get("/{share_id}", response_model=ShareRead)
