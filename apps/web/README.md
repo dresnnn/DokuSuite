@@ -35,6 +35,16 @@ The easiest way to deploy your Next.js app is to use the [Vercel Platform](https
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
 
+## API Type Generation
+
+Generate TypeScript types from the shared OpenAPI contract:
+
+```bash
+npm run generate
+```
+
+This regenerates `lib/api.ts` based on `packages/contracts/openapi.yaml`.
+
 ## Continuous Integration
 
 A GitHub Actions workflow (`.github/workflows/web.yml`) runs `npm ci`, `npm run lint`, and `npm test` on pushes and pull requests affecting this app.
