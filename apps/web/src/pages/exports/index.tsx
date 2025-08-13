@@ -16,15 +16,6 @@ export default function ExportsPage() {
     POST: typeof apiClient.POST
   }
 
-  const fetchExports = async () => {
-    const { data } = await client.GET('/exports')
-    if (data) setJobs(data as ExportJob[])
-  }
-
-  useEffect(() => {
-    fetchExports()
-  }, [])
-
   const triggerZipExport = async () => {
     const { data } = await client.POST('/exports/zip', {})
     if (data) setJobs((prev) => [...prev, data as ExportJob])
