@@ -1,4 +1,6 @@
 from fastapi import FastAPI
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
 
 from .api.routes import auth as auth_routes
 from .api.routes import exports as export_routes
@@ -10,6 +12,7 @@ from .api.routes import photos as photo_routes
 from .api.routes import shares as share_routes
 from .api.routes import users as user_routes
 from .core.config import settings
+from .core.limiter import limiter
 from .core.logging import configure_logging
 from .core.metrics import router as metrics_router
 from .core.middleware import RequestMetricsMiddleware
@@ -42,6 +45,8 @@ def configure_tracing(app: FastAPI) -> None:
 def create_app() -> FastAPI:
     configure_logging()
     app = FastAPI(title=settings.app_name)
+    app.state.limiter = limiter
+    app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
     app.add_middleware(RequestMetricsMiddleware)
     app.include_router(metrics_router)
     app.include_router(health_routes.router)

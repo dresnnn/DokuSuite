@@ -1,10 +1,11 @@
 import secrets
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from pydantic import BaseModel, EmailStr
 from sqlmodel import Session, select
 
 from app.core.config import settings
+from app.core.limiter import limiter
 from app.core.security import (
     User,
     create_access_token,
@@ -48,7 +49,10 @@ def register(req: RegisterRequest, session: Session = Depends(get_session)):
 
 
 @router.post("/login")
-def login(req: LoginRequest, session: Session = Depends(get_session)):
+@limiter.limit("5/minute")
+def login(
+    req: LoginRequest, request: Request, session: Session = Depends(get_session)
+):
     email = req.email.lower()
     user = session.exec(select(UserModel).where(UserModel.email == email)).first()
     if user is None or not verify_password(req.password, user.password_hash):

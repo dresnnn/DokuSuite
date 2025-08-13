@@ -8,6 +8,7 @@ from fastapi import (
     BackgroundTasks,
     Depends,
     HTTPException,
+    Request,
     Response,
     status,
 )
@@ -16,6 +17,7 @@ from sqlmodel import Session, select
 
 from app.api.schemas import Page, ShareCreate, ShareRead
 from app.core.config import settings
+from app.core.limiter import limiter
 from app.core.security import User, require_role
 from app.db.models import AuditLog, Order, Photo, Share
 from app.db.session import get_session
@@ -140,9 +142,11 @@ def revoke_share(
 
 
 @public_router.get("/{token}/photos/{photo_id}")
+@limiter.limit("5/minute")
 def public_photo(
     token: str,
     photo_id: int,
+    request: Request,
     background_tasks: BackgroundTasks,
     session: Session = Depends(get_session),
 ):
