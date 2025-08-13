@@ -375,6 +375,17 @@ paths:
         '404': { $ref: '#/components/responses/NotFound' }
 
   /shares:
+    get:
+      tags: [shares]
+      summary: List shares (read-only)
+      parameters:
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/limit'
+        - in: query
+          name: orderId
+          schema: { type: integer }
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/Page_Share_' } } } }
     post:
       tags: [shares]
       summary: Create a customer share for an order
@@ -539,6 +550,13 @@ components:
         items:
           type: array
           items: { $ref: '#/components/schemas/Order' }
+        meta: { $ref: '#/components/schemas/PageMeta' }
+    Page_Share_:
+      type: object
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/Share' }
         meta: { $ref: '#/components/schemas/PageMeta' }
     GeoPoint:
       type: object
