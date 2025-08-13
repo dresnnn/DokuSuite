@@ -22,6 +22,7 @@ export default function Layout({ children }: { children: ReactNode }) {
           <Link href="/users">Users</Link> |{' '}
           <Link href="/orders">Orders</Link> |{' '}
           <Link href="/shares">Shares</Link> |{' '}
+          <Link href="/exports">Exports</Link> |{' '}
           <button onClick={handleLogout}>Logout</button>
         </nav>
       )}

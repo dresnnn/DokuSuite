@@ -164,4 +164,26 @@ describe('LoginPage', () => {
       expect(window.localStorage.removeItem).toHaveBeenCalledWith('token');
       expect(push).toHaveBeenCalledWith('/login');
     });
+
+    it('renders exports link in navigation', () => {
+      const push = jest.fn();
+      mockedUseRouter.mockReturnValue({
+        pathname: '/photos',
+        replace: push,
+        push,
+        prefetch: jest.fn(),
+        events: { on: jest.fn(), off: jest.fn() },
+        beforePopState: jest.fn(),
+      });
+
+      render(
+        <AuthProvider>
+          <Layout>
+            <div>content</div>
+          </Layout>
+        </AuthProvider>,
+      );
+
+      expect(screen.getByText('Exports')).toBeInTheDocument();
+    });
   });
