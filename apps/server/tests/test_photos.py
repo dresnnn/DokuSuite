@@ -3,10 +3,12 @@ import io
 from datetime import UTC, datetime
 
 from fastapi.testclient import TestClient
+from PIL import Image
 from sqlmodel import SQLModel, select
 
 from app.core.config import settings
 from app.core.security import create_access_token
+from app.services.phash import compute_phash
 
 
 def make_client(monkeypatch):
@@ -63,6 +65,17 @@ def auth_headers():
         "access_token"
     ]
     return {"Authorization": f"Bearer {token}"}
+
+
+def test_phash_similarity():
+    img1 = Image.new("RGB", (64, 64), "white")
+    img2 = img1.copy()
+    img2.putpixel((0, 0), (254, 254, 254))
+    buf1 = io.BytesIO()
+    buf2 = io.BytesIO()
+    img1.save(buf1, format="PNG")
+    img2.save(buf2, format="PNG")
+    assert compute_phash(buf1.getvalue()) == compute_phash(buf2.getvalue())
 
 
 def test_photo_ingest_happy_path(monkeypatch):
