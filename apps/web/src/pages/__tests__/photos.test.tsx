@@ -1,12 +1,25 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import PhotosPage from '../photos'
+import PhotoDetailPage from '../photos/[id]'
 import { apiClient } from '../../../lib/api'
+import L from 'leaflet'
 
 jest.mock('../../../lib/api', () => ({
-  apiClient: { GET: jest.fn(), POST: jest.fn() },
+  apiClient: { GET: jest.fn(), POST: jest.fn(), PATCH: jest.fn() },
 }))
 
+jest.mock('next/router', () => ({
+  useRouter: () => ({ query: { id: '1' } }),
+}))
+
+type MockMarker = {
+  getElement: () => HTMLElement
+  on: (event: string, cb: (e: unknown) => void) => void
+  __handlers: Record<string, (e: unknown) => void>
+}
+
 jest.mock('leaflet', () => {
+  const markers: MockMarker[] = []
   const map = {
     setView: jest.fn().mockReturnThis(),
     on: jest.fn(),
@@ -24,24 +37,32 @@ jest.mock('leaflet', () => {
     map: () => map,
     tileLayer: () => ({ addTo: jest.fn() }),
     divIcon: ({ html }: { html: string }) => html,
-    marker: (_: unknown, opts: { icon: string }) => {
+    marker: (_: unknown, opts: { icon: string }): MockMarker => {
       const container = document.createElement('div')
       container.innerHTML = opts.icon
       const el = container.firstElementChild as HTMLElement
+      const handlers: Record<string, (e: unknown) => void> = {}
       return {
         getElement: () => el,
+        on: (event: string, cb: (e: unknown) => void) => {
+          handlers[event] = cb
+        },
+        __handlers: handlers,
       }
     },
     markerClusterGroup: () => ({
-      addLayer: (marker: { getElement: () => HTMLElement }) => {
+      addLayer: (marker: MockMarker) => {
+        markers.push(marker)
         document.body.appendChild(marker.getElement())
       },
       clearLayers: () => {
+        markers.length = 0
         document
           .querySelectorAll('[data-testid="marker"]')
           .forEach((el) => el.remove())
       },
     }),
+    __markers: markers,
   }
 })
 
@@ -180,4 +201,65 @@ describe('PhotosPage', () => {
       expect(screen.getAllByTestId('marker')).toHaveLength(2),
     )
   })
-});
+})
+
+describe('PhotoDetailPage', () => {
+  it('updates photo metadata', async () => {
+    jest.clearAllMocks()
+    ;(apiClient.GET as jest.Mock).mockResolvedValue({
+      data: { quality_flag: 'ok', note: 'old' },
+    })
+    render(<PhotoDetailPage />)
+    await waitFor(() => expect(apiClient.GET).toHaveBeenCalled())
+    fireEvent.change(screen.getByLabelText('Quality Flag:'), {
+      target: { value: 'bad' },
+    })
+    fireEvent.change(screen.getByLabelText('Note:'), {
+      target: { value: 'new' },
+    })
+    fireEvent.click(screen.getByText('Save'))
+    await waitFor(() =>
+      expect(apiClient.PATCH).toHaveBeenCalledWith(
+        '/photos/{id}',
+        expect.objectContaining({
+          params: { path: { id: 1 } },
+          body: expect.objectContaining({
+            quality_flag: 'bad',
+            note: 'new',
+          }),
+        }),
+      ),
+    )
+  })
+
+  it('sends updated coordinates on marker drag', async () => {
+    jest.clearAllMocks()
+    ;(apiClient.GET as jest.Mock)
+      .mockResolvedValueOnce({ data: { items: [], meta: {} } })
+      .mockResolvedValueOnce({
+        data: {
+          items: [{ id: 1, ad_hoc_spot: { lat: 1, lon: 1 } }],
+          meta: {},
+        },
+      })
+    render(<PhotosPage />)
+    await waitFor(() => expect(apiClient.GET).toHaveBeenCalled())
+    fireEvent.click(screen.getByText('Map'))
+    await waitFor(() =>
+      expect(screen.getAllByTestId('marker')).toHaveLength(1),
+    )
+    const marker = (L as unknown as { __markers: MockMarker[] }).__markers[0]
+    marker.__handlers.dragend({
+      target: { getLatLng: () => ({ lat: 5, lng: 6 }) },
+    })
+    await waitFor(() =>
+      expect(apiClient.PATCH).toHaveBeenCalledWith(
+        '/photos/{id}',
+        expect.objectContaining({
+          params: { path: { id: 1 } },
+          body: { ad_hoc_spot: { lat: 5, lon: 6 } },
+        }),
+      ),
+    )
+  })
+})

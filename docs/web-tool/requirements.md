@@ -8,7 +8,8 @@ Hauptnutzergruppen:
 Kernfunktionen:
 - Galerie mit schneller Filterung (Plakatierer, Woche, Standort, Modus, Qualität, Auftrag, Kunde, Zeitraum, Status) sowie spezifischen Parametern `from`, `to`, `orderId`, `status`, `siteId`.
 - Kartenansicht mit Leaflet, lädt `/photos?bbox=` abhängig vom Kartenausschnitt,
-  clustert Marker und erlaubt Standortkorrektur.
+  clustert Marker und erlaubt Standortkorrektur per Drag-and-Drop
+  (`PATCH /photos/{id}` aktualisiert die Koordinaten).
 - Bulk-Operationen: Multi-Select, Zuweisen, Ausblenden, Curate-Flag, Re-Matching, Export.
 - Mehrfachauswahl im Grid/Table mit Auftragszuweisung via `POST /photos/batch/assign`.
 - Kundenfreigaben: Links (ablaufbar), Kunden-Login, ZIP- und Excel-Export, PDF-Report, Karten-Sharing.
@@ -16,6 +17,8 @@ Kernfunktionen:
 - Export-Workflow: Export-Jobs listen (`GET /exports`), neue Exporte anstoßen (`POST /exports`), Status anzeigen und Download-Link bei abgeschlossenen Jobs (`status=done`).
 - Nutzer-/Rollenverwaltung; Einladungslinks, Passwort-Reset, 2FA (später).
 - Auftragsverwaltung: Aufträge listen, nach Kunde und Status filtern sowie neue Aufträge anlegen.
+- Foto-Detailseite zur Bearbeitung von Metadaten (`quality_flag`, `note`, ...)
+  über `PATCH /photos/{id}`.
  - Authentifizierung via Token: Browser speichert das Token und sendet es bei jeder API-Anfrage als `Authorization: Bearer <token>`.
    - `AuthContext` verwaltet Loginstatus und Token im Frontend.
    - `AuthGuard` schützt Seiten und leitet nicht authentifizierte Nutzer auf `/login`.
