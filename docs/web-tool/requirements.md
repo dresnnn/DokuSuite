@@ -85,7 +85,7 @@ Kernfunktionen:
 - Nutzer fordert über `/forgot-password` einen Reset an (`POST /auth/reset-request`).
 - Er erhält einen Link `/reset/{token}` per E-Mail.
 - Auf der Reset-Seite setzt der Nutzer ein neues Passwort; das Frontend sendet `POST /auth/reset` mit Token und Passwort.
-- Nach erfolgreichem Reset kann sich der Nutzer mit dem neuen Passwort anmelden.
+- Nach erfolgreichem Reset leitet das Frontend auf `/login` weiter und zeigt einen Erfolgs-Toast an; anschließend kann sich der Nutzer mit dem neuen Passwort anmelden.
 
 ## Plakatierer-Flow
 
