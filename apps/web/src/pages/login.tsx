@@ -18,6 +18,7 @@ export default function LoginPage() {
     });
     if (data?.access_token) {
       login(data.access_token);
+      router.replace('/photos');
     } else if (data?.challenge_token) {
       setChallenge(data.challenge_token);
       router.push('/2fa/verify');
