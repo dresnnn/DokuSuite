@@ -707,6 +707,24 @@ paths:
         '204': { description: Revoked }
         '404': { $ref: '#/components/responses/NotFound' }
 
+  /public/shares/{token}:
+    get:
+      tags: [public-shares]
+      summary: Get public share metadata
+      security: []
+      parameters:
+        - in: path
+          name: token
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Public share
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PublicShare' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
   /public/shares/{token}/photos/{id}:
     get:
       tags: [public-shares]
@@ -1048,6 +1066,10 @@ components:
         expires_at: { type: string, format: date-time, nullable: true }
         download_allowed: { type: boolean }
         watermark_policy: { $ref: '#/components/schemas/WatermarkPolicy', nullable: true }
+    PublicShare:
+      type: object
+      properties:
+        download_allowed: { type: boolean }
     PublicPhoto:
       type: object
       properties:

@@ -21,11 +21,23 @@ export default function PublicSharePage() {
   const [selected, setSelected] = useState<number[]>([])
   const [view, setView] = useState<'grid' | 'map'>('grid')
   const [jobs, setJobs] = useState<ExportJob[]>([])
+  const [downloadAllowed, setDownloadAllowed] = useState(true)
 
   const client = apiClient as unknown as {
     GET: typeof apiClient.GET
     POST: typeof apiClient.POST
   }
+
+  useEffect(() => {
+    const load = async () => {
+      if (!token || Array.isArray(token)) return
+      const { data } = await apiClient.GET('/public/shares/{token}', {
+        params: { path: { token } },
+      })
+      setDownloadAllowed(data?.download_allowed !== false)
+    }
+    load()
+  }, [token])
 
   useEffect(() => {
     const load = async () => {
@@ -129,11 +141,13 @@ export default function PublicSharePage() {
         typeof token === 'string' && <PhotoMap shareToken={token} />
       )}
 
-      <div>
-        <button onClick={exportZip}>Download ZIP</button>
-        <button onClick={exportExcel}>Download Excel</button>
-        <button onClick={exportPdf}>Download PDF</button>
-      </div>
+      {downloadAllowed && (
+        <div>
+          <button onClick={exportZip}>Download ZIP</button>
+          <button onClick={exportExcel}>Download Excel</button>
+          <button onClick={exportPdf}>Download PDF</button>
+        </div>
+      )}
 
       {jobs.length > 0 && (
         <div style={{ marginTop: '1rem' }}>
