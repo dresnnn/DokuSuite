@@ -3,6 +3,7 @@ import { useRouter } from 'next/router';
 import { useEffect, ReactNode } from 'react';
 import { AuthProvider, useAuth } from '../context/AuthContext';
 import Layout from '../components/Layout';
+import { ToastProvider, useToast } from '../components/Toast';
 import '../styles/globals.css';
 
 const publicPaths = [
@@ -18,6 +19,7 @@ const publicPaths = [
 export function AuthGuard({ children }: { children: ReactNode }) {
   const { isAuthenticated, role } = useAuth();
   const router = useRouter();
+  const { showToast } = useToast();
 
   useEffect(() => {
     const adminPaths = ['/users', '/shares', '/locations'];
@@ -27,6 +29,7 @@ export function AuthGuard({ children }: { children: ReactNode }) {
 
     if (!isAuthenticated && !isPublicPath) {
       router.replace('/login');
+      showToast('error', 'Please log in');
     } else if (
       isAuthenticated &&
       role &&
@@ -34,8 +37,9 @@ export function AuthGuard({ children }: { children: ReactNode }) {
       role !== 'ADMIN'
     ) {
       router.replace('/photos');
+      showToast('error', 'Access denied');
     }
-  }, [isAuthenticated, role, router]);
+  }, [isAuthenticated, role, router, showToast]);
 
   return <>{children}</>;
 }
@@ -43,11 +47,13 @@ export function AuthGuard({ children }: { children: ReactNode }) {
 export default function App({ Component, pageProps }: AppProps) {
   return (
     <AuthProvider>
-      <AuthGuard>
-        <Layout>
-          <Component {...pageProps} />
-        </Layout>
-      </AuthGuard>
+      <ToastProvider>
+        <AuthGuard>
+          <Layout>
+            <Component {...pageProps} />
+          </Layout>
+        </AuthGuard>
+      </ToastProvider>
     </AuthProvider>
   );
 }

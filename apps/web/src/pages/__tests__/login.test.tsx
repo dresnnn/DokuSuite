@@ -5,6 +5,7 @@ import { AuthProvider } from '../../context/AuthContext';
 import Layout from '../../components/Layout';
 import { AuthGuard } from '../_app';
 import { useRouter } from 'next/router';
+import { ToastProvider } from '../../components/Toast';
 
 jest.mock('next/router', () => ({
   useRouter: jest.fn(),
@@ -59,7 +60,9 @@ describe('LoginPage', () => {
 
     render(
       <AuthProvider>
-        <LoginPage />
+        <ToastProvider>
+          <LoginPage />
+        </ToastProvider>
       </AuthProvider>,
     );
     fireEvent.change(screen.getByPlaceholderText('Email'), {
@@ -93,7 +96,9 @@ describe('LoginPage', () => {
 
     render(
       <AuthProvider>
-        <LoginPage />
+        <ToastProvider>
+          <LoginPage />
+        </ToastProvider>
       </AuthProvider>,
     );
     fireEvent.change(screen.getByPlaceholderText('Email'), {
@@ -120,7 +125,9 @@ describe('LoginPage', () => {
 
     render(
       <AuthProvider>
-        <LoginPage />
+        <ToastProvider>
+          <LoginPage />
+        </ToastProvider>
       </AuthProvider>,
     );
     fireEvent.change(screen.getByPlaceholderText('Email'), {
@@ -182,9 +189,11 @@ describe('LoginPage', () => {
 
       render(
         <AuthProvider>
-          <AuthGuard>
-            <div>public</div>
-          </AuthGuard>
+          <ToastProvider>
+            <AuthGuard>
+              <div>public</div>
+            </AuthGuard>
+          </ToastProvider>
         </AuthProvider>,
       );
 
@@ -206,9 +215,11 @@ describe('LoginPage', () => {
 
       render(
         <AuthProvider>
-          <AuthGuard>
-            <div>protected</div>
-          </AuthGuard>
+          <ToastProvider>
+            <AuthGuard>
+              <div>protected</div>
+            </AuthGuard>
+          </ToastProvider>
         </AuthProvider>,
       );
 
@@ -237,9 +248,11 @@ describe('LoginPage', () => {
 
       render(
         <AuthProvider>
-          <AuthGuard>
-            <div>admin</div>
-          </AuthGuard>
+          <ToastProvider>
+            <AuthGuard>
+              <div>admin</div>
+            </AuthGuard>
+          </ToastProvider>
         </AuthProvider>,
       );
 

@@ -1,6 +1,7 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import SharesPage from '../shares'
 import { apiClient } from '../../../lib/api'
+import { ToastProvider } from '../../components/Toast'
 
 jest.mock('../../../lib/api', () => ({
   apiClient: { GET: jest.fn(), POST: jest.fn() },
@@ -22,7 +23,11 @@ describe('SharesPage', () => {
       data: { id: 2, order_id: 3, url: 'http://u2' },
     })
 
-    render(<SharesPage />)
+    render(
+      <ToastProvider>
+        <SharesPage />
+      </ToastProvider>,
+    )
 
     await waitFor(() => {
       expect(apiClient.GET).toHaveBeenCalledWith('/shares', {
@@ -67,7 +72,11 @@ describe('SharesPage', () => {
       data: { id: 2, order_id: 3, url: 'http://u2' },
     })
 
-    render(<SharesPage />)
+    render(
+      <ToastProvider>
+        <SharesPage />
+      </ToastProvider>,
+    )
 
     await waitFor(() => {
       expect(apiClient.GET).toHaveBeenCalledWith('/shares', {
@@ -109,7 +118,11 @@ describe('SharesPage', () => {
       },
     })
 
-    render(<SharesPage />)
+    render(
+      <ToastProvider>
+        <SharesPage />
+      </ToastProvider>,
+    )
 
     await waitFor(() => {
       expect(apiClient.GET).toHaveBeenCalledWith('/shares', {
@@ -149,7 +162,11 @@ describe('SharesPage', () => {
         },
       })
 
-    render(<SharesPage />)
+    render(
+      <ToastProvider>
+        <SharesPage />
+      </ToastProvider>,
+    )
 
     await waitFor(() => {
       expect(screen.getByText('http://u1')).toBeInTheDocument()

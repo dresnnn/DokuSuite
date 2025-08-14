@@ -4,6 +4,7 @@ import { useAuth } from '../../context/AuthContext'
 import { undoStack } from '../../lib/undoStack'
 import PhotoMap from '../../components/PhotoMap'
 import PhotoUpload from '../../components/PhotoUpload'
+import { useToast } from '../../components/Toast'
 import {
   ExportJob,
   loadExportJobs,
@@ -44,6 +45,7 @@ export default function PhotosPage() {
   const loader = useRef<HTMLDivElement | null>(null)
 
   const { role, userId } = useAuth()
+  const { showToast } = useToast()
 
   const client = apiClient as unknown as {
     GET: typeof apiClient.GET
@@ -53,29 +55,33 @@ export default function PhotosPage() {
   const fetchPhotos = useCallback(
     async (page: number, append = false) => {
       setLoading(true)
-      const { data } = await apiClient.GET('/photos', {
-        params: {
-          query: {
-            page,
-            limit: meta.limit,
-            mode: mode || undefined,
-            uploaderId: uploaderId || undefined,
-            from: from || undefined,
-            to: to || undefined,
-            siteId: siteId || undefined,
-            orderId: orderId || undefined,
-            status: status || undefined,
-            calendarWeek: calendarWeek || undefined,
-            qualityFlag: qualityFlag || undefined,
-            customerId: customerId || undefined,
+      try {
+        const { data } = await apiClient.GET('/photos', {
+          params: {
+            query: {
+              page,
+              limit: meta.limit,
+              mode: mode || undefined,
+              uploaderId: uploaderId || undefined,
+              from: from || undefined,
+              to: to || undefined,
+              siteId: siteId || undefined,
+              orderId: orderId || undefined,
+              status: status || undefined,
+              calendarWeek: calendarWeek || undefined,
+              qualityFlag: qualityFlag || undefined,
+              customerId: customerId || undefined,
+            },
           },
-        },
-      })
-      if (data) {
-        setPhotos((prev) =>
-          append ? [...prev, ...(data.items || [])] : data.items || [],
-        )
-        setMeta(data.meta || { page, limit: meta.limit, total: 0 })
+        })
+        if (data) {
+          setPhotos((prev) =>
+            append ? [...prev, ...(data.items || [])] : data.items || [],
+          )
+          setMeta(data.meta || { page, limit: meta.limit, total: 0 })
+        }
+      } catch {
+        showToast('error', 'Failed to load photos')
       }
       setLoading(false)
     },
@@ -91,6 +97,7 @@ export default function PhotosPage() {
       calendarWeek,
       qualityFlag,
       customerId,
+      showToast,
     ],
   )
 
@@ -119,78 +126,113 @@ export default function PhotosPage() {
   const assignSelected = async () => {
     if (!assignOrder || selected.length === 0) return
     const photoIds = selected.map(String)
-    await apiClient.POST('/photos/batch/assign', {
-      body: {
-        photoIds,
-        orderId: assignOrder,
-        calendarWeek: assignWeek || undefined,
-      },
-    })
-    undoStack.push(() =>
-      apiClient.POST('/photos/batch/assign', {
-        body: { photoIds, orderId: '' },
-      }),
-    )
-    setSelected([])
-    setAssignOrder('')
-    setAssignWeek('')
+    try {
+      await apiClient.POST('/photos/batch/assign', {
+        body: {
+          photoIds,
+          orderId: assignOrder,
+          calendarWeek: assignWeek || undefined,
+        },
+      })
+      undoStack.push(() =>
+        apiClient.POST('/photos/batch/assign', {
+          body: { photoIds, orderId: '' },
+        }),
+      )
+      setSelected([])
+      setAssignOrder('')
+      setAssignWeek('')
+      showToast('success', 'Photos assigned')
+    } catch {
+      showToast('error', 'Failed to assign photos')
+    }
   }
 
   const hideSelected = async () => {
     if (selected.length === 0) return
     const photoIds = selected.map(String)
-    await apiClient.POST('/photos/batch/hide', {
-      body: { photoIds },
-    })
-    setSelected([])
+    try {
+      await apiClient.POST('/photos/batch/hide', {
+        body: { photoIds },
+      })
+      setSelected([])
+      showToast('success', 'Photos hidden')
+    } catch {
+      showToast('error', 'Failed to hide photos')
+    }
   }
 
   const curateSelected = async () => {
     if (selected.length === 0) return
     const photoIds = selected.map(String)
-    await apiClient.POST('/photos/batch/curate', {
-      body: { photoIds },
-    })
-    setSelected([])
+    try {
+      await apiClient.POST('/photos/batch/curate', {
+        body: { photoIds },
+      })
+      setSelected([])
+      showToast('success', 'Photos curated')
+    } catch {
+      showToast('error', 'Failed to curate photos')
+    }
   }
 
   const rematchSelected = async () => {
     if (selected.length === 0) return
     const photoIds = selected.map(String)
-    await apiClient.POST('/photos/batch/rematch', {
-      body: { photoIds },
-    })
-    setSelected([])
+    try {
+      await apiClient.POST('/photos/batch/rematch', {
+        body: { photoIds },
+      })
+      setSelected([])
+      showToast('success', 'Photos rematched')
+    } catch {
+      showToast('error', 'Failed to rematch photos')
+    }
   }
 
   const triggerZipExport = async () => {
     if (selected.length === 0) return
     const photoIds = selected.map(String)
-    const { data } = await client.POST('/exports/zip', {
-      body: { photoIds },
-    })
-    if (data) setJobs((prev) => [...prev, data as ExportJob])
-    setSelected([])
+    try {
+      const { data } = await client.POST('/exports/zip', {
+        body: { photoIds },
+      })
+      if (data) setJobs((prev) => [...prev, data as ExportJob])
+      setSelected([])
+      showToast('success', 'ZIP export started')
+    } catch {
+      showToast('error', 'ZIP export failed')
+    }
   }
 
   const triggerExcelExport = async () => {
     if (selected.length === 0) return
     const photoIds = selected.map(String)
-    const { data } = await client.POST('/exports/excel', {
-      body: { photoIds },
-    })
-    if (data) setJobs((prev) => [...prev, data as ExportJob])
-    setSelected([])
+    try {
+      const { data } = await client.POST('/exports/excel', {
+        body: { photoIds },
+      })
+      if (data) setJobs((prev) => [...prev, data as ExportJob])
+      setSelected([])
+      showToast('success', 'Excel export started')
+    } catch {
+      showToast('error', 'Excel export failed')
+    }
   }
 
   const triggerPdfExport = async () => {
     if (selected.length === 0) return
     const photoIds = selected.map(String)
-    const { data } = await client.POST('/exports/pdf', {
-      body: { photoIds },
-    })
-    if (data) setJobs((prev) => [...prev, data as ExportJob])
-    setSelected([])
+    try {
+      const { data } = await client.POST('/exports/pdf', {
+        body: { photoIds },
+      })
+      if (data) setJobs((prev) => [...prev, data as ExportJob])
+      setSelected([])
+      showToast('success', 'PDF export started')
+    } catch {
+      showToast('error', 'PDF export failed')
+    }
   }
 
   const changePage = (newPage: number) => {

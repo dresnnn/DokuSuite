@@ -1,6 +1,7 @@
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { undoStack } from '../../lib/undoStack'
 import L from 'leaflet'
+import { ToastProvider } from '../../components/Toast'
 
 jest.mock('../../context/AuthContext', () => ({
   useAuth: jest.fn(),
@@ -110,7 +111,11 @@ describe('PhotosPage', () => {
       .mockResolvedValueOnce({ data: page1 })
       .mockResolvedValueOnce({ data: page2 });
 
-    render(<PhotosPage />);
+    render(
+      <ToastProvider>
+        <PhotosPage />
+      </ToastProvider>,
+    )
 
     await waitFor(() => {
       expect(screen.getByText('Photo 1')).toBeInTheDocument();
@@ -140,7 +145,11 @@ describe('PhotosPage', () => {
 
   it('submits filters', async () => {
     ;(apiClient.GET as jest.Mock).mockResolvedValue({ data: { items: [], meta: {} } })
-    render(<PhotosPage />)
+    render(
+      <ToastProvider>
+        <PhotosPage />
+      </ToastProvider>,
+    )
     await waitFor(() => expect(apiClient.GET).toHaveBeenCalled())
     ;(apiClient.GET as jest.Mock).mockClear()
 
@@ -196,7 +205,11 @@ describe('PhotosPage', () => {
     ;(apiClient.GET as jest.Mock).mockResolvedValue({ data: resp })
     authMock.mockReturnValue({ role: 'USER', userId: 5 })
 
-    render(<PhotosPage />)
+    render(
+      <ToastProvider>
+        <PhotosPage />
+      </ToastProvider>,
+    )
 
     await waitFor(() =>
       expect(apiClient.GET).toHaveBeenCalledWith(
@@ -217,7 +230,11 @@ describe('PhotosPage', () => {
       meta: { page: 1, limit: 10, total: 2 },
     }
     ;(apiClient.GET as jest.Mock).mockResolvedValue({ data: resp })
-    render(<PhotosPage />)
+    render(
+      <ToastProvider>
+        <PhotosPage />
+      </ToastProvider>,
+    )
     await waitFor(() => screen.getByText('Photo 1'))
 
     const checkboxes = screen.getAllByRole('checkbox')
@@ -254,7 +271,11 @@ describe('PhotosPage', () => {
     const fetchMock = jest.fn().mockResolvedValue({ ok: true })
     ;(global as unknown as { fetch: typeof fetch }).fetch = fetchMock
 
-    render(<PhotosPage />)
+    render(
+      <ToastProvider>
+        <PhotosPage />
+      </ToastProvider>,
+    )
     await waitFor(() => expect(apiClient.GET).toHaveBeenCalled())
 
     const file = new File(['data'], 'test.jpg', { type: 'image/jpeg' })
@@ -295,7 +316,11 @@ describe('PhotosPage', () => {
           meta: {},
         },
       })
-    render(<PhotosPage />)
+    render(
+      <ToastProvider>
+        <PhotosPage />
+      </ToastProvider>,
+    )
     await waitFor(() => expect(apiClient.GET).toHaveBeenCalled())
     fireEvent.click(screen.getByText('Map'))
     await waitFor(() =>
@@ -317,7 +342,11 @@ describe('PhotosPage', () => {
       .mockResolvedValueOnce({ data: page1 })
       .mockResolvedValueOnce({ data: page2 })
 
-    render(<PhotosPage />)
+    render(
+      <ToastProvider>
+        <PhotosPage />
+      </ToastProvider>,
+    )
 
     await waitFor(() =>
       expect(screen.getByText('Photo 1')).toBeInTheDocument(),
@@ -374,7 +403,11 @@ describe('PhotosPage', () => {
       .mockResolvedValueOnce({ data: page2 })
       .mockResolvedValueOnce({ data: page1 })
 
-    render(<PhotosPage />)
+    render(
+      <ToastProvider>
+        <PhotosPage />
+      </ToastProvider>,
+    )
 
     await waitFor(() =>
       expect(screen.getByText('Photo 1')).toBeInTheDocument(),
@@ -403,7 +436,11 @@ describe('PhotosPage', () => {
     ;(apiClient.GET as jest.Mock).mockResolvedValue({
       data: { items: [{ id: 1 }], meta: {} },
     })
-    render(<PhotosPage />)
+    render(
+      <ToastProvider>
+        <PhotosPage />
+      </ToastProvider>,
+    )
     await waitFor(() => expect(apiClient.GET).toHaveBeenCalled())
     await waitFor(() =>
       expect(screen.getAllByRole('checkbox')[0]).toBeInTheDocument(),
@@ -423,7 +460,11 @@ describe('PhotosPage', () => {
     ;(apiClient.GET as jest.Mock).mockResolvedValue({
       data: { items: [{ id: 1 }], meta: {} },
     })
-    render(<PhotosPage />)
+    render(
+      <ToastProvider>
+        <PhotosPage />
+      </ToastProvider>,
+    )
     await waitFor(() => expect(apiClient.GET).toHaveBeenCalled())
     await waitFor(() =>
       expect(screen.getAllByRole('checkbox')[0]).toBeInTheDocument(),
@@ -443,7 +484,11 @@ describe('PhotosPage', () => {
     ;(apiClient.GET as jest.Mock).mockResolvedValue({
       data: { items: [{ id: 1 }], meta: {} },
     })
-    render(<PhotosPage />)
+    render(
+      <ToastProvider>
+        <PhotosPage />
+      </ToastProvider>,
+    )
     await waitFor(() => expect(apiClient.GET).toHaveBeenCalled())
     await waitFor(() =>
       expect(screen.getAllByRole('checkbox')[0]).toBeInTheDocument(),
@@ -463,7 +508,11 @@ describe('PhotosPage', () => {
     ;(apiClient.GET as jest.Mock).mockResolvedValue({
       data: { items: [{ id: 1 }], meta: {} },
     })
-    render(<PhotosPage />)
+    render(
+      <ToastProvider>
+        <PhotosPage />
+      </ToastProvider>,
+    )
     await waitFor(() => expect(apiClient.GET).toHaveBeenCalled())
     await waitFor(() =>
       expect(screen.getAllByRole('checkbox')[0]).toBeInTheDocument(),
@@ -502,7 +551,11 @@ describe('PhotosPage', () => {
     ;(apiClient.POST as jest.Mock).mockResolvedValue({
       data: { id: 'j1', status: 'queued' },
     })
-    const { unmount } = render(<PhotosPage />)
+    const { unmount } = render(
+      <ToastProvider>
+        <PhotosPage />
+      </ToastProvider>,
+    )
     await waitFor(() => expect(apiClient.GET).toHaveBeenCalled())
     fireEvent.click(screen.getAllByRole('checkbox')[0])
     fireEvent.click(screen.getByText('Export ZIP'))
@@ -511,7 +564,11 @@ describe('PhotosPage', () => {
     ;(apiClient.GET as jest.Mock).mockResolvedValue({
       data: { items: [], meta: {} },
     })
-    render(<PhotosPage />)
+    render(
+      <ToastProvider>
+        <PhotosPage />
+      </ToastProvider>,
+    )
     await waitFor(() => expect(screen.getByText('j1')).toBeInTheDocument())
   })
 })
@@ -555,7 +612,11 @@ describe('PhotoDetailPage', () => {
           meta: {},
         },
       })
-    render(<PhotosPage />)
+    render(
+      <ToastProvider>
+        <PhotosPage />
+      </ToastProvider>,
+    )
     await waitFor(() => expect(apiClient.GET).toHaveBeenCalled())
     fireEvent.click(screen.getByText('Map'))
     await waitFor(() =>
