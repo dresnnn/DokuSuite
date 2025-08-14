@@ -4,7 +4,7 @@ import { useRouter } from 'next/router';
 import { useAuth } from '../context/AuthContext';
 
 export default function Layout({ children }: { children: ReactNode }) {
-  const { logout } = useAuth();
+  const { logout, isAuthenticated } = useAuth();
   const router = useRouter();
 
   const handleLogout = () => {
@@ -12,7 +12,7 @@ export default function Layout({ children }: { children: ReactNode }) {
     router.push('/login');
   };
 
-  const showNav = router.pathname !== '/login';
+  const showNav = isAuthenticated && router.pathname !== '/login';
 
   return (
     <div>
