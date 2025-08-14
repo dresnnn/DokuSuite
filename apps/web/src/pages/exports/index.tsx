@@ -1,4 +1,3 @@
-/* eslint-disable react-hooks/exhaustive-deps */
 import { useEffect, useState } from 'react'
 import { apiClient } from '../../../lib/api'
 
@@ -26,6 +25,11 @@ export default function ExportsPage() {
     if (data) setJobs((prev) => [...prev, data as ExportJob])
   }
 
+  const triggerPdfExport = async () => {
+    const { data } = await client.POST('/exports/pdf', {})
+    if (data) setJobs((prev) => [...prev, data as ExportJob])
+  }
+
   useEffect(() => {
     const pending = jobs.filter((j) => j.status !== 'done')
     if (pending.length === 0) return
@@ -44,12 +48,13 @@ export default function ExportsPage() {
     }, 2000)
 
     return () => clearInterval(interval)
-  }, [jobs])
+  }, [jobs, client])
 
   return (
     <div>
       <button onClick={triggerZipExport}>Start ZIP Export</button>
       <button onClick={triggerExcelExport}>Start Excel Export</button>
+      <button onClick={triggerPdfExport}>Start PDF Export</button>
       <table>
         <thead>
           <tr>
