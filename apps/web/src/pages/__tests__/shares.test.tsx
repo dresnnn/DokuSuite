@@ -13,12 +13,17 @@ describe('SharesPage', () => {
   })
 
   it('lists and creates shares and shows URL', async () => {
-    ;(apiClient.GET as jest.Mock).mockResolvedValue({
-      data: {
-        items: [{ id: 1, order_id: 2, url: 'http://u1', download_allowed: true }],
-        meta: { page: 1, limit: 10, total: 1 },
-      },
-    })
+    ;(apiClient.GET as jest.Mock)
+      .mockResolvedValueOnce({
+        data: {
+          items: [{ id: 1, order_id: 2, url: 'http://u1', download_allowed: true }],
+          meta: { page: 1, limit: 10, total: 1 },
+        },
+      })
+      .mockResolvedValueOnce({ data: { customer_id: 7 } })
+      .mockResolvedValueOnce({
+        data: { watermark_policy: 'default', watermark_text: null },
+      })
     ;(apiClient.POST as jest.Mock).mockResolvedValue({
       data: { id: 2, order_id: 3, url: 'http://u2', download_allowed: true },
     })
@@ -42,14 +47,26 @@ describe('SharesPage', () => {
     fireEvent.change(screen.getByPlaceholderText('Order ID'), {
       target: { value: '3' },
     })
+
+    await waitFor(() => {
+      expect(apiClient.GET).toHaveBeenNthCalledWith(
+        2,
+        '/orders/{id}',
+        { params: { path: { id: 3 } } },
+      )
+      expect(apiClient.GET).toHaveBeenNthCalledWith(
+        3,
+        '/customers/{id}',
+        { params: { path: { id: 7 } } },
+      )
+      expect(screen.getByLabelText('Watermark Policy')).toHaveValue('default')
+    })
+
     fireEvent.change(screen.getByPlaceholderText('Email'), {
       target: { value: 'a@b.c' },
     })
     fireEvent.change(screen.getByPlaceholderText('Expires At'), {
       target: { value: '2024-01-01T00:00' },
-    })
-    fireEvent.change(screen.getByLabelText('Watermark Policy'), {
-      target: { value: 'default' },
     })
     fireEvent.click(screen.getByText('Create'))
 
@@ -69,9 +86,14 @@ describe('SharesPage', () => {
   })
 
   it('creates share with custom watermark text', async () => {
-    ;(apiClient.GET as jest.Mock).mockResolvedValue({
-      data: { items: [], meta: { page: 1, limit: 10, total: 0 } },
-    })
+    ;(apiClient.GET as jest.Mock)
+      .mockResolvedValueOnce({
+        data: { items: [], meta: { page: 1, limit: 10, total: 0 } },
+      })
+      .mockResolvedValueOnce({ data: { customer_id: 7 } })
+      .mockResolvedValueOnce({
+        data: { watermark_policy: 'default', watermark_text: null },
+      })
     ;(apiClient.POST as jest.Mock).mockResolvedValue({
       data: { id: 2, order_id: 3, url: 'http://u2', download_allowed: true },
     })
@@ -119,9 +141,12 @@ describe('SharesPage', () => {
   })
 
   it('creates share without download and shows in table', async () => {
-    ;(apiClient.GET as jest.Mock).mockResolvedValue({
-      data: { items: [], meta: { page: 1, limit: 10, total: 0 } },
-    })
+    ;(apiClient.GET as jest.Mock)
+      .mockResolvedValueOnce({
+        data: { items: [], meta: { page: 1, limit: 10, total: 0 } },
+      })
+      .mockResolvedValueOnce({ data: { customer_id: 7 } })
+      .mockResolvedValueOnce({ data: {} })
     ;(apiClient.POST as jest.Mock).mockResolvedValue({
       data: { id: 5, order_id: 6, url: 'http://u5', download_allowed: false },
     })
@@ -150,6 +175,42 @@ describe('SharesPage', () => {
       })
       const row = screen.getByText('http://u5').closest('tr')!
       expect(row).toHaveTextContent('No')
+    })
+  })
+
+  it('prefills watermark data from customer', async () => {
+    ;(apiClient.GET as jest.Mock)
+      .mockResolvedValueOnce({
+        data: { items: [], meta: { page: 1, limit: 10, total: 0 } },
+      })
+      .mockResolvedValueOnce({ data: { customer_id: 11 } })
+      .mockResolvedValueOnce({
+        data: { watermark_policy: 'custom_text', watermark_text: 'hello' },
+      })
+
+    render(
+      <ToastProvider>
+        <SharesPage />
+      </ToastProvider>,
+    )
+
+    fireEvent.change(screen.getByPlaceholderText('Order ID'), {
+      target: { value: '5' },
+    })
+
+    await waitFor(() => {
+      expect(apiClient.GET).toHaveBeenNthCalledWith(
+        2,
+        '/orders/{id}',
+        { params: { path: { id: 5 } } },
+      )
+      expect(apiClient.GET).toHaveBeenNthCalledWith(
+        3,
+        '/customers/{id}',
+        { params: { path: { id: 11 } } },
+      )
+      expect(screen.getByLabelText('Watermark Policy')).toHaveValue('custom_text')
+      expect(screen.getByPlaceholderText('Watermark Text')).toHaveValue('hello')
     })
   })
 

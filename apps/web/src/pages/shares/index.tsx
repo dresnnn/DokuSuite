@@ -57,6 +57,32 @@ export default function SharesPage() {
     fetchShares()
   }, [])
 
+  useEffect(() => {
+    const loadDefaults = async () => {
+      if (!orderId) {
+        setWatermarkPolicy('')
+        setWatermarkText('')
+        return
+      }
+      try {
+        const order = await client.GET('/orders/{id}', {
+          params: { path: { id: Number(orderId) } },
+        })
+        const customerId = order.data?.customer_id
+        if (customerId) {
+          const customer = await client.GET('/customers/{id}', {
+            params: { path: { id: customerId } },
+          })
+          setWatermarkPolicy(customer.data?.watermark_policy || '')
+          setWatermarkText(customer.data?.watermark_text || '')
+        }
+      } catch {
+        /* ignore */
+      }
+    }
+    loadDefaults()
+  }, [orderId])
+
   const handleFilterSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     setMeta((m) => ({ ...m, page: 1 }))
