@@ -21,6 +21,7 @@ export default function SharesPage() {
   const [email, setEmail] = useState('')
   const [expiresAt, setExpiresAt] = useState('')
   const [watermarkPolicy, setWatermarkPolicy] = useState('')
+  const [watermarkText, setWatermarkText] = useState('')
 
   const client = apiClient as unknown as {
     GET: typeof apiClient.GET
@@ -50,6 +51,8 @@ export default function SharesPage() {
         download_allowed: true,
         expires_at: expiresAt || null,
         watermark_policy: watermarkPolicy || undefined,
+        watermark_text:
+          watermarkPolicy === 'custom_text' ? watermarkText || null : undefined,
       },
     })
     if (data) {
@@ -58,6 +61,7 @@ export default function SharesPage() {
       setEmail('')
       setExpiresAt('')
       setWatermarkPolicy('')
+      setWatermarkText('')
     }
   }
 
@@ -104,6 +108,13 @@ export default function SharesPage() {
           <option value="default">default</option>
           <option value="custom_text">custom_text</option>
         </select>
+        {watermarkPolicy === 'custom_text' ? (
+          <input
+            placeholder="Watermark Text"
+            value={watermarkText}
+            onChange={(e) => setWatermarkText(e.target.value)}
+          />
+        ) : null}
         <button type="submit">Create</button>
       </form>
       <table>

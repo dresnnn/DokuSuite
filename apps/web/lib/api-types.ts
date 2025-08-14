@@ -1853,6 +1853,8 @@ export interface components {
             /** @default true */
             download_allowed: boolean;
             watermark_policy?: components["schemas"]["WatermarkPolicy"];
+            /** @description Only used when `watermark_policy` is `custom_text`. */
+            watermark_text?: string | null;
             /** Format: email */
             email?: string | null;
         };
