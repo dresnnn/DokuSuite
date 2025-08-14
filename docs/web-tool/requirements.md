@@ -30,7 +30,7 @@ Kernfunktionen:
 - Admin-Seiten (`Users`, `Shares`, `Locations`) sind nur für Nutzer mit `role === 'ADMIN'` zugänglich und leiten sonst auf `/photos` weiter.
 - Logout löscht das Token und navigiert zu `/login`.
 - Registrierung neuer Nutzer über Formular (`POST /auth/register`), leitet nach erfolgreicher Registrierung zu `/login`.
-- Navigationsleiste mit Links zu `Photos`, `Users`, `Orders`, `Shares` und `Exports`.
+- Navigationsleiste nur für eingeloggte Nutzer mit Links zu `Photos`, `Users`, `Orders`, `Shares` und `Exports`.
 - Branding/Wasserzeichen-Policy je Kunde/Share (Agenturkunden i. d. R. ohne Wasserzeichen).
 
 ## Kunden-Flow

@@ -258,6 +258,7 @@ describe('LoginPage', () => {
   });
 
     it('renders exports link in navigation', () => {
+      store['token'] = 'token123';
       const push = jest.fn();
       mockedUseRouter.mockReturnValue({
         pathname: '/photos',
@@ -277,5 +278,28 @@ describe('LoginPage', () => {
       );
 
       expect(screen.getByText('Exports')).toBeInTheDocument();
+    });
+
+    it('does not render navigation links when unauthenticated', () => {
+      const push = jest.fn();
+      mockedUseRouter.mockReturnValue({
+        pathname: '/photos',
+        replace: push,
+        push,
+        prefetch: jest.fn(),
+        events: { on: jest.fn(), off: jest.fn() },
+        beforePopState: jest.fn(),
+      });
+
+      render(
+        <AuthProvider>
+          <Layout>
+            <div>content</div>
+          </Layout>
+        </AuthProvider>,
+      );
+
+      expect(screen.queryByText('Photos')).not.toBeInTheDocument();
+      expect(screen.queryByText('Exports')).not.toBeInTheDocument();
     });
   });
