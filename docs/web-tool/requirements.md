@@ -26,6 +26,7 @@ Kernfunktionen:
 - Authentifizierung via Token: Browser speichert das Token und sendet es bei jeder API-Anfrage als `Authorization: Bearer <token>`.
 - `AuthContext` verwaltet Loginstatus und Token im Frontend.
 - `AuthGuard` schützt Seiten und leitet nicht authentifizierte Nutzer auf `/login`.
+- Öffentliche Seiten ohne Login: `/login`, `/register`, `/forgot-password`, `/reset`, `/accept`, `/public`, `/2fa/verify`.
 - Admin-Seiten (`Users`, `Shares`, `Locations`) sind nur für Nutzer mit `role === 'ADMIN'` zugänglich und leiten sonst auf `/photos` weiter.
 - Logout löscht das Token und navigiert zu `/login`.
 - Registrierung neuer Nutzer über Formular (`POST /auth/register`), leitet nach erfolgreicher Registrierung zu `/login`.

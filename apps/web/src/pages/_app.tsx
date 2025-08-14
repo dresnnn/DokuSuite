@@ -4,13 +4,27 @@ import { useEffect, ReactNode } from 'react';
 import { AuthProvider, useAuth } from '../context/AuthContext';
 import Layout from '../components/Layout';
 
+const publicPaths = [
+  '/login',
+  '/register',
+  '/forgot-password',
+  '/reset',
+  '/accept',
+  '/public',
+  '/2fa/verify',
+];
+
 export function AuthGuard({ children }: { children: ReactNode }) {
   const { isAuthenticated, role } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
     const adminPaths = ['/users', '/shares', '/locations'];
-    if (!isAuthenticated && router.pathname !== '/login') {
+    const isPublicPath = publicPaths.some((p) =>
+      router.pathname.startsWith(p),
+    );
+
+    if (!isAuthenticated && !isPublicPath) {
       router.replace('/login');
     } else if (
       isAuthenticated &&
