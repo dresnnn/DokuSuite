@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { apiClient } from '../../../lib/api'
 import { useAuth } from '../../context/AuthContext'
 import { undoStack } from '../../lib/undoStack'
@@ -38,6 +38,8 @@ export default function PhotosPage() {
   const [assignWeek, setAssignWeek] = useState('')
   const [view, setView] = useState<'table' | 'grid' | 'map'>('table')
   const [jobs, setJobs] = useState<ExportJob[]>([])
+  const [loading, setLoading] = useState(false)
+  const loader = useRef<HTMLDivElement | null>(null)
 
   const { role, userId } = useAuth()
 
@@ -46,34 +48,41 @@ export default function PhotosPage() {
     POST: typeof apiClient.POST
   }
 
-  const fetchPhotos = async (page = meta.page, limit = meta.limit) => {
-    const { data } = await apiClient.GET('/photos', {
-      params: {
-        query: {
-          page,
-          limit,
-          mode: mode || undefined,
-          uploaderId: uploaderId || undefined,
-          from: from || undefined,
-          to: to || undefined,
-          siteId: siteId || undefined,
-          orderId: orderId || undefined,
-          status: status || undefined,
+  const fetchPhotos = useCallback(
+    async (page: number, append = false) => {
+      setLoading(true)
+      const { data } = await apiClient.GET('/photos', {
+        params: {
+          query: {
+            page,
+            limit: meta.limit,
+            mode: mode || undefined,
+            uploaderId: uploaderId || undefined,
+            from: from || undefined,
+            to: to || undefined,
+            siteId: siteId || undefined,
+            orderId: orderId || undefined,
+            status: status || undefined,
+          },
         },
-      },
-    })
-    if (data) {
-      setPhotos(data.items || [])
-      setMeta(data.meta || { page: page, limit: limit, total: 0 })
-    }
-  }
+      })
+      if (data) {
+        setPhotos((prev) =>
+          append ? [...prev, ...(data.items || [])] : data.items || [],
+        )
+        setMeta(data.meta || { page, limit: meta.limit, total: 0 })
+      }
+      setLoading(false)
+    },
+    [meta.limit, mode, uploaderId, from, to, siteId, orderId, status],
+  )
 
   useEffect(() => {
     if (role === 'USER') setUploaderId(userId ? String(userId) : '')
   }, [role, userId])
 
   useEffect(() => {
-    fetchPhotos()
+    fetchPhotos(1)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [uploaderId])
 
@@ -81,7 +90,7 @@ export default function PhotosPage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    fetchPhotos()
+    fetchPhotos(1)
   }
 
   const toggleSelect = (id: number) => {
@@ -168,16 +177,13 @@ export default function PhotosPage() {
   }
 
   const changePage = (newPage: number) => {
-    setMeta((m) => ({ ...m, page: newPage }))
-    fetchPhotos(newPage)
+    fetchPhotos(newPage, true)
   }
 
-    useEffect(() => {
-      const handler = (e: KeyboardEvent) => {
-        if (e.key === 'ArrowRight') {
-          if (meta.page! < totalPages) changePage((meta.page || 1) + 1)
-        } else if (e.key === 'ArrowLeft') {
-          if (meta.page! > 1) changePage((meta.page || 1) - 1)
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowRight') {
+        if (meta.page! < totalPages) changePage((meta.page || 1) + 1)
       } else if (e.key.toLowerCase() === 'a') {
         setSelected((prev) =>
           prev.length === photos.length ? [] : photos.map((p) => p.id!),
@@ -186,10 +192,25 @@ export default function PhotosPage() {
         undoStack.undo()
       }
     }
-      window.addEventListener('keydown', handler)
-      return () => window.removeEventListener('keydown', handler)
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [meta, totalPages, photos])
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [meta, totalPages, photos])
+
+  useEffect(() => {
+    const el = loader.current
+    if (!el) return
+    const observer = new IntersectionObserver((entries) => {
+      const first = entries[0]
+      if (first.isIntersecting && !loading) {
+        if (meta.page! < totalPages) {
+          fetchPhotos((meta.page || 1) + 1, true)
+        }
+      }
+    })
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [loader, meta, totalPages, fetchPhotos, loading])
 
   useEffect(() => {
     const pending = jobs.filter((j) => j.status !== 'done')
@@ -213,18 +234,8 @@ export default function PhotosPage() {
 
   return (
     <div>
-        <PhotoUpload onUploaded={fetchPhotos} />
+        <PhotoUpload onUploaded={() => fetchPhotos(1)} />
       <form onSubmit={handleSubmit} style={{ marginBottom: '1rem' }}>
-        <label>
-          Page:
-          <input
-            type="number"
-            value={meta.page}
-            onChange={(e) =>
-              setMeta((m) => ({ ...m, page: Number(e.target.value) }))
-            }
-          />
-        </label>
         <label>
           Limit:
           <input
@@ -349,23 +360,7 @@ export default function PhotosPage() {
         <PhotoMap />
       )}
 
-      <div style={{ marginTop: '1rem' }}>
-        <button
-          disabled={meta.page === 1}
-          onClick={() => changePage((meta.page || 1) - 1)}
-        >
-          Prev
-        </button>
-        <span>
-          {meta.page} / {totalPages}
-        </span>
-        <button
-          disabled={meta.page === totalPages}
-          onClick={() => changePage((meta.page || 1) + 1)}
-        >
-          Next
-        </button>
-      </div>
+      <div ref={loader} />
 
       <div style={{ marginTop: '1rem' }}>
         <h3>Assign Selected</h3>
