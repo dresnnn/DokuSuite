@@ -9,6 +9,7 @@ jest.mock('../../../lib/api', () => ({
 describe('ExportsPage', () => {
   beforeEach(() => {
     jest.resetAllMocks()
+    window.localStorage.clear()
   })
 
   it('does not fetch exports on mount', () => {
@@ -113,6 +114,36 @@ describe('ExportsPage', () => {
       'href',
       'http://example.com/pdf',
     )
+    jest.useRealTimers()
+  })
+
+  it('persists export jobs after reload', async () => {
+    jest.useFakeTimers()
+    const store: Record<string, string> = {}
+    Object.defineProperty(window, 'localStorage', {
+      value: {
+        getItem: (k: string) => store[k] || null,
+        setItem: (k: string, v: string) => {
+          store[k] = v
+        },
+        removeItem: (k: string) => {
+          delete store[k]
+        },
+        clear: () => {
+          for (const k of Object.keys(store)) delete store[k]
+        },
+      },
+      configurable: true,
+    })
+    ;(apiClient.POST as jest.Mock).mockResolvedValue({
+      data: { id: 'p1', status: 'queued' },
+    })
+    const { unmount } = render(<ExportsPage />)
+    fireEvent.click(screen.getByText('Start ZIP Export'))
+    await waitFor(() => expect(screen.getByText('p1')).toBeInTheDocument())
+    unmount()
+    render(<ExportsPage />)
+    await waitFor(() => expect(screen.getByText('p1')).toBeInTheDocument())
     jest.useRealTimers()
   })
 })

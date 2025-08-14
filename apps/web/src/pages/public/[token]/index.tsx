@@ -2,17 +2,16 @@ import { useRouter } from 'next/router'
 import { useEffect, useState } from 'react'
 import { apiClient } from '../../../../lib/api'
 import PhotoMap from '../../../components/PhotoMap'
+import {
+  ExportJob,
+  loadExportJobs,
+  saveExportJobs,
+} from '../../../../lib/exportJobs'
 
 type Photo = {
   id: number
   original_url?: string
   thumbnail_url?: string
-}
-
-type ExportJob = {
-  id?: string
-  status?: string
-  url?: string
 }
 
 export default function PublicSharePage() {
@@ -66,6 +65,14 @@ export default function PublicSharePage() {
     })
     if (data) setJobs((prev) => [...prev, data as ExportJob])
   }
+
+  useEffect(() => {
+    setJobs(loadExportJobs())
+  }, [])
+
+  useEffect(() => {
+    saveExportJobs(jobs)
+  }, [jobs])
 
   useEffect(() => {
     const pending = jobs.filter((j) => j.status !== 'done')
