@@ -71,15 +71,17 @@ describe('SharesPage', () => {
     fireEvent.click(screen.getByText('Create'))
 
     await waitFor(() => {
+      const iso = new Date('2024-01-01T00:00').toISOString()
       expect(apiClient.POST).toHaveBeenCalledWith('/shares', {
         body: {
           order_id: 3,
           email: 'a@b.c',
           download_allowed: true,
-          expires_at: '2024-01-01T00:00',
+          expires_at: iso,
           watermark_policy: 'default',
         },
       })
+      expect(iso).toMatch(/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z/)
       const row = screen.getByText('http://u2').closest('tr')!
       expect(row).toHaveTextContent('Yes')
     })
