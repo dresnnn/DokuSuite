@@ -152,6 +152,30 @@ describe('LoginPage', () => {
       global.fetch = originalFetch;
     });
 
+    it('does not redirect unauthenticated users on public routes', async () => {
+      const replace = jest.fn();
+      mockedUseRouter.mockReturnValue({
+        pathname: '/public/info',
+        replace,
+        push: jest.fn(),
+        prefetch: jest.fn(),
+        events: { on: jest.fn(), off: jest.fn() },
+        beforePopState: jest.fn(),
+      });
+
+      render(
+        <AuthProvider>
+          <AuthGuard>
+            <div>public</div>
+          </AuthGuard>
+        </AuthProvider>,
+      );
+
+      await waitFor(() => {
+        expect(replace).not.toHaveBeenCalled();
+      });
+    });
+
     it('redirects unauthenticated users to /login', async () => {
       const replace = jest.fn();
       mockedUseRouter.mockReturnValue({
