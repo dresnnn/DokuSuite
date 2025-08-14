@@ -1,6 +1,7 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import UsersPage from '../users'
 import { apiClient } from '../../../lib/api'
+import { ToastProvider } from '../../components/Toast'
 
 jest.mock('../../../lib/api', () => ({
   apiClient: {
@@ -22,7 +23,11 @@ describe('UsersPage', () => {
     })
     ;(apiClient.PATCH as jest.Mock).mockResolvedValue({ data: {} })
 
-    render(<UsersPage />)
+    render(
+      <ToastProvider>
+        <UsersPage />
+      </ToastProvider>,
+    )
 
     await waitFor(() => {
       expect(screen.getByText('u1@example.com')).toBeInTheDocument()
@@ -46,7 +51,11 @@ describe('UsersPage', () => {
     })
     ;(apiClient.DELETE as jest.Mock).mockResolvedValue({})
 
-    render(<UsersPage />)
+    render(
+      <ToastProvider>
+        <UsersPage />
+      </ToastProvider>,
+    )
 
     await waitFor(() => {
       expect(screen.getByText('u1@example.com')).toBeInTheDocument()
@@ -66,7 +75,11 @@ describe('UsersPage', () => {
     ;(apiClient.GET as jest.Mock).mockResolvedValue({ data: [] })
     ;(apiClient.POST as jest.Mock).mockResolvedValue({ data: {} })
 
-    render(<UsersPage />)
+    render(
+      <ToastProvider>
+        <UsersPage />
+      </ToastProvider>,
+    )
 
     fireEvent.change(screen.getByPlaceholderText('Email'), {
       target: { value: 'new@example.com' },
@@ -79,5 +92,29 @@ describe('UsersPage', () => {
       })
       expect(screen.getByPlaceholderText('Email')).toHaveValue('')
     })
+
+    await waitFor(() =>
+      expect(screen.getByRole('alert')).toHaveTextContent('Invite sent'),
+    )
+  })
+
+  it('shows toast on invite error', async () => {
+    ;(apiClient.GET as jest.Mock).mockResolvedValue({ data: [] })
+    ;(apiClient.POST as jest.Mock).mockResolvedValue({ error: 'oops' })
+
+    render(
+      <ToastProvider>
+        <UsersPage />
+      </ToastProvider>,
+    )
+
+    fireEvent.change(screen.getByPlaceholderText('Email'), {
+      target: { value: 'err@example.com' },
+    })
+    fireEvent.click(screen.getByText('Invite'))
+
+    await waitFor(() =>
+      expect(screen.getByRole('alert')).toHaveTextContent('Invite failed'),
+    )
   })
 })

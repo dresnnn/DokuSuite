@@ -104,4 +104,4 @@ UX/Leistung:
 
 - Zentrale Toast-Komponente f\u00fcr Erfolg- und Fehlermeldungen.
 - `AuthGuard` informiert \u00fcber fehlende Berechtigungen oder nicht eingeloggte Nutzer.
-- Seiten wie `Photos`, `Orders` und `Shares` zeigen Ergebnis von API-Aktionen \u00fcber Toasts an.
+- Seiten wie `Photos`, `Orders`, `Shares`, `Users`, `Customers` und `Locations` zeigen Ergebnis von API-Aktionen über Toasts an (z. B. Einladungen oder Rollenänderungen, Kundenanlage/-aktualisierung, Standort-Updates).

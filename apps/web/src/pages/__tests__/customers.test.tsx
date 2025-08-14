@@ -1,6 +1,7 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import CustomersPage from '../customers'
 import { apiClient } from '../../../lib/api'
+import { ToastProvider } from '../../components/Toast'
 
 jest.mock('../../../lib/api', () => ({
   apiClient: {
@@ -34,7 +35,11 @@ describe('CustomersPage', () => {
       .mockResolvedValueOnce({ data: page2 })
       .mockResolvedValue({ data: page1 })
 
-    render(<CustomersPage />)
+    render(
+      <ToastProvider>
+        <CustomersPage />
+      </ToastProvider>,
+    )
 
     await waitFor(() => {
       expect(screen.getByDisplayValue('c1')).toBeInTheDocument()
@@ -53,7 +58,11 @@ describe('CustomersPage', () => {
     })
     ;(apiClient.POST as jest.Mock).mockResolvedValue({ data: { id: 1 } })
 
-    render(<CustomersPage />)
+    render(
+      <ToastProvider>
+        <CustomersPage />
+      </ToastProvider>,
+    )
 
     fireEvent.change(screen.getByPlaceholderText('Name'), {
       target: { value: 'Cust' },
@@ -75,6 +84,10 @@ describe('CustomersPage', () => {
         },
       })
     })
+
+    await waitFor(() =>
+      expect(screen.getByRole('alert')).toHaveTextContent('Customer created'),
+    )
   })
 
   it('updates customer', async () => {
@@ -86,7 +99,11 @@ describe('CustomersPage', () => {
     }
     ;(apiClient.GET as jest.Mock).mockResolvedValue({ data: page })
 
-    render(<CustomersPage />)
+    render(
+      <ToastProvider>
+        <CustomersPage />
+      </ToastProvider>,
+    )
 
     await waitFor(() => expect(screen.getByDisplayValue('Cust1')).toBeInTheDocument())
 
@@ -119,7 +136,11 @@ describe('CustomersPage', () => {
     }
     ;(apiClient.GET as jest.Mock).mockResolvedValue({ data: page })
 
-    render(<CustomersPage />)
+    render(
+      <ToastProvider>
+        <CustomersPage />
+      </ToastProvider>,
+    )
 
     await waitFor(() => expect(screen.getByDisplayValue('Cust1')).toBeInTheDocument())
 

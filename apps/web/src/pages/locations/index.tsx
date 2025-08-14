@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { apiClient } from '../../../lib/api'
+import { useToast } from '../../components/Toast'
 
 type Location = {
   id?: number
@@ -20,22 +21,27 @@ export default function LocationsPage() {
   const [q, setQ] = useState('')
   const [near, setNear] = useState('')
   const [radius, setRadius] = useState(50)
+  const { showToast } = useToast()
 
   const fetchLocations = async (page = meta.page, limit = meta.limit) => {
-    const { data } = await apiClient.GET('/locations', {
-      params: {
-        query: {
-          q: q || undefined,
-          near: near || undefined,
-          radius_m: radius || undefined,
-          page,
-          limit,
+    try {
+      const { data } = await apiClient.GET('/locations', {
+        params: {
+          query: {
+            q: q || undefined,
+            near: near || undefined,
+            radius_m: radius || undefined,
+            page,
+            limit,
+          },
         },
-      },
-    })
-    if (data) {
-      setLocations(data.items || [])
-      setMeta(data.meta || { page, limit, total: 0 })
+      })
+      if (data) {
+        setLocations(data.items || [])
+        setMeta(data.meta || { page, limit, total: 0 })
+      }
+    } catch {
+      showToast('error', 'Failed to load locations')
     }
   }
 
@@ -66,14 +72,19 @@ export default function LocationsPage() {
   }
 
   const handleSave = async (loc: Location) => {
-    await apiClient.PATCH('/locations/{id}', {
-      params: { path: { id: loc.id! } },
-      body: {
-        name: loc.name,
-        address: loc.address,
-        active: loc.active,
-      },
-    })
+    try {
+      await apiClient.PATCH('/locations/{id}', {
+        params: { path: { id: loc.id! } },
+        body: {
+          name: loc.name,
+          address: loc.address,
+          active: loc.active,
+        },
+      })
+      showToast('success', 'Location updated')
+    } catch {
+      showToast('error', 'Failed to update location')
+    }
   }
 
   const totalPages = Math.ceil((meta.total || 0) / (meta.limit || 1)) || 1
