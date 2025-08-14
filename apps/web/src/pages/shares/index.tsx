@@ -130,6 +130,15 @@ export default function SharesPage() {
     }
   }
 
+  const handleCopy = async (url: string) => {
+    try {
+      await navigator.clipboard.writeText(url)
+      showToast('success', 'URL copied')
+    } catch {
+      showToast('error', 'Failed to copy URL')
+    }
+  }
+
   const totalPages = Math.ceil((meta.total || 0) / (meta.limit || 1)) || 1
 
   const changePage = (newPage: number) => {
@@ -211,9 +220,14 @@ export default function SharesPage() {
               <td>{s.order_id}</td>
               <td>
                 {s.url ? (
-                  <a href={s.url} target="_blank" rel="noopener noreferrer">
-                    {s.url}
-                  </a>
+                  <>
+                    <a href={s.url} target="_blank" rel="noopener noreferrer">
+                      {s.url}
+                    </a>
+                    <button style={{ marginLeft: '0.5rem' }} onClick={() => handleCopy(s.url!)}>
+                      Copy
+                    </button>
+                  </>
                 ) : null}
               </td>
               <td>{s.download_allowed ? 'Yes' : 'No'}</td>
