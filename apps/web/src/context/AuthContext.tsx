@@ -14,6 +14,7 @@ interface AuthContextValue {
   isAuthenticated: boolean;
   challenge: string | null;
   setChallenge: (token: string | null) => void;
+  disable2FA: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -53,8 +54,25 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
     setChallenge(null);
   };
 
+  const disable2FA = async () => {
+    await apiClient.DELETE('/auth/2fa', {});
+    logout();
+  };
+
   return (
-    <AuthContext.Provider value={{ token, role, userId, login, logout, isAuthenticated: !!token, challenge, setChallenge }}>
+    <AuthContext.Provider
+      value={{
+        token,
+        role,
+        userId,
+        login,
+        logout,
+        isAuthenticated: !!token,
+        challenge,
+        setChallenge,
+        disable2FA,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

@@ -34,6 +34,12 @@ Kernfunktionen:
 - Navigationsleiste nur für eingeloggte Nutzer mit Links zu `Photos`, `Users`, `Orders`, `Shares` und `Exports`.
 - Branding/Wasserzeichen-Policy je Kunde/Share (Agenturkunden i. d. R. ohne Wasserzeichen).
 
+## Profilverwaltung
+
+- Nutzer können ihr Passwort ändern (`POST /auth/change-password`).
+- Zwei-Faktor-Authentifizierung kann aktiviert (`POST /auth/2fa/setup`) oder deaktiviert (`DELETE /auth/2fa`) werden.
+- Nach Deaktivierung der 2FA wird der Nutzer ausgeloggt und muss sich erneut anmelden.
+
 ## Kundenverwaltung
 
 - Kunden paginiert listen (`GET /customers`).

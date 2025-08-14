@@ -127,6 +127,13 @@ paths:
         '401':
           $ref: '#/components/responses/Unauthorized'
 
+  /auth/2fa:
+    delete:
+      tags: [auth]
+      summary: Disable 2FA and require re-login
+      responses:
+        '204': { description: No Content }
+
   /auth/me:
     get:
       tags: [auth]
@@ -222,6 +229,25 @@ paths:
         '204': { description: No Content }
         '404':
           $ref: '#/components/responses/NotFound'
+
+  /auth/change-password:
+    post:
+      tags: [auth]
+      summary: Change user password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [current_password, new_password]
+              properties:
+                current_password: { type: string, minLength: 1 }
+                new_password: { type: string, minLength: 1 }
+      responses:
+        '204': { description: No Content }
+        '401':
+          $ref: '#/components/responses/Unauthorized'
 
   /users:
     get:
