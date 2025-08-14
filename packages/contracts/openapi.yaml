@@ -389,6 +389,15 @@ paths:
         - in: query
           name: status
           schema: { $ref: '#/components/schemas/PhotoStatus' }
+        - in: query
+          name: calendarWeek
+          schema: { type: string }
+        - in: query
+          name: qualityFlag
+          schema: { type: string }
+        - in: query
+          name: customerId
+          schema: { type: string }
       responses:
         '200':
           description: Paginated photos

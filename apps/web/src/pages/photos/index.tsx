@@ -33,6 +33,9 @@ export default function PhotosPage() {
   const [siteId, setSiteId] = useState('')
   const [orderId, setOrderId] = useState('')
   const [status, setStatus] = useState('')
+  const [calendarWeek, setCalendarWeek] = useState('')
+  const [qualityFlag, setQualityFlag] = useState('')
+  const [customerId, setCustomerId] = useState('')
   const [selected, setSelected] = useState<number[]>([])
   const [assignOrder, setAssignOrder] = useState('')
   const [assignWeek, setAssignWeek] = useState('')
@@ -63,6 +66,9 @@ export default function PhotosPage() {
             siteId: siteId || undefined,
             orderId: orderId || undefined,
             status: status || undefined,
+            calendarWeek: calendarWeek || undefined,
+            qualityFlag: qualityFlag || undefined,
+            customerId: customerId || undefined,
           },
         },
       })
@@ -74,7 +80,19 @@ export default function PhotosPage() {
       }
       setLoading(false)
     },
-    [meta.limit, mode, uploaderId, from, to, siteId, orderId, status],
+    [
+      meta.limit,
+      mode,
+      uploaderId,
+      from,
+      to,
+      siteId,
+      orderId,
+      status,
+      calendarWeek,
+      qualityFlag,
+      customerId,
+    ],
   )
 
   useEffect(() => {
@@ -288,6 +306,27 @@ export default function PhotosPage() {
         <label>
           Order ID:
           <input value={orderId} onChange={(e) => setOrderId(e.target.value)} />
+        </label>
+        <label>
+          Calendar Week:
+          <input
+            value={calendarWeek}
+            onChange={(e) => setCalendarWeek(e.target.value)}
+          />
+        </label>
+        <label>
+          Quality Flag:
+          <input
+            value={qualityFlag}
+            onChange={(e) => setQualityFlag(e.target.value)}
+          />
+        </label>
+        <label>
+          Customer ID:
+          <input
+            value={customerId}
+            onChange={(e) => setCustomerId(e.target.value)}
+          />
         </label>
         <label>
           Status:

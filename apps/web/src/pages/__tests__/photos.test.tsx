@@ -155,6 +155,15 @@ describe('PhotosPage', () => {
     fireEvent.change(screen.getAllByLabelText('Order ID:')[0], {
       target: { value: '42' },
     })
+    fireEvent.change(screen.getAllByLabelText('Calendar Week:')[0], {
+      target: { value: '2025-W10' },
+    })
+    fireEvent.change(screen.getByLabelText('Quality Flag:'), {
+      target: { value: 'OK' },
+    })
+    fireEvent.change(screen.getByLabelText('Customer ID:'), {
+      target: { value: 'cust1' },
+    })
     fireEvent.change(screen.getByLabelText('Status:'), {
       target: { value: 'SHARED' },
     })
@@ -172,6 +181,9 @@ describe('PhotosPage', () => {
             siteId: 'site1',
             orderId: '42',
             status: 'SHARED',
+            calendarWeek: '2025-W10',
+            qualityFlag: 'OK',
+            customerId: 'cust1',
           }),
         },
       }),
@@ -213,7 +225,7 @@ describe('PhotosPage', () => {
     fireEvent.change(screen.getAllByLabelText('Order ID:')[1], {
       target: { value: '999' },
     })
-    fireEvent.change(screen.getByLabelText('Calendar Week:'), {
+    fireEvent.change(screen.getAllByLabelText('Calendar Week:')[1], {
       target: { value: '2025-W01' },
     })
     fireEvent.click(screen.getByText('Assign'))
