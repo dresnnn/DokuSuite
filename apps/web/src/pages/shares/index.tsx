@@ -68,6 +68,13 @@ export default function SharesPage() {
     setShares((prev) => prev.filter((s) => s.id !== id))
   }
 
+  const totalPages = Math.ceil((meta.total || 0) / (meta.limit || 1)) || 1
+
+  const changePage = (newPage: number) => {
+    setMeta((m) => ({ ...m, page: newPage }))
+    fetchShares(newPage)
+  }
+
   return (
     <div>
       <form onSubmit={handleCreate} style={{ marginBottom: '1rem' }}>
@@ -127,6 +134,23 @@ export default function SharesPage() {
           ))}
         </tbody>
       </table>
+      <div style={{ marginTop: '1rem' }}>
+        <button
+          disabled={meta.page === 1}
+          onClick={() => changePage((meta.page || 1) - 1)}
+        >
+          Prev
+        </button>
+        <span>
+          {meta.page} / {totalPages}
+        </span>
+        <button
+          disabled={meta.page === totalPages}
+          onClick={() => changePage((meta.page || 1) + 1)}
+        >
+          Next
+        </button>
+      </div>
     </div>
   )
 }
