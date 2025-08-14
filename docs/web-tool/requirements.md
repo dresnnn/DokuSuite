@@ -60,6 +60,11 @@ Kernfunktionen:
 - Auf der Reset-Seite setzt der Nutzer ein neues Passwort; das Frontend sendet `POST /auth/reset` mit Token und Passwort.
 - Nach erfolgreichem Reset kann sich der Nutzer mit dem neuen Passwort anmelden.
 
+## Plakatierer-Flow
+
+- Nutzer mit Rolle `USER` sehen im Web-Tool ausschließlich ihre eigenen Uploads.
+- Das Frontend setzt `uploaderId` automatisch auf die eigene `userId` und blendet den Filter im Fotoformular aus.
+
 UX/Leistung:
 
 - Flüssige Interaktionen bei großen Datenmengen (Server-seitige Filter/Pagination, Streaming/Infinite Scroll).
