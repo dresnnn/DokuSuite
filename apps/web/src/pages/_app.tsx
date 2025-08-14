@@ -5,6 +5,8 @@ import { AuthProvider, useAuth } from '../context/AuthContext';
 import Layout from '../components/Layout';
 import { ToastProvider, useToast } from '../components/Toast';
 import '../styles/globals.css';
+import 'leaflet/dist/leaflet.css';
+import 'leaflet.markercluster/dist/MarkerCluster.css';
 
 const publicPaths = [
   '/login',
