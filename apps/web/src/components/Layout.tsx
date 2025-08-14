@@ -15,18 +15,22 @@ export default function Layout({ children }: { children: ReactNode }) {
   const showNav = isAuthenticated && router.pathname !== '/login';
 
   return (
-    <div>
+    <div className="app-container">
       {showNav && (
-        <nav>
-          <Link href="/photos">Photos</Link> |{' '}
-          <Link href="/users">Users</Link> |{' '}
-          <Link href="/orders">Orders</Link> |{' '}
-          <Link href="/shares">Shares</Link> |{' '}
-          <Link href="/exports">Exports</Link> |{' '}
-          <button onClick={handleLogout}>Logout</button>
+        <nav className="navbar">
+          <div className="nav-links">
+            <Link href="/photos">Photos</Link>
+            <Link href="/users">Users</Link>
+            <Link href="/orders">Orders</Link>
+            <Link href="/shares">Shares</Link>
+            <Link href="/exports">Exports</Link>
+          </div>
+          <button className="logout-button" onClick={handleLogout}>
+            Logout
+          </button>
         </nav>
       )}
-      {children}
+      <main className="main-content">{children}</main>
     </div>
   );
 }
