@@ -18,6 +18,7 @@ type PageMeta = {
 export default function SharesPage() {
   const [shares, setShares] = useState<Share[]>([])
   const [meta, setMeta] = useState<PageMeta>({ page: 1, limit: 10, total: 0 })
+  const [filterOrderId, setFilterOrderId] = useState('')
   const [orderId, setOrderId] = useState('')
   const [email, setEmail] = useState('')
   const [expiresAt, setExpiresAt] = useState('')
@@ -33,7 +34,13 @@ export default function SharesPage() {
   const fetchShares = async (page = meta.page, limit = meta.limit) => {
     try {
       const { data } = await client.GET('/shares', {
-        params: { query: { page, limit } },
+        params: {
+          query: {
+            page,
+            limit,
+            orderId: filterOrderId || undefined,
+          },
+        },
       })
       if (data) {
         setShares(data.items || [])
@@ -47,6 +54,12 @@ export default function SharesPage() {
   useEffect(() => {
     fetchShares()
   }, [])
+
+  const handleFilterSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    setMeta((m) => ({ ...m, page: 1 }))
+    fetchShares(1)
+  }
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -97,6 +110,17 @@ export default function SharesPage() {
 
   return (
     <div>
+      <form onSubmit={handleFilterSubmit} style={{ marginBottom: '1rem' }}>
+        <label>
+          Order ID:
+          <input
+            value={filterOrderId}
+            onChange={(e) => setFilterOrderId(e.target.value)}
+          />
+        </label>
+        <button type="submit">Fetch</button>
+      </form>
+
       <form onSubmit={handleCreate} style={{ marginBottom: '1rem' }}>
         <input
           placeholder="Order ID"
