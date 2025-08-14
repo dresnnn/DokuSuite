@@ -30,9 +30,12 @@ describe('SharesPage', () => {
     )
 
     await waitFor(() => {
-      expect(apiClient.GET).toHaveBeenCalledWith('/shares', {
-        params: { query: { page: 1, limit: 10 } },
-      })
+      expect(apiClient.GET).toHaveBeenCalledWith(
+        '/shares',
+        expect.objectContaining({
+          params: { query: expect.objectContaining({ page: 1, limit: 10 }) },
+        }),
+      )
       expect(screen.getByText('http://u1')).toBeInTheDocument()
     })
 
@@ -79,9 +82,12 @@ describe('SharesPage', () => {
     )
 
     await waitFor(() => {
-      expect(apiClient.GET).toHaveBeenCalledWith('/shares', {
-        params: { query: { page: 1, limit: 10 } },
-      })
+      expect(apiClient.GET).toHaveBeenCalledWith(
+        '/shares',
+        expect.objectContaining({
+          params: { query: expect.objectContaining({ page: 1, limit: 10 }) },
+        }),
+      )
     })
 
     fireEvent.change(screen.getByPlaceholderText('Order ID'), {
@@ -125,9 +131,12 @@ describe('SharesPage', () => {
     )
 
     await waitFor(() => {
-      expect(apiClient.GET).toHaveBeenCalledWith('/shares', {
-        params: { query: { page: 1, limit: 10 } },
-      })
+      expect(apiClient.GET).toHaveBeenCalledWith(
+        '/shares',
+        expect.objectContaining({
+          params: { query: expect.objectContaining({ page: 1, limit: 10 }) },
+        }),
+      )
       expect(screen.getByText('http://u1')).toBeInTheDocument()
     })
 
@@ -175,19 +184,56 @@ describe('SharesPage', () => {
     fireEvent.click(screen.getByText('Next'))
 
     await waitFor(() => {
-      expect(apiClient.GET).toHaveBeenLastCalledWith('/shares', {
-        params: { query: { page: 2, limit: 10 } },
-      })
+      expect(apiClient.GET).toHaveBeenLastCalledWith(
+        '/shares',
+        expect.objectContaining({
+          params: { query: expect.objectContaining({ page: 2, limit: 10 }) },
+        }),
+      )
       expect(screen.getByText('http://u2')).toBeInTheDocument()
     })
 
     fireEvent.click(screen.getByText('Prev'))
 
     await waitFor(() => {
-      expect(apiClient.GET).toHaveBeenLastCalledWith('/shares', {
-        params: { query: { page: 1, limit: 10 } },
-      })
+      expect(apiClient.GET).toHaveBeenLastCalledWith(
+        '/shares',
+        expect.objectContaining({
+          params: { query: expect.objectContaining({ page: 1, limit: 10 }) },
+        }),
+      )
       expect(screen.getByText('http://u1')).toBeInTheDocument()
+    })
+
+  })
+
+  it('filters shares by order ID', async () => {
+    ;(apiClient.GET as jest.Mock)
+      .mockResolvedValueOnce({
+        data: { items: [], meta: { page: 1, limit: 10, total: 0 } },
+      })
+      .mockResolvedValueOnce({
+        data: { items: [], meta: { page: 1, limit: 10, total: 0 } },
+      })
+
+    render(
+      <ToastProvider>
+        <SharesPage />
+      </ToastProvider>,
+    )
+
+    fireEvent.change(screen.getByLabelText(/Order ID/), {
+      target: { value: '5' },
+    })
+    fireEvent.click(screen.getByText('Fetch'))
+
+    await waitFor(() => {
+      expect(apiClient.GET).toHaveBeenLastCalledWith(
+        '/shares',
+        expect.objectContaining({
+          params: { query: expect.objectContaining({ orderId: '5' }) },
+        }),
+      )
     })
   })
 })
