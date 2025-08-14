@@ -26,6 +26,7 @@ describe('PublicSharePage', () => {
     mockedUseRouter.mockReturnValue({
       query: { token: 'tok1' },
     })
+    window.localStorage.clear()
   })
 
   it('fetches and displays photos', async () => {
@@ -135,6 +136,42 @@ describe('PublicSharePage', () => {
       'href',
       'http://example.com/zip',
     )
+    jest.useRealTimers()
+  })
+
+  it('persists export jobs after reload', async () => {
+    jest.useFakeTimers()
+    const store: Record<string, string> = {}
+    Object.defineProperty(window, 'localStorage', {
+      value: {
+        getItem: (k: string) => store[k] || null,
+        setItem: (k: string, v: string) => {
+          store[k] = v
+        },
+        removeItem: (k: string) => {
+          delete store[k]
+        },
+        clear: () => {
+          for (const k of Object.keys(store)) delete store[k]
+        },
+      },
+      configurable: true,
+    })
+    ;(apiClient.GET as jest.Mock).mockResolvedValue({
+      data: { items: [{ id: 1, thumbnail_url: 't1', original_url: 'o1' }] },
+    })
+    ;(apiClient.POST as jest.Mock).mockResolvedValue({
+      data: { id: 's1', status: 'queued' },
+    })
+    const { unmount } = render(<PublicSharePage />)
+    await waitFor(() => expect(screen.getByRole('img')).toBeInTheDocument())
+    fireEvent.click(screen.getByRole('checkbox'))
+    fireEvent.click(screen.getByText('Download ZIP'))
+    await waitFor(() => expect(screen.getByText('s1')).toBeInTheDocument())
+    unmount()
+    ;(apiClient.GET as jest.Mock).mockResolvedValue({ data: { items: [] } })
+    render(<PublicSharePage />)
+    await waitFor(() => expect(screen.getByText('s1')).toBeInTheDocument())
     jest.useRealTimers()
   })
 

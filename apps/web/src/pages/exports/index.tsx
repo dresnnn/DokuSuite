@@ -1,14 +1,21 @@
 import { useEffect, useState } from 'react'
 import { apiClient } from '../../../lib/api'
-
-type ExportJob = {
-  id?: string
-  status?: string
-  url?: string
-}
+import {
+  ExportJob,
+  loadExportJobs,
+  saveExportJobs,
+} from '../../../lib/exportJobs'
 
 export default function ExportsPage() {
   const [jobs, setJobs] = useState<ExportJob[]>([])
+
+  useEffect(() => {
+    setJobs(loadExportJobs())
+  }, [])
+
+  useEffect(() => {
+    saveExportJobs(jobs)
+  }, [jobs])
 
   const client = apiClient as unknown as {
     GET: typeof apiClient.GET

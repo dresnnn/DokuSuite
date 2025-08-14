@@ -4,6 +4,11 @@ import { useAuth } from '../../context/AuthContext'
 import { undoStack } from '../../lib/undoStack'
 import PhotoMap from '../../components/PhotoMap'
 import PhotoUpload from '../../components/PhotoUpload'
+import {
+  ExportJob,
+  loadExportJobs,
+  saveExportJobs,
+} from '../../../lib/exportJobs'
 
 type Photo = {
   id?: number
@@ -15,12 +20,6 @@ type PageMeta = {
   page?: number
   limit?: number
   total?: number
-}
-
-type ExportJob = {
-  id?: string
-  status?: string
-  url?: string
 }
 
 export default function PhotosPage() {
@@ -197,6 +196,14 @@ export default function PhotosPage() {
   const changePage = (newPage: number) => {
     fetchPhotos(newPage, true)
   }
+
+  useEffect(() => {
+    setJobs(loadExportJobs())
+  }, [])
+
+  useEffect(() => {
+    saveExportJobs(jobs)
+  }, [jobs])
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {

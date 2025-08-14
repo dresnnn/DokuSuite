@@ -87,6 +87,7 @@ beforeEach(() => {
       unobserve: jest.fn(),
     }
   }) as unknown as typeof IntersectionObserver
+  window.localStorage.clear()
 })
 
 describe('PhotosPage', () => {
@@ -475,6 +476,43 @@ describe('PhotosPage', () => {
         expect.objectContaining({ body: { photoIds: ['1'] } }),
       ),
     )
+  })
+
+  it('persists export jobs after reload', async () => {
+    jest.clearAllMocks()
+    const store: Record<string, string> = {}
+    Object.defineProperty(window, 'localStorage', {
+      value: {
+        getItem: (k: string) => store[k] || null,
+        setItem: (k: string, v: string) => {
+          store[k] = v
+        },
+        removeItem: (k: string) => {
+          delete store[k]
+        },
+        clear: () => {
+          for (const k of Object.keys(store)) delete store[k]
+        },
+      },
+      configurable: true,
+    })
+    ;(apiClient.GET as jest.Mock).mockResolvedValue({
+      data: { items: [{ id: 1 }], meta: {} },
+    })
+    ;(apiClient.POST as jest.Mock).mockResolvedValue({
+      data: { id: 'j1', status: 'queued' },
+    })
+    const { unmount } = render(<PhotosPage />)
+    await waitFor(() => expect(apiClient.GET).toHaveBeenCalled())
+    fireEvent.click(screen.getAllByRole('checkbox')[0])
+    fireEvent.click(screen.getByText('Export ZIP'))
+    await waitFor(() => expect(screen.getByText('j1')).toBeInTheDocument())
+    unmount()
+    ;(apiClient.GET as jest.Mock).mockResolvedValue({
+      data: { items: [], meta: {} },
+    })
+    render(<PhotosPage />)
+    await waitFor(() => expect(screen.getByText('j1')).toBeInTheDocument())
   })
 })
 
