@@ -1,6 +1,6 @@
-/* eslint-disable react-hooks/exhaustive-deps */
 import { useEffect, useState } from 'react'
 import { apiClient } from '../../../lib/api'
+import { useAuth } from '../../context/AuthContext'
 import { undoStack } from '../../lib/undoStack'
 import PhotoMap from '../../components/PhotoMap'
 import PhotoUpload from '../../components/PhotoUpload'
@@ -39,6 +39,8 @@ export default function PhotosPage() {
   const [view, setView] = useState<'table' | 'grid' | 'map'>('table')
   const [jobs, setJobs] = useState<ExportJob[]>([])
 
+  const { role, userId } = useAuth()
+
   const client = apiClient as unknown as {
     GET: typeof apiClient.GET
     POST: typeof apiClient.POST
@@ -67,8 +69,13 @@ export default function PhotosPage() {
   }
 
   useEffect(() => {
+    if (role === 'USER') setUploaderId(userId ? String(userId) : '')
+  }, [role, userId])
+
+  useEffect(() => {
     fetchPhotos()
-  }, [])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [uploaderId])
 
   const totalPages = Math.ceil((meta.total || 0) / (meta.limit || 1)) || 1
 
@@ -165,12 +172,12 @@ export default function PhotosPage() {
     fetchPhotos(newPage)
   }
 
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      if (e.key === 'ArrowRight') {
-        if (meta.page! < totalPages) changePage((meta.page || 1) + 1)
-      } else if (e.key === 'ArrowLeft') {
-        if (meta.page! > 1) changePage((meta.page || 1) - 1)
+    useEffect(() => {
+      const handler = (e: KeyboardEvent) => {
+        if (e.key === 'ArrowRight') {
+          if (meta.page! < totalPages) changePage((meta.page || 1) + 1)
+        } else if (e.key === 'ArrowLeft') {
+          if (meta.page! > 1) changePage((meta.page || 1) - 1)
       } else if (e.key.toLowerCase() === 'a') {
         setSelected((prev) =>
           prev.length === photos.length ? [] : photos.map((p) => p.id!),
@@ -179,9 +186,10 @@ export default function PhotosPage() {
         undoStack.undo()
       }
     }
-    window.addEventListener('keydown', handler)
-    return () => window.removeEventListener('keydown', handler)
-  }, [meta, totalPages, photos])
+      window.addEventListener('keydown', handler)
+      return () => window.removeEventListener('keydown', handler)
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [meta, totalPages, photos])
 
   useEffect(() => {
     const pending = jobs.filter((j) => j.status !== 'done')
@@ -201,7 +209,7 @@ export default function PhotosPage() {
     }, 2000)
 
     return () => clearInterval(interval)
-  }, [jobs])
+  }, [jobs, client])
 
   return (
     <div>
@@ -235,13 +243,15 @@ export default function PhotosPage() {
             <option value="MOBILE">MOBILE</option>
           </select>
         </label>
-        <label>
-          Uploader ID:
-          <input
-            value={uploaderId}
-            onChange={(e) => setUploaderId(e.target.value)}
-          />
-        </label>
+        {role !== 'USER' && (
+          <label>
+            Uploader ID:
+            <input
+              value={uploaderId}
+              onChange={(e) => setUploaderId(e.target.value)}
+            />
+          </label>
+        )}
         <label>
           From:
           <input

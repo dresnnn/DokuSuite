@@ -1,13 +1,19 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
-import PhotosPage from '../photos'
-import PhotoDetailPage from '../photos/[id]'
-import { apiClient } from '../../../lib/api'
 import { undoStack } from '../../lib/undoStack'
 import L from 'leaflet'
+
+jest.mock('../../context/AuthContext', () => ({
+  useAuth: jest.fn(),
+}))
 
 jest.mock('../../../lib/api', () => ({
   apiClient: { GET: jest.fn(), POST: jest.fn(), PATCH: jest.fn() },
 }))
+
+import { apiClient } from '../../../lib/api'
+import PhotosPage from '../photos'
+import PhotoDetailPage from '../photos/[id]'
+import { useAuth } from '../../context/AuthContext'
 
 jest.mock('next/router', () => ({
   useRouter: () => ({ query: { id: '1' } }),
@@ -70,6 +76,12 @@ jest.mock('leaflet', () => {
 jest.mock('leaflet.markercluster', () => ({}), { virtual: true })
 
 describe('PhotosPage', () => {
+  const authMock = useAuth as jest.Mock
+
+  beforeEach(() => {
+    authMock.mockReturnValue({ role: 'ADMIN', userId: 1 })
+  })
+
   it('displays photos and paginates', async () => {
     const page1 = {
       items: [{ id: 1, mode: 'MOBILE', uploader_id: 'u1' }],
@@ -145,6 +157,23 @@ describe('PhotosPage', () => {
           }),
         },
       }),
+    )
+  })
+
+  it('filters by uploaderId for USER role', async () => {
+    const resp = { items: [], meta: {} }
+    ;(apiClient.GET as jest.Mock).mockResolvedValue({ data: resp })
+    authMock.mockReturnValue({ role: 'USER', userId: 5 })
+
+    render(<PhotosPage />)
+
+    await waitFor(() =>
+      expect(apiClient.GET).toHaveBeenCalledWith(
+        '/photos',
+        expect.objectContaining({
+          params: { query: expect.objectContaining({ uploaderId: '5' }) },
+        }),
+      ),
     )
   })
 
