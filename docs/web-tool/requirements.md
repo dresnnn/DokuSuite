@@ -33,6 +33,11 @@ Kernfunktionen:
 - Navigationsleiste nur für eingeloggte Nutzer mit Links zu `Photos`, `Users`, `Orders`, `Shares` und `Exports`.
 - Branding/Wasserzeichen-Policy je Kunde/Share (Agenturkunden i. d. R. ohne Wasserzeichen).
 
+## Login-Flow
+
+- Nutzer meldet sich auf `/login` mit E-Mail und Passwort an.
+- Bei erfolgreicher Anmeldung speichert das Frontend das Token und leitet automatisch zur Galerie `/photos` weiter.
+
 ## Kunden-Flow
 
 - Kunde öffnet einen Freigabe-Link `/public/{token}`.

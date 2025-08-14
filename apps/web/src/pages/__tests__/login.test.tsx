@@ -13,10 +13,12 @@ jest.mock('next/router', () => ({
 const mockedUseRouter = useRouter as jest.Mock;
 
 let store: Record<string, string> = {};
+let replace: jest.Mock;
 
 describe('LoginPage', () => {
   beforeEach(() => {
     store = {};
+    replace = jest.fn();
     Object.defineProperty(window, 'localStorage', {
       value: {
         setItem: jest.fn((key, value) => {
@@ -31,7 +33,7 @@ describe('LoginPage', () => {
     });
     mockedUseRouter.mockReturnValue({
       pathname: '/login',
-      replace: jest.fn(),
+      replace,
       push: jest.fn(),
       prefetch: jest.fn(),
       events: { on: jest.fn(), off: jest.fn() },
@@ -46,7 +48,7 @@ describe('LoginPage', () => {
     jest.restoreAllMocks();
   });
 
-  it('stores token on successful login', async () => {
+  it('stores token and redirects on successful login', async () => {
     jest.spyOn(apiClient, 'POST').mockResolvedValue(
       {
         data: {
@@ -70,6 +72,7 @@ describe('LoginPage', () => {
 
     await waitFor(() => {
       expect(window.localStorage.setItem).toHaveBeenCalledWith('token', 'token123');
+      expect(replace).toHaveBeenCalledWith('/photos');
     });
   });
 
