@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { apiClient } from '../../../lib/api'
+import { useToast } from '../../components/Toast'
 
 type Customer = {
   id?: number
@@ -22,14 +23,19 @@ export default function CustomersPage() {
     watermark_policy: 'none',
     watermark_text: '',
   })
+  const { showToast } = useToast()
 
   const fetchCustomers = async (page = meta.page, limit = meta.limit) => {
-    const { data } = await apiClient.GET('/customers', {
-      params: { query: { page, limit } },
-    })
-    if (data) {
-      setCustomers(data.items || [])
-      setMeta(data.meta || { page, limit, total: 0 })
+    try {
+      const { data } = await apiClient.GET('/customers', {
+        params: { query: { page, limit } },
+      })
+      if (data) {
+        setCustomers(data.items || [])
+        setMeta(data.meta || { page, limit, total: 0 })
+      }
+    } catch {
+      showToast('error', 'Failed to load customers')
     }
   }
 
@@ -39,15 +45,20 @@ export default function CustomersPage() {
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault()
-    await apiClient.POST('/customers', {
-      body: {
-        name: newCustomer.name,
-        watermark_policy: newCustomer.watermark_policy,
-        watermark_text: newCustomer.watermark_text || undefined,
-      },
-    })
-    setNewCustomer({ name: '', watermark_policy: 'none', watermark_text: '' })
-    fetchCustomers()
+    try {
+      await apiClient.POST('/customers', {
+        body: {
+          name: newCustomer.name,
+          watermark_policy: newCustomer.watermark_policy,
+          watermark_text: newCustomer.watermark_text || undefined,
+        },
+      })
+      setNewCustomer({ name: '', watermark_policy: 'none', watermark_text: '' })
+      showToast('success', 'Customer created')
+      fetchCustomers()
+    } catch {
+      showToast('error', 'Failed to create customer')
+    }
   }
 
   const handleFieldChange = (
@@ -63,20 +74,30 @@ export default function CustomersPage() {
   }
 
   const handleUpdate = async (c: Customer) => {
-    await apiClient.PATCH('/customers/{id}', {
-      params: { path: { id: c.id! } },
-      body: {
-        name: c.name,
-        watermark_policy: c.watermark_policy,
-        watermark_text: c.watermark_text,
-      },
-    })
-    fetchCustomers()
+    try {
+      await apiClient.PATCH('/customers/{id}', {
+        params: { path: { id: c.id! } },
+        body: {
+          name: c.name,
+          watermark_policy: c.watermark_policy,
+          watermark_text: c.watermark_text,
+        },
+      })
+      showToast('success', 'Customer updated')
+      fetchCustomers()
+    } catch {
+      showToast('error', 'Failed to update customer')
+    }
   }
 
   const handleDelete = async (id: number) => {
-    await apiClient.DELETE('/customers/{id}', { params: { path: { id } } })
-    setCustomers((prev) => prev.filter((c) => c.id !== id))
+    try {
+      await apiClient.DELETE('/customers/{id}', { params: { path: { id } } })
+      setCustomers((prev) => prev.filter((c) => c.id !== id))
+      showToast('success', 'Customer deleted')
+    } catch {
+      showToast('error', 'Failed to delete customer')
+    }
   }
 
   const totalPages = Math.ceil((meta.total || 0) / (meta.limit || 1)) || 1

@@ -1,6 +1,7 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import LocationsPage from '../locations'
 import { apiClient } from '../../../lib/api'
+import { ToastProvider } from '../../components/Toast'
 
 jest.mock('../../../lib/api', () => ({
   apiClient: { GET: jest.fn(), PATCH: jest.fn() },
@@ -25,7 +26,11 @@ describe('LocationsPage', () => {
       .mockResolvedValueOnce({ data: page2 })
       .mockResolvedValue({ data: page1 })
 
-    render(<LocationsPage />)
+    render(
+      <ToastProvider>
+        <LocationsPage />
+      </ToastProvider>,
+    )
 
     await waitFor(() => {
       expect(screen.getByDisplayValue('Loc1')).toBeInTheDocument()
@@ -73,7 +78,11 @@ describe('LocationsPage', () => {
     })
     ;(apiClient.PATCH as jest.Mock).mockResolvedValue({ data: {} })
 
-    render(<LocationsPage />)
+    render(
+      <ToastProvider>
+        <LocationsPage />
+      </ToastProvider>,
+    )
 
     await waitFor(() => {
       expect(screen.getByDisplayValue('Old')).toBeInTheDocument()
@@ -90,6 +99,10 @@ describe('LocationsPage', () => {
         body: { name: 'New', address: 'A', active: true },
       })
     })
+
+    await waitFor(() =>
+      expect(screen.getByRole('alert')).toHaveTextContent('Location updated'),
+    )
   })
 })
 

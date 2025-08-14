@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { apiClient } from '../../../lib/api'
+import { useToast } from '../../components/Toast'
 
 type User = {
   id?: number
@@ -10,12 +11,16 @@ type User = {
 export default function UsersPage() {
   const [users, setUsers] = useState<User[]>([])
   const [inviteEmail, setInviteEmail] = useState('')
-  const [error, setError] = useState<string | null>(null)
+  const { showToast } = useToast()
 
   const fetchUsers = async () => {
-    const { data } = await apiClient.GET('/users')
-    if (data) {
-      setUsers(data)
+    try {
+      const { data } = await apiClient.GET('/users')
+      if (data) {
+        setUsers(data)
+      }
+    } catch {
+      showToast('error', 'Failed to load users')
     }
   }
 
@@ -24,30 +29,40 @@ export default function UsersPage() {
   }, [])
 
   const handleRoleChange = async (id: number, role: string) => {
-    await apiClient.PATCH('/users/{id}', {
-      params: { path: { id } },
-      body: { role },
-    })
-    setUsers((prev) => prev.map((u) => (u.id === id ? { ...u, role } : u)))
+    try {
+      await apiClient.PATCH('/users/{id}', {
+        params: { path: { id } },
+        body: { role },
+      })
+      setUsers((prev) => prev.map((u) => (u.id === id ? { ...u, role } : u)))
+      showToast('success', 'Role updated')
+    } catch {
+      showToast('error', 'Failed to update role')
+    }
   }
 
   const handleDelete = async (id: number) => {
-    await apiClient.DELETE('/users/{id}', {
-      params: { path: { id } },
-    })
-    setUsers((prev) => prev.filter((u) => u.id !== id))
+    try {
+      await apiClient.DELETE('/users/{id}', {
+        params: { path: { id } },
+      })
+      setUsers((prev) => prev.filter((u) => u.id !== id))
+      showToast('success', 'User deleted')
+    } catch {
+      showToast('error', 'Failed to delete user')
+    }
   }
 
   const handleInvite = async (e: React.FormEvent) => {
     e.preventDefault()
-    setError(null)
-    const { error: err } = await apiClient.POST('/auth/invite', {
+    const { error } = await apiClient.POST('/auth/invite', {
       body: { email: inviteEmail },
     })
-    if (err) {
-      setError('Invite failed')
+    if (error) {
+      showToast('error', 'Invite failed')
     } else {
       setInviteEmail('')
+      showToast('success', 'Invite sent')
     }
   }
 
@@ -61,11 +76,6 @@ export default function UsersPage() {
         />
         <button type="submit">Invite</button>
       </form>
-      {error && (
-        <div role="alert" style={{ color: 'red' }}>
-          {error}
-        </div>
-      )}
       <table>
         <thead>
           <tr>
