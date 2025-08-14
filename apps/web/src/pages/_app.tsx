@@ -3,6 +3,7 @@ import { useRouter } from 'next/router';
 import { useEffect, ReactNode } from 'react';
 import { AuthProvider, useAuth } from '../context/AuthContext';
 import Layout from '../components/Layout';
+import '../styles/globals.css';
 
 const publicPaths = [
   '/login',
