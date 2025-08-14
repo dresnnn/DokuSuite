@@ -36,7 +36,7 @@ Kernfunktionen:
 
 - Kunde öffnet einen Freigabe-Link `/public/{token}`.
 - Die Galerie lädt die Fotos inklusive URLs direkt über `/public/shares/{token}/photos`; keine Einzelrequests pro Bild.
-- Der Kunde kann einzelne Fotos auswählen und ZIP-, Excel- oder PDF-Exporte (`POST /exports/zip`, `POST /exports/excel`, `POST /exports/pdf`) starten; der Status wird über Polling von `/exports/{id}` aktualisiert.
+- Der Kunde kann einzelne Fotos auswählen und ZIP-, Excel- oder PDF-Exporte (`POST /exports/zip`, `POST /exports/excel`, `POST /exports/pdf`) starten; der Status der Export-Jobs wird im UI angezeigt, über Polling von `/exports/{id}` aktualisiert und bei `status=done` als Download-Link bereitgestellt.
 - Zusätzlich kann der Kunde eine Kartenansicht aufrufen, die Fotos abhängig vom Kartenausschnitt über `/public/shares/{token}/photos?bbox` lädt.
 
 ## Invite-Flow
