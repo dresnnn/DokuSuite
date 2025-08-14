@@ -1,25 +1,29 @@
 import { useRouter } from 'next/router';
 import { useState } from 'react';
 import { apiClient } from '../../../lib/api';
+import { useToast } from '../../components/Toast';
 
 export default function AcceptPage() {
   const router = useRouter();
   const { token } = router.query;
   const [password, setPassword] = useState('');
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
+  const { showToast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
     if (!token || Array.isArray(token)) return;
-    const { error: err } = await apiClient.POST('/auth/accept', {
-      body: { token, password },
-    });
-    if (err) {
-      setError('Accept failed');
-    } else {
-      setSuccess(true);
+    try {
+      const { error } = await apiClient.POST('/auth/accept', {
+        body: { token, password },
+      });
+      if (error) {
+        showToast('error', 'Accept failed');
+      } else {
+        showToast('success', 'Password set. You can now log in.');
+        router.push('/login');
+      }
+    } catch {
+      showToast('error', 'Accept failed');
     }
   };
 
@@ -32,12 +36,6 @@ export default function AcceptPage() {
         onChange={(e) => setPassword(e.target.value)}
       />
       <button type="submit">Set Password</button>
-      {error && (
-        <div role="alert" style={{ color: 'red' }}>
-          {error}
-        </div>
-      )}
-      {success && <div>Password set. You can now log in.</div>}
     </form>
   );
 }

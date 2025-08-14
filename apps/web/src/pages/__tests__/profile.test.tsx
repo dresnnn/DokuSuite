@@ -3,6 +3,7 @@ import ProfilePage from '../profile';
 import { AuthProvider } from '../../context/AuthContext';
 import { apiClient } from '../../../lib/api';
 import { useRouter } from 'next/router';
+import { ToastProvider } from '../../components/Toast';
 
 jest.mock('next/router', () => ({
   useRouter: jest.fn(),
@@ -51,7 +52,9 @@ describe('ProfilePage', () => {
 
     render(
       <AuthProvider>
-        <ProfilePage />
+        <ToastProvider>
+          <ProfilePage />
+        </ToastProvider>
       </AuthProvider>,
     );
 
@@ -68,6 +71,10 @@ describe('ProfilePage', () => {
         body: { current_password: 'old', new_password: 'new' },
       });
     });
+
+    await waitFor(() =>
+      expect(screen.getByRole('alert')).toHaveTextContent('Passwort geändert'),
+    );
   });
 
   it('disables 2FA and logs out', async () => {
@@ -78,7 +85,9 @@ describe('ProfilePage', () => {
 
     render(
       <AuthProvider>
-        <ProfilePage />
+        <ToastProvider>
+          <ProfilePage />
+        </ToastProvider>
       </AuthProvider>,
     );
 
@@ -88,5 +97,9 @@ describe('ProfilePage', () => {
       expect(del).toHaveBeenCalledWith('/auth/2fa', {});
       expect(window.localStorage.removeItem).toHaveBeenCalledWith('token');
     });
+
+    await waitFor(() =>
+      expect(screen.getByRole('alert')).toHaveTextContent('2FA deaktiviert'),
+    );
   });
 });

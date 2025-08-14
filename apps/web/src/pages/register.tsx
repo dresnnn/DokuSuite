@@ -1,23 +1,28 @@
 import { useState } from 'react'
 import { useRouter } from 'next/router'
 import { apiClient } from '../../lib/api'
+import { useToast } from '../components/Toast'
 
 export default function RegisterPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [error, setError] = useState<string | null>(null)
   const router = useRouter()
+  const { showToast } = useToast()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setError(null)
-    const { data } = await apiClient.POST('/auth/register', {
-      body: { email, password },
-    })
-    if (data) {
-      router.push('/login')
-    } else {
-      setError('Registration failed')
+    try {
+      const { data } = await apiClient.POST('/auth/register', {
+        body: { email, password },
+      })
+      if (data) {
+        showToast('success', 'Registration successful')
+        router.push('/login')
+      } else {
+        showToast('error', 'Registration failed')
+      }
+    } catch {
+      showToast('error', 'Registration failed')
     }
   }
 
@@ -35,11 +40,6 @@ export default function RegisterPage() {
         onChange={(e) => setPassword(e.target.value)}
       />
       <button type="submit">Register</button>
-      {error && (
-        <div role="alert" style={{ color: 'red' }}>
-          {error}
-        </div>
-      )}
     </form>
   )
 }

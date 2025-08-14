@@ -1,6 +1,7 @@
 import { useRouter } from 'next/router'
 import { useEffect, useState } from 'react'
 import { apiClient } from '../../../lib/api'
+import { useToast } from '../../components/Toast'
 
 type Order = {
   customer_id?: string
@@ -12,6 +13,7 @@ export default function OrderDetailPage() {
   const router = useRouter()
   const { id } = router.query
   const [order, setOrder] = useState<Order>({})
+  const { showToast } = useToast()
 
   useEffect(() => {
     if (!id) return
@@ -34,14 +36,19 @@ export default function OrderDetailPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!id) return
-    await apiClient.PATCH('/orders/{id}', {
-      params: { path: { id: Number(id) } },
-      body: {
-        customer_id: order.customer_id || '',
-        name: order.name || '',
-        status: order.status || '',
-      },
-    })
+    try {
+      await apiClient.PATCH('/orders/{id}', {
+        params: { path: { id: Number(id) } },
+        body: {
+          customer_id: order.customer_id || '',
+          name: order.name || '',
+          status: order.status || '',
+        },
+      })
+      showToast('success', 'Order updated')
+    } catch {
+      showToast('error', 'Update failed')
+    }
   }
 
   return (
