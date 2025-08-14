@@ -15,12 +15,12 @@ describe('SharesPage', () => {
   it('lists and creates shares and shows URL', async () => {
     ;(apiClient.GET as jest.Mock).mockResolvedValue({
       data: {
-        items: [{ id: 1, order_id: 2, url: 'http://u1' }],
+        items: [{ id: 1, order_id: 2, url: 'http://u1', download_allowed: true }],
         meta: { page: 1, limit: 10, total: 1 },
       },
     })
     ;(apiClient.POST as jest.Mock).mockResolvedValue({
-      data: { id: 2, order_id: 3, url: 'http://u2' },
+      data: { id: 2, order_id: 3, url: 'http://u2', download_allowed: true },
     })
 
     render(
@@ -63,7 +63,8 @@ describe('SharesPage', () => {
           watermark_policy: 'default',
         },
       })
-      expect(screen.getByText('http://u2')).toBeInTheDocument()
+      const row = screen.getByText('http://u2').closest('tr')!
+      expect(row).toHaveTextContent('Yes')
     })
   })
 
@@ -72,7 +73,7 @@ describe('SharesPage', () => {
       data: { items: [], meta: { page: 1, limit: 10, total: 0 } },
     })
     ;(apiClient.POST as jest.Mock).mockResolvedValue({
-      data: { id: 2, order_id: 3, url: 'http://u2' },
+      data: { id: 2, order_id: 3, url: 'http://u2', download_allowed: true },
     })
 
     render(
@@ -112,14 +113,50 @@ describe('SharesPage', () => {
           watermark_text: 'secret',
         },
       })
-      expect(screen.getByText('http://u2')).toBeInTheDocument()
+      const row = screen.getByText('http://u2').closest('tr')!
+      expect(row).toHaveTextContent('Yes')
+    })
+  })
+
+  it('creates share without download and shows in table', async () => {
+    ;(apiClient.GET as jest.Mock).mockResolvedValue({
+      data: { items: [], meta: { page: 1, limit: 10, total: 0 } },
+    })
+    ;(apiClient.POST as jest.Mock).mockResolvedValue({
+      data: { id: 5, order_id: 6, url: 'http://u5', download_allowed: false },
+    })
+
+    render(
+      <ToastProvider>
+        <SharesPage />
+      </ToastProvider>,
+    )
+
+    fireEvent.change(screen.getByPlaceholderText('Order ID'), {
+      target: { value: '6' },
+    })
+    fireEvent.click(screen.getByLabelText('Download erlaubt'))
+    fireEvent.click(screen.getByText('Create'))
+
+    await waitFor(() => {
+      expect(apiClient.POST).toHaveBeenCalledWith('/shares', {
+        body: {
+          order_id: 6,
+          email: null,
+          download_allowed: false,
+          expires_at: null,
+          watermark_policy: undefined,
+        },
+      })
+      const row = screen.getByText('http://u5').closest('tr')!
+      expect(row).toHaveTextContent('No')
     })
   })
 
   it('revokes share', async () => {
     ;(apiClient.GET as jest.Mock).mockResolvedValue({
       data: {
-        items: [{ id: 1, order_id: 2, url: 'http://u1' }],
+        items: [{ id: 1, order_id: 2, url: 'http://u1', download_allowed: true }],
         meta: { page: 1, limit: 10, total: 1 },
       },
     })
@@ -154,19 +191,19 @@ describe('SharesPage', () => {
     ;(apiClient.GET as jest.Mock)
       .mockResolvedValueOnce({
         data: {
-          items: [{ id: 1, order_id: 2, url: 'http://u1' }],
+          items: [{ id: 1, order_id: 2, url: 'http://u1', download_allowed: true }],
           meta: { page: 1, limit: 10, total: 20 },
         },
       })
       .mockResolvedValueOnce({
         data: {
-          items: [{ id: 2, order_id: 3, url: 'http://u2' }],
+          items: [{ id: 2, order_id: 3, url: 'http://u2', download_allowed: true }],
           meta: { page: 2, limit: 10, total: 20 },
         },
       })
       .mockResolvedValueOnce({
         data: {
-          items: [{ id: 1, order_id: 2, url: 'http://u1' }],
+          items: [{ id: 1, order_id: 2, url: 'http://u1', download_allowed: true }],
           meta: { page: 1, limit: 10, total: 20 },
         },
       })

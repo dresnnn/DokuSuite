@@ -7,6 +7,7 @@ type Share = {
   id?: number
   order_id?: number
   url?: string
+  download_allowed?: boolean
 }
 
 type PageMeta = {
@@ -24,6 +25,7 @@ export default function SharesPage() {
   const [expiresAt, setExpiresAt] = useState('')
   const [watermarkPolicy, setWatermarkPolicy] = useState('')
   const [watermarkText, setWatermarkText] = useState('')
+  const [downloadAllowed, setDownloadAllowed] = useState(true)
   const { showToast } = useToast()
 
   const client = apiClient as unknown as {
@@ -68,7 +70,7 @@ export default function SharesPage() {
         body: {
           order_id: Number(orderId),
           email: email || null,
-          download_allowed: true,
+          download_allowed: downloadAllowed,
           expires_at: expiresAt || null,
           watermark_policy: watermarkPolicy || undefined,
           watermark_text:
@@ -82,6 +84,7 @@ export default function SharesPage() {
         setExpiresAt('')
         setWatermarkPolicy('')
         setWatermarkText('')
+        setDownloadAllowed(true)
         showToast('success', 'Share created')
       }
     } catch {
@@ -155,6 +158,14 @@ export default function SharesPage() {
             onChange={(e) => setWatermarkText(e.target.value)}
           />
         ) : null}
+        <label>
+          <input
+            type="checkbox"
+            checked={downloadAllowed}
+            onChange={(e) => setDownloadAllowed(e.target.checked)}
+          />
+          Download erlaubt
+        </label>
         <button type="submit">Create</button>
       </form>
       <table>
@@ -163,6 +174,7 @@ export default function SharesPage() {
             <th>ID</th>
             <th>Order ID</th>
             <th>URL</th>
+            <th>Download erlaubt</th>
             <th>Actions</th>
           </tr>
         </thead>
@@ -178,6 +190,7 @@ export default function SharesPage() {
                   </a>
                 ) : null}
               </td>
+              <td>{s.download_allowed ? 'Yes' : 'No'}</td>
               <td>
                 <button onClick={() => handleDelete(s.id!)}>Revoke</button>
               </td>
