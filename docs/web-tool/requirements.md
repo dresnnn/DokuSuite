@@ -21,7 +21,8 @@ Kernfunktionen:
 - Auftragsverwaltung: Aufträge listen, nach Kunde und Status filtern, neue Aufträge anlegen sowie Details ansehen und den Status bearbeiten (`GET /orders/{id}`, `PATCH /orders/{id}`).
 - Standortpflege: Standorte suchen (`q`, `near`, `radius_m`), paginiert listen und Name, Adresse oder Aktivstatus bearbeiten (`PATCH /locations/{id}`).
 - Foto-Detailseite zur Bearbeitung von Metadaten (`quality_flag`, `note`, ...)
-  über `PATCH /photos/{id}`.
+  über `PATCH /photos/{id}` und Korrektur des Standorts per Karte
+  (Marker-Drag mit `PATCH /photos/{id}` aktualisiert die Koordinaten).
 - Foto-Upload: Browser fordert über `POST /photos/upload-intent` eine signierte URL an und lädt die Datei direkt hoch.
 - Authentifizierung via Token: Browser speichert das Token und sendet es bei jeder API-Anfrage als `Authorization: Bearer <token>`.
 - `AuthContext` verwaltet Loginstatus und Token im Frontend.

@@ -1,6 +1,7 @@
 import { useRouter } from 'next/router'
 import { useEffect, useState } from 'react'
 import { apiClient } from '../../../lib/api'
+import PhotoMap from '../../components/PhotoMap'
 
 type Photo = {
   quality_flag?: string | null
@@ -9,6 +10,7 @@ type Photo = {
   site_id?: string | null
   device_id?: string | null
   uploader_id?: string | null
+  ad_hoc_spot?: { lat: number; lon: number } | null
 }
 
 export default function PhotoDetailPage() {
@@ -51,7 +53,8 @@ export default function PhotoDetailPage() {
   }
 
   return (
-    <form onSubmit={handleSubmit}>
+    <>
+      <form onSubmit={handleSubmit}>
       <label>
         Quality Flag:
         <input
@@ -97,7 +100,14 @@ export default function PhotoDetailPage() {
         />
       </label>
       <button type="submit">Save</button>
-    </form>
+      </form>
+      {id && photo.ad_hoc_spot && (
+        <PhotoMap
+          photoId={Number(id)}
+          adHocSpot={{ lat: photo.ad_hoc_spot.lat, lon: photo.ad_hoc_spot.lon }}
+        />
+      )}
+    </>
   )
 }
 
