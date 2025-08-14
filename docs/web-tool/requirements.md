@@ -17,7 +17,7 @@ Kernfunktionen:
 - Kundenfreigaben: Links (ablaufbar), Kunden-Login, ZIP-, Excel- und PDF-Export (`POST /exports/zip`, `POST /exports/excel`, `POST /exports/pdf`), Karten-Sharing.
 - Freigabeverwaltung: bestehende Shares paginiert listen (`page`/`limit`), neue Links mit Ablaufdatum (`expires_at`) und Wasserzeichen-Policy (`watermark_policy`) erzeugen, Widerruf über `POST /shares/{id}/revoke`; die generierte URL wird nach Erstellung angezeigt.
 - Export-Workflow: Export-Jobs der aktuellen Sitzung lokal verfolgen, ZIP-, Excel- und PDF-Exporte der ausgewählten Fotos anstoßen (`POST /exports/zip`, `POST /exports/excel`, `POST /exports/pdf`), Status via Polling aktualisieren (`GET /exports/{id}`) und Download-Link bei abgeschlossenen Jobs (`status=done`).
-- Nutzer-/Rollenverwaltung; Einladungslinks, Passwort-Reset, 2FA (später).
+- Nutzer-/Rollenverwaltung; Einladungslinks, Passwort-Reset, 2FA.
 - Auftragsverwaltung: Aufträge listen, nach Kunde und Status filtern, neue Aufträge anlegen sowie Details ansehen und den Status bearbeiten (`GET /orders/{id}`, `PATCH /orders/{id}`).
 - Standortpflege: Standorte suchen (`q`, `near`, `radius_m`), paginiert listen und Name, Adresse oder Aktivstatus bearbeiten (`PATCH /locations/{id}`).
 - Foto-Detailseite zur Bearbeitung von Metadaten (`quality_flag`, `note`, ...)
@@ -45,6 +45,13 @@ Kernfunktionen:
 - Der Nutzer erhält einen Link `/accept/{token}`.
 - Auf der Accept-Seite setzt der Nutzer ein neues Passwort; das Frontend sendet `POST /auth/accept` mit Token und Passwort.
 - Nach erfolgreichem Setzen des Passworts kann sich der Nutzer über `/login` anmelden.
+
+## 2FA-Flow
+
+- Nutzer generiert auf `/2fa/setup` ein TOTP-Secret (`POST /auth/2fa/setup`).
+- Beim Login ohne gültiges 2FA-Token liefert `/auth/login` einen `challenge_token`.
+- Der Nutzer wird zu `/2fa/verify` geleitet und sendet `POST /auth/2fa/verify` mit `challenge` und Einmalcode.
+- Bei erfolgreicher Verifizierung erhält der Browser wie gewohnt ein JWT (`access_token`).
 
 ## Invite-Flow
 

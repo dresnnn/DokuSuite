@@ -73,6 +73,39 @@ describe('LoginPage', () => {
     });
   });
 
+  it('redirects to 2fa verification when challenge returned', async () => {
+    const push = jest.fn();
+    mockedUseRouter.mockReturnValue({
+      pathname: '/login',
+      replace: jest.fn(),
+      push,
+      prefetch: jest.fn(),
+      events: { on: jest.fn(), off: jest.fn() },
+      beforePopState: jest.fn(),
+    });
+
+    jest.spyOn(apiClient, 'POST').mockResolvedValue({
+      data: { challenge_token: 'abc' },
+    } as unknown as Awaited<ReturnType<typeof apiClient.POST>>);
+
+    render(
+      <AuthProvider>
+        <LoginPage />
+      </AuthProvider>,
+    );
+    fireEvent.change(screen.getByPlaceholderText('Email'), {
+      target: { value: 'user@example.com' },
+    });
+    fireEvent.change(screen.getByPlaceholderText('Password'), {
+      target: { value: 'pw' },
+    });
+    fireEvent.click(screen.getByText('Login'));
+
+    await waitFor(() => {
+      expect(push).toHaveBeenCalledWith('/2fa/verify');
+    });
+  });
+
   it('shows error on failed login', async () => {
     jest
       .spyOn(apiClient, 'POST')

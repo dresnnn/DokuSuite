@@ -86,6 +86,46 @@ paths:
         '401':
           $ref: '#/components/responses/Unauthorized'
 
+  /auth/2fa/setup:
+    post:
+      tags: [auth]
+      summary: Initiate 2FA setup
+      responses:
+        '200':
+          description: OTP secret and QR code
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  secret: { type: string }
+                  qr_code: { type: string, description: Data URL for QR image }
+
+  /auth/2fa/verify:
+    post:
+      tags: [auth]
+      summary: Verify 2FA token for login challenge
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [challenge, token]
+              properties:
+                challenge: { type: string }
+                token: { type: string }
+      responses:
+        '200':
+          description: JWT access token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthToken'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
   /auth/me:
     get:
       tags: [auth]

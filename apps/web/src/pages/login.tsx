@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useRouter } from 'next/router';
 import { apiClient } from '../../lib/api';
 import { useAuth } from '../context/AuthContext';
 
@@ -6,7 +7,8 @@ export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
-  const { login } = useAuth();
+  const { login, setChallenge } = useAuth();
+  const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -14,8 +16,11 @@ export default function LoginPage() {
     const { data } = await apiClient.POST('/auth/login', {
       body: { email, password },
     });
-    if (data) {
+    if (data?.access_token) {
       login(data.access_token);
+    } else if (data?.challenge_token) {
+      setChallenge(data.challenge_token);
+      router.push('/2fa/verify');
     } else {
       setError('Login failed');
     }
