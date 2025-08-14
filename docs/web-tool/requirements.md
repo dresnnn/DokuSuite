@@ -3,7 +3,7 @@
 Hauptnutzergruppen:
 
 - Verwaltung/Team: Prüfung, Korrektur, Zuordnung, Exporte, Freigaben.
-- Kunden: Einsicht in freigegebene Aufträge, Download, Karten/Excel.
+- Kunden: Einsicht in freigegebene Aufträge, Download (falls erlaubt), Karten/Excel.
 - Plakatierer (optional): Eigene Uploads sichten, Status einsehen.
 
 Kernfunktionen:
@@ -14,8 +14,8 @@ Kernfunktionen:
   (`PATCH /photos/{id}` aktualisiert die Koordinaten).
 - Bulk-Operationen: Multi-Select, Zuweisen (`POST /photos/batch/assign`), Ausblenden (`POST /photos/batch/hide`), Curate-Flag (`POST /photos/batch/curate`), Re-Matching (`POST /photos/batch/rematch`), Export ausgewählter Fotos als ZIP/Excel/PDF (`POST /exports/zip`, `POST /exports/excel`, `POST /exports/pdf`).
 - Mehrfachauswahl im Grid/Table mit Auftragszuweisung via `POST /photos/batch/assign`; weitere Batch-Aktionen über `POST /photos/batch/hide`, `POST /photos/batch/curate` und `POST /photos/batch/rematch`.
-- Kundenfreigaben: Links (ablaufbar), Kunden-Login, ZIP-, Excel- und PDF-Export (`POST /exports/zip`, `POST /exports/excel`, `POST /exports/pdf`), Karten-Sharing.
-- Freigabeverwaltung: bestehende Shares paginiert listen (`page`/`limit`), optional nach Auftrag filtern (`orderId`), Seitenwechsel über `Prev`/`Next`-Buttons mit Gesamtseitenzahl aus `total` und `limit`, neue Links mit Ablaufdatum (`expires_at`), Wasserzeichen-Policy (`watermark_policy`) und optional benutzerdefiniertem Wasserzeichen-Text (`watermark_text`) bei `watermark_policy=custom_text` erzeugen, Widerruf über `POST /shares/{id}/revoke`; die generierte URL wird nach Erstellung angezeigt.
+- Kundenfreigaben: Links (ablaufbar), Kunden-Login, optionaler Download je Freigabe (`download_allowed`), ZIP-, Excel- und PDF-Export (`POST /exports/zip`, `POST /exports/excel`, `POST /exports/pdf`), Karten-Sharing.
+- Freigabeverwaltung: bestehende Shares paginiert listen (`page`/`limit`), optional nach Auftrag filtern (`orderId`), Seitenwechsel über `Prev`/`Next`-Buttons mit Gesamtseitenzahl aus `total` und `limit`, neue Links mit Ablaufdatum (`expires_at`), Download-Erlaubnis (`download_allowed`), Wasserzeichen-Policy (`watermark_policy`) und optional benutzerdefiniertem Wasserzeichen-Text (`watermark_text`) bei `watermark_policy=custom_text` erzeugen, Widerruf über `POST /shares/{id}/revoke`; die generierte URL wird nach Erstellung angezeigt.
 - Export-Workflow: Export-Jobs der aktuellen Sitzung lokal verfolgen und in `localStorage` persistieren, ZIP-, Excel- und PDF-Exporte der ausgewählten Fotos anstoßen (`POST /exports/zip`, `POST /exports/excel`, `POST /exports/pdf`), Status via Polling aktualisieren (`GET /exports/{id}`) und Download-Link bei abgeschlossenen Jobs (`status=done`).
 - Nutzer-/Rollenverwaltung; Einladungslinks, Passwort-Reset, 2FA.
 - Auftragsverwaltung: Aufträge listen, nach Kunde und Status filtern, neue Aufträge anlegen sowie Details ansehen und den Status bearbeiten (`GET /orders/{id}`, `PATCH /orders/{id}`).
