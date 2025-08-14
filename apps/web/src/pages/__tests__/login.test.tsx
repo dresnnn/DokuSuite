@@ -155,6 +155,20 @@ describe('LoginPage', () => {
       global.fetch = originalFetch;
     });
 
+    it('clears token and redirects to login on 401 responses', async () => {
+      setAuthToken('token123');
+
+      const fetchMock = jest.fn().mockResolvedValue({ status: 401 });
+      const originalFetch = global.fetch;
+      // @ts-expect-error replace fetch for test
+      global.fetch = fetchMock;
+
+      await authFetch('/api/photos');
+      expect(window.localStorage.removeItem).toHaveBeenCalledWith('token');
+
+      global.fetch = originalFetch;
+    });
+
     it('does not redirect unauthenticated users on public routes', async () => {
       const replace = jest.fn();
       mockedUseRouter.mockReturnValue({

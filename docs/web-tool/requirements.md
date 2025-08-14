@@ -29,6 +29,7 @@ Kernfunktionen:
 - Öffentliche Seiten ohne Login: `/login`, `/register`, `/forgot-password`, `/reset`, `/accept`, `/public`, `/2fa/verify`.
 - Admin-Seiten (`Users`, `Shares`, `Locations`) sind nur für Nutzer mit `role === 'ADMIN'` zugänglich und leiten sonst auf `/photos` weiter.
 - Logout löscht das Token und navigiert zu `/login`.
+- Bei abgelaufener Sitzung (HTTP 401) löscht das Frontend das Token und leitet automatisch auf `/login` weiter.
 - Registrierung neuer Nutzer über Formular (`POST /auth/register`), leitet nach erfolgreicher Registrierung zu `/login`.
 - Navigationsleiste nur für eingeloggte Nutzer mit Links zu `Photos`, `Users`, `Orders`, `Shares` und `Exports`.
 - Branding/Wasserzeichen-Policy je Kunde/Share (Agenturkunden i. d. R. ohne Wasserzeichen).
