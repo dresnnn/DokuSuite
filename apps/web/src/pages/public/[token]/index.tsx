@@ -1,12 +1,16 @@
 import { useRouter } from 'next/router'
 import { useEffect, useState } from 'react'
+import dynamic from 'next/dynamic'
 import { apiClient } from '../../../../lib/api'
-import PhotoMap from '../../../components/PhotoMap'
 import {
   ExportJob,
   loadExportJobs,
   saveExportJobs,
 } from '../../../../lib/exportJobs'
+
+const PhotoMap = dynamic(() => import('../../../components/PhotoMap'), {
+  ssr: false,
+})
 
 type Photo = {
   id: number
