@@ -92,12 +92,13 @@ export default function SharesPage() {
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault()
     try {
+      const expiresAtIso = expiresAt ? new Date(expiresAt).toISOString() : null
       const { data } = await apiClient.POST('/shares', {
         body: {
           order_id: Number(orderId),
           email: email || null,
           download_allowed: downloadAllowed,
-          expires_at: expiresAt || null,
+          expires_at: expiresAtIso,
           watermark_policy: watermarkPolicy || undefined,
           watermark_text:
             watermarkPolicy === 'custom_text' ? watermarkText || null : undefined,
