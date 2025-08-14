@@ -2,6 +2,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import RegisterPage from '../register'
 import { apiClient } from '../../../lib/api'
 import { useRouter } from 'next/router'
+import { ToastProvider } from '../../components/Toast'
 
 jest.mock('next/router', () => ({
   useRouter: jest.fn(),
@@ -24,7 +25,11 @@ describe('RegisterPage', () => {
         ReturnType<typeof apiClient.POST>
       >)
 
-    render(<RegisterPage />)
+    render(
+      <ToastProvider>
+        <RegisterPage />
+      </ToastProvider>,
+    )
 
     fireEvent.change(screen.getByPlaceholderText('Email'), {
       target: { value: 'user@example.com' },
@@ -37,6 +42,12 @@ describe('RegisterPage', () => {
     await waitFor(() => {
       expect(push).toHaveBeenCalledWith('/login')
     })
+
+    await waitFor(() =>
+      expect(screen.getByRole('alert')).toHaveTextContent(
+        'Registration successful',
+      ),
+    )
   })
 
   it('shows error on failed registration', async () => {
@@ -47,7 +58,11 @@ describe('RegisterPage', () => {
         ReturnType<typeof apiClient.POST>
       >)
 
-    render(<RegisterPage />)
+    render(
+      <ToastProvider>
+        <RegisterPage />
+      </ToastProvider>,
+    )
 
     fireEvent.change(screen.getByPlaceholderText('Email'), {
       target: { value: 'user@example.com' },
@@ -57,8 +72,8 @@ describe('RegisterPage', () => {
     })
     fireEvent.click(screen.getByText('Register'))
 
-    await waitFor(() => {
-      expect(screen.getByRole('alert')).toHaveTextContent('Registration failed')
-    })
+    await waitFor(() =>
+      expect(screen.getByRole('alert')).toHaveTextContent('Registration failed'),
+    )
   })
 })

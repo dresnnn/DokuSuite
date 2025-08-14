@@ -589,7 +589,11 @@ describe('PhotoDetailPage', () => {
     ;(apiClient.GET as jest.Mock).mockResolvedValue({
       data: { quality_flag: 'ok', note: 'old' },
     })
-    render(<PhotoDetailPage />)
+    render(
+      <ToastProvider>
+        <PhotoDetailPage />
+      </ToastProvider>,
+    )
     await waitFor(() => expect(apiClient.GET).toHaveBeenCalled())
     fireEvent.change(screen.getByLabelText('Quality Flag:'), {
       target: { value: 'bad' },
@@ -610,6 +614,10 @@ describe('PhotoDetailPage', () => {
         }),
       ),
     )
+
+    await waitFor(() =>
+      expect(screen.getByRole('alert')).toHaveTextContent('Photo updated'),
+    )
   })
 
   it('sends updated coordinates on marker drag', async () => {
@@ -617,7 +625,11 @@ describe('PhotoDetailPage', () => {
     ;(apiClient.GET as jest.Mock).mockResolvedValue({
       data: { ad_hoc_spot: { lat: 1, lon: 1 } },
     })
-    render(<PhotoDetailPage />)
+    render(
+      <ToastProvider>
+        <PhotoDetailPage />
+      </ToastProvider>,
+    )
     await waitFor(() => expect(apiClient.GET).toHaveBeenCalled())
     await waitFor(() =>
       expect(screen.getAllByTestId('marker').length).toBeGreaterThan(0),

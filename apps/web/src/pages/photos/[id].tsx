@@ -2,6 +2,7 @@ import { useRouter } from 'next/router'
 import { useEffect, useState } from 'react'
 import { apiClient } from '../../../lib/api'
 import PhotoMap from '../../components/PhotoMap'
+import { useToast } from '../../components/Toast'
 
 type Photo = {
   quality_flag?: string | null
@@ -17,6 +18,7 @@ export default function PhotoDetailPage() {
   const router = useRouter()
   const { id } = router.query
   const [photo, setPhoto] = useState<Photo>({})
+  const { showToast } = useToast()
 
   useEffect(() => {
     if (!id) return
@@ -39,17 +41,22 @@ export default function PhotoDetailPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!id) return
-    await apiClient.PATCH('/photos/{id}', {
-      params: { path: { id: Number(id) } },
-      body: {
-        quality_flag: photo.quality_flag || null,
-        note: photo.note || null,
-        mode: photo.mode || null,
-        site_id: photo.site_id || null,
-        device_id: photo.device_id || null,
-        uploader_id: photo.uploader_id || null,
-      },
-    })
+    try {
+      await apiClient.PATCH('/photos/{id}', {
+        params: { path: { id: Number(id) } },
+        body: {
+          quality_flag: photo.quality_flag || null,
+          note: photo.note || null,
+          mode: photo.mode || null,
+          site_id: photo.site_id || null,
+          device_id: photo.device_id || null,
+          uploader_id: photo.uploader_id || null,
+        },
+      })
+      showToast('success', 'Photo updated')
+    } catch {
+      showToast('error', 'Update failed')
+    }
   }
 
   return (

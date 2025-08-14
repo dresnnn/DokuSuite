@@ -2,6 +2,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import AcceptPage from '../accept/[token]';
 import { apiClient } from '../../../lib/api';
 import { useRouter } from 'next/router';
+import { ToastProvider } from '../../components/Toast';
 
 jest.mock('next/router', () => ({
   useRouter: jest.fn(),
@@ -22,9 +23,15 @@ describe('AcceptPage', () => {
   });
 
   it('posts token and password', async () => {
+    const push = jest.fn();
+    mockedUseRouter.mockReturnValue({ query: { token: 'tok1' }, push });
     (apiClient.POST as jest.Mock).mockResolvedValue({ error: undefined });
 
-    render(<AcceptPage />);
+    render(
+      <ToastProvider>
+        <AcceptPage />
+      </ToastProvider>,
+    );
 
     fireEvent.change(screen.getByPlaceholderText('Password'), {
       target: { value: 'pw' },
@@ -35,24 +42,33 @@ describe('AcceptPage', () => {
       expect(apiClient.POST).toHaveBeenCalledWith('/auth/accept', {
         body: { token: 'tok1', password: 'pw' },
       });
-      expect(
-        screen.getByText('Password set. You can now log in.'),
-      ).toBeInTheDocument();
+      expect(push).toHaveBeenCalledWith('/login');
     });
+
+    await waitFor(() =>
+      expect(screen.getByRole('alert')).toHaveTextContent(
+        'Password set. You can now log in.',
+      ),
+    );
   });
 
   it('shows error on failure', async () => {
+    mockedUseRouter.mockReturnValue({ query: { token: 'tok1' } });
     (apiClient.POST as jest.Mock).mockResolvedValue({ error: {} });
 
-    render(<AcceptPage />);
+    render(
+      <ToastProvider>
+        <AcceptPage />
+      </ToastProvider>,
+    );
 
     fireEvent.change(screen.getByPlaceholderText('Password'), {
       target: { value: 'pw' },
     });
     fireEvent.click(screen.getByText('Set Password'));
 
-    await waitFor(() => {
-      expect(screen.getByRole('alert')).toHaveTextContent('Accept failed');
-    });
+    await waitFor(() =>
+      expect(screen.getByRole('alert')).toHaveTextContent('Accept failed'),
+    );
   });
 });

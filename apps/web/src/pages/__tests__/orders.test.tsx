@@ -143,7 +143,11 @@ describe('OrderDetailPage', () => {
       data: { customer_id: 'c1', name: 'Order 1', status: 'reserved' },
     })
 
-    render(<OrderDetailPage />)
+    render(
+      <ToastProvider>
+        <OrderDetailPage />
+      </ToastProvider>,
+    )
     await waitFor(() => expect(apiClient.GET).toHaveBeenCalled())
 
     fireEvent.change(screen.getByLabelText('Status:'), {
@@ -159,6 +163,10 @@ describe('OrderDetailPage', () => {
           body: expect.objectContaining({ status: 'booked' }),
         }),
       ),
+    )
+
+    await waitFor(() =>
+      expect(screen.getByRole('alert')).toHaveTextContent('Order updated'),
     )
   })
 })
