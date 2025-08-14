@@ -1030,6 +1030,133 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/customers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List customers */
+        get: {
+            parameters: {
+                query?: {
+                    page?: components["parameters"]["page"];
+                    limit?: components["parameters"]["limit"];
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Page_Customer_"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        /** Create customer */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["CustomerCreate"];
+                };
+            };
+            responses: {
+                /** @description Created */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Customer"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/customers/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete customer */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: components["parameters"]["id"];
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description No Content */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                404: components["responses"]["NotFound"];
+            };
+        };
+        options?: never;
+        head?: never;
+        /** Update customer */
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: components["parameters"]["id"];
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["CustomerUpdate"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Customer"];
+                    };
+                };
+                404: components["responses"]["NotFound"];
+            };
+        };
+        trace?: never;
+    };
     "/orders": {
         parameters: {
             query?: never;
@@ -1590,6 +1717,10 @@ export interface components {
             items?: components["schemas"]["Share"][];
             meta?: components["schemas"]["PageMeta"];
         };
+        Page_Customer_: {
+            items?: components["schemas"]["Customer"][];
+            meta?: components["schemas"]["PageMeta"];
+        };
         GeoPoint: {
             lat?: number;
             lon?: number;
@@ -1679,6 +1810,22 @@ export interface components {
             site_id?: string | null;
             device_id?: string | null;
             uploader_id?: string | null;
+        };
+        CustomerCreate: {
+            name: string;
+            watermark_policy?: components["schemas"]["WatermarkPolicy"];
+            watermark_text?: string | null;
+        };
+        CustomerUpdate: {
+            name?: string | null;
+            watermark_policy?: components["schemas"]["WatermarkPolicy"];
+            watermark_text?: string | null;
+        };
+        Customer: {
+            id?: number;
+            name?: string;
+            watermark_policy?: components["schemas"]["WatermarkPolicy"];
+            watermark_text?: string | null;
         };
         OrderCreate: {
             customer_id: string;

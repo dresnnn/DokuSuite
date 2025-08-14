@@ -34,6 +34,12 @@ Kernfunktionen:
 - Navigationsleiste nur für eingeloggte Nutzer mit Links zu `Photos`, `Users`, `Orders`, `Shares` und `Exports`.
 - Branding/Wasserzeichen-Policy je Kunde/Share (Agenturkunden i. d. R. ohne Wasserzeichen).
 
+## Kundenverwaltung
+
+- Kunden paginiert listen (`GET /customers`).
+- Neue Kunden anlegen (`POST /customers`).
+- Kunden bearbeiten (`PATCH /customers/{id}`) und löschen (`DELETE /customers/{id}`).
+
 ## Login-Flow
 
 - Nutzer meldet sich auf `/login` mit E-Mail und Passwort an.
