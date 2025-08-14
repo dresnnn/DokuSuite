@@ -1,13 +1,14 @@
 import { useRouter } from 'next/router';
 import { useState } from 'react';
 import { apiClient } from '../../../lib/api';
+import { useToast } from '../../components/Toast';
 
 export default function ResetPage() {
   const router = useRouter();
   const { token } = router.query;
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
+  const { showToast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -19,7 +20,8 @@ export default function ResetPage() {
     if (err) {
       setError('Reset failed');
     } else {
-      setSuccess(true);
+      showToast('success', 'Password reset. You can now log in.');
+      router.replace('/login');
     }
   };
 
@@ -37,7 +39,6 @@ export default function ResetPage() {
           {error}
         </div>
       )}
-      {success && <div>Password reset. You can now log in.</div>}
     </form>
   );
 }
