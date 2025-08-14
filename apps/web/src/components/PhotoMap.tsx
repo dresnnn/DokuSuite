@@ -13,17 +13,42 @@ type Photo = {
 
 type Props = {
   shareToken?: string
+  photoId?: number
+  adHocSpot?: { lat: number; lon: number }
 }
 
-export default function PhotoMap({ shareToken }: Props) {
+export default function PhotoMap({ shareToken, photoId, adHocSpot }: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (!containerRef.current) return
 
-    const map = L.map(containerRef.current).setView([0, 0], 2)
+    const map = L.map(containerRef.current)
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map)
 
+    if (photoId && adHocSpot) {
+      map.setView([adHocSpot.lat, adHocSpot.lon], 13)
+      const marker = L.marker([adHocSpot.lat, adHocSpot.lon], {
+        draggable: true,
+        icon: L.divIcon({
+          className: '',
+          html: '<div data-testid="marker"></div>',
+        }),
+      })
+      marker.addTo(map)
+      marker.on('dragend', async (e) => {
+        const { lat, lng } = (e.target as L.Marker).getLatLng()
+        await apiClient.PATCH('/photos/{id}', {
+          params: { path: { id: photoId } },
+          body: { ad_hoc_spot: { lat, lon: lng } },
+        })
+      })
+      return () => {
+        map.remove()
+      }
+    }
+
+    map.setView([0, 0], 2)
     const cluster = L.markerClusterGroup()
     map.addLayer(cluster)
 
@@ -78,7 +103,7 @@ export default function PhotoMap({ shareToken }: Props) {
       map.off('moveend', fetchPhotos)
       map.remove()
     }
-  }, [shareToken])
+  }, [shareToken, photoId, adHocSpot])
 
   return <div ref={containerRef} style={{ height: '400px' }} data-testid="photo-map" />
 }

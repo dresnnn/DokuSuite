@@ -23,6 +23,7 @@ jest.mock('next/router', () => ({
 type MockMarker = {
   getElement: () => HTMLElement
   on: (event: string, cb: (e: unknown) => void) => void
+  addTo: (_: unknown) => void
   __handlers: Record<string, (e: unknown) => void>
 }
 
@@ -50,13 +51,18 @@ jest.mock('leaflet', () => {
       container.innerHTML = opts.icon
       const el = container.firstElementChild as HTMLElement
       const handlers: Record<string, (e: unknown) => void> = {}
-      return {
+      const marker: MockMarker = {
         getElement: () => el,
         on: (event: string, cb: (e: unknown) => void) => {
           handlers[event] = cb
         },
+        addTo: () => {
+          markers.push(marker)
+          document.body.appendChild(el)
+        },
         __handlers: handlers,
       }
+      return marker
     },
     markerClusterGroup: () => ({
       addLayer: (marker: MockMarker) => {
@@ -89,6 +95,7 @@ beforeEach(() => {
     }
   }) as unknown as typeof IntersectionObserver
   window.localStorage.clear()
+  ;(L as unknown as { __markers: MockMarker[] }).__markers.length = 0
 })
 
 describe('PhotosPage', () => {
@@ -604,23 +611,13 @@ describe('PhotoDetailPage', () => {
 
   it('sends updated coordinates on marker drag', async () => {
     jest.clearAllMocks()
-    ;(apiClient.GET as jest.Mock)
-      .mockResolvedValueOnce({ data: { items: [], meta: {} } })
-      .mockResolvedValueOnce({
-        data: {
-          items: [{ id: 1, ad_hoc_spot: { lat: 1, lon: 1 } }],
-          meta: {},
-        },
-      })
-    render(
-      <ToastProvider>
-        <PhotosPage />
-      </ToastProvider>,
-    )
+    ;(apiClient.GET as jest.Mock).mockResolvedValue({
+      data: { ad_hoc_spot: { lat: 1, lon: 1 } },
+    })
+    render(<PhotoDetailPage />)
     await waitFor(() => expect(apiClient.GET).toHaveBeenCalled())
-    fireEvent.click(screen.getByText('Map'))
     await waitFor(() =>
-      expect(screen.getAllByTestId('marker')).toHaveLength(1),
+      expect((L as unknown as { __markers: MockMarker[] }).__markers).toHaveLength(1),
     )
     const marker = (L as unknown as { __markers: MockMarker[] }).__markers[0]
     marker.__handlers.dragend({
