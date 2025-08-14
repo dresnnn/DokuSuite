@@ -1,6 +1,7 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import { useEffect, useState } from 'react'
 import { apiClient } from '../../../lib/api'
+import { useToast } from '../../components/Toast'
 
 type Share = {
   id?: number
@@ -22,6 +23,7 @@ export default function SharesPage() {
   const [expiresAt, setExpiresAt] = useState('')
   const [watermarkPolicy, setWatermarkPolicy] = useState('')
   const [watermarkText, setWatermarkText] = useState('')
+  const { showToast } = useToast()
 
   const client = apiClient as unknown as {
     GET: typeof apiClient.GET
@@ -29,12 +31,16 @@ export default function SharesPage() {
   }
 
   const fetchShares = async (page = meta.page, limit = meta.limit) => {
-    const { data } = await client.GET('/shares', {
-      params: { query: { page, limit } },
-    })
-    if (data) {
-      setShares(data.items || [])
-      setMeta(data.meta || { page, limit, total: 0 })
+    try {
+      const { data } = await client.GET('/shares', {
+        params: { query: { page, limit } },
+      })
+      if (data) {
+        setShares(data.items || [])
+        setMeta(data.meta || { page, limit, total: 0 })
+      }
+    } catch {
+      showToast('error', 'Failed to load shares')
     }
   }
 
@@ -44,32 +50,42 @@ export default function SharesPage() {
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault()
-    const { data } = await apiClient.POST('/shares', {
-      body: {
-        order_id: Number(orderId),
-        email: email || null,
-        download_allowed: true,
-        expires_at: expiresAt || null,
-        watermark_policy: watermarkPolicy || undefined,
-        watermark_text:
-          watermarkPolicy === 'custom_text' ? watermarkText || null : undefined,
-      },
-    })
-    if (data) {
-      setShares((prev) => [...prev, data])
-      setOrderId('')
-      setEmail('')
-      setExpiresAt('')
-      setWatermarkPolicy('')
-      setWatermarkText('')
+    try {
+      const { data } = await apiClient.POST('/shares', {
+        body: {
+          order_id: Number(orderId),
+          email: email || null,
+          download_allowed: true,
+          expires_at: expiresAt || null,
+          watermark_policy: watermarkPolicy || undefined,
+          watermark_text:
+            watermarkPolicy === 'custom_text' ? watermarkText || null : undefined,
+        },
+      })
+      if (data) {
+        setShares((prev) => [...prev, data])
+        setOrderId('')
+        setEmail('')
+        setExpiresAt('')
+        setWatermarkPolicy('')
+        setWatermarkText('')
+        showToast('success', 'Share created')
+      }
+    } catch {
+      showToast('error', 'Failed to create share')
     }
   }
 
   const handleDelete = async (id: number) => {
-    await client.POST('/shares/{id}/revoke', {
-      params: { path: { id } },
-    })
-    setShares((prev) => prev.filter((s) => s.id !== id))
+    try {
+      await client.POST('/shares/{id}/revoke', {
+        params: { path: { id } },
+      })
+      setShares((prev) => prev.filter((s) => s.id !== id))
+      showToast('success', 'Share revoked')
+    } catch {
+      showToast('error', 'Failed to revoke share')
+    }
   }
 
   const totalPages = Math.ceil((meta.total || 0) / (meta.limit || 1)) || 1

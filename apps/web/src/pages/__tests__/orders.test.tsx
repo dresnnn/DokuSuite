@@ -2,6 +2,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import OrdersPage from '../orders'
 import OrderDetailPage from '../orders/[id]'
 import { apiClient } from '../../../lib/api'
+import { ToastProvider } from '../../components/Toast'
 
 jest.mock('../../../lib/api', () => ({
   apiClient: { GET: jest.fn(), POST: jest.fn(), PATCH: jest.fn() },
@@ -30,7 +31,11 @@ describe('OrdersPage', () => {
       .mockResolvedValueOnce({ data: page2 })
       .mockResolvedValue({ data: page1 })
 
-    render(<OrdersPage />)
+    render(
+      <ToastProvider>
+        <OrdersPage />
+      </ToastProvider>,
+    )
 
     await waitFor(() => {
       expect(screen.getByText('o1')).toBeInTheDocument()
@@ -76,7 +81,11 @@ describe('OrdersPage', () => {
     })
     ;(apiClient.POST as jest.Mock).mockResolvedValue({ data: { id: 1 } })
 
-    render(<OrdersPage />)
+    render(
+      <ToastProvider>
+        <OrdersPage />
+      </ToastProvider>,
+    )
 
     fireEvent.change(screen.getByPlaceholderText('Customer ID'), {
       target: { value: 'c1' },
@@ -97,6 +106,33 @@ describe('OrdersPage', () => {
 
     expect(screen.getByPlaceholderText('Customer ID')).toHaveValue('')
     expect(screen.getByPlaceholderText('Name')).toHaveValue('')
+  })
+
+  it('shows toast on create order error', async () => {
+    ;(apiClient.GET as jest.Mock).mockResolvedValue({
+      data: { items: [], meta: { page: 1, limit: 10, total: 0 } },
+    })
+    ;(apiClient.POST as jest.Mock).mockResolvedValue({ data: undefined })
+
+    render(
+      <ToastProvider>
+        <OrdersPage />
+      </ToastProvider>,
+    )
+
+    fireEvent.change(screen.getByPlaceholderText('Customer ID'), {
+      target: { value: 'c1' },
+    })
+    fireEvent.change(screen.getByPlaceholderText('Name'), {
+      target: { value: 'Order 1' },
+    })
+    fireEvent.click(screen.getByText('Create'))
+
+    await waitFor(() => {
+      expect(screen.getByRole('alert')).toHaveTextContent(
+        'Failed to create order',
+      )
+    })
   })
 })
 

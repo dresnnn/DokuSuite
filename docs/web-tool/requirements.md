@@ -97,3 +97,9 @@ UX/Leistung:
 - Tastaturkürzel, Batch-Workflows, Undo.
   - Navigation mit Pfeiltasten (\u2190/\u2192) und Auswahl aller Fotos per `A`.
   - Letzte Batch-Zuweisung l\u00e4sst sich mit `Ctrl+Z` r\u00fcckg\u00e4ngig machen.
+
+## Fehler-/Statusmeldungen
+
+- Zentrale Toast-Komponente f\u00fcr Erfolg- und Fehlermeldungen.
+- `AuthGuard` informiert \u00fcber fehlende Berechtigungen oder nicht eingeloggte Nutzer.
+- Seiten wie `Photos`, `Orders` und `Shares` zeigen Ergebnis von API-Aktionen \u00fcber Toasts an.

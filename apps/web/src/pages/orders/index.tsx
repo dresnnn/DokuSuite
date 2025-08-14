@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { apiClient } from '../../../lib/api'
+import { useToast } from '../../components/Toast'
 
 type Order = {
   id?: number
@@ -26,21 +27,26 @@ export default function OrdersPage() {
     name: '',
     status: 'reserved',
   })
+  const { showToast } = useToast()
 
   const fetchOrders = async (page = meta.page, limit = meta.limit) => {
-    const { data } = await apiClient.GET('/orders', {
-      params: {
-        query: {
-          page,
-          limit,
-          customerId: customerId || undefined,
-          status: status || undefined,
+    try {
+      const { data } = await apiClient.GET('/orders', {
+        params: {
+          query: {
+            page,
+            limit,
+            customerId: customerId || undefined,
+            status: status || undefined,
+          },
         },
-      },
-    })
-    if (data) {
-      setOrders(data.items || [])
-      setMeta(data.meta || { page, limit, total: 0 })
+      })
+      if (data) {
+        setOrders(data.items || [])
+        setMeta(data.meta || { page, limit, total: 0 })
+      }
+    } catch {
+      showToast('error', 'Failed to load orders')
     }
   }
 
@@ -55,9 +61,18 @@ export default function OrdersPage() {
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault()
-    await apiClient.POST('/orders', { body: newOrder })
-    setNewOrder({ customer_id: '', name: '', status: 'reserved' })
-    fetchOrders()
+    try {
+      const { data } = await apiClient.POST('/orders', { body: newOrder })
+      if (data) {
+        setNewOrder({ customer_id: '', name: '', status: 'reserved' })
+        showToast('success', 'Order created')
+        fetchOrders()
+      } else {
+        showToast('error', 'Failed to create order')
+      }
+    } catch {
+      showToast('error', 'Failed to create order')
+    }
   }
 
   const totalPages = Math.ceil((meta.total || 0) / (meta.limit || 1)) || 1
