@@ -2,7 +2,7 @@ import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import PublicSharePage from '../public/[token]'
 import { apiClient } from '../../../lib/api'
 import { useRouter } from 'next/router'
-import PhotoMap from '../../components/PhotoMap'
+import L from 'leaflet'
 
 jest.mock('next/router', () => ({
   useRouter: jest.fn(),
@@ -12,13 +12,69 @@ jest.mock('../../../lib/api', () => ({
   apiClient: { GET: jest.fn(), POST: jest.fn() },
 }))
 
-jest.mock('../../components/PhotoMap', () => ({
-  __esModule: true,
-  default: jest.fn(() => <div data-testid="photo-map" />),
-}))
+type MockMarker = {
+  getElement: () => HTMLElement
+  on: (event: string, cb: (e: unknown) => void) => void
+  addTo: (_: unknown) => void
+  __handlers: Record<string, (e: unknown) => void>
+}
+
+jest.mock('leaflet', () => {
+  const markers: MockMarker[] = []
+  const map = {
+    setView: jest.fn().mockReturnThis(),
+    on: jest.fn(),
+    off: jest.fn(),
+    remove: jest.fn(),
+    getBounds: () => ({
+      getSouth: () => 0,
+      getWest: () => 0,
+      getNorth: () => 1,
+      getEast: () => 1,
+    }),
+    addLayer: jest.fn(),
+  }
+  return {
+    map: () => map,
+    tileLayer: () => ({ addTo: jest.fn() }),
+    divIcon: ({ html }: { html: string }) => html,
+    marker: (_: unknown, opts: { icon?: string }): MockMarker => {
+      const container = document.createElement('div')
+      container.innerHTML = opts.icon ?? '<div data-testid="marker"></div>'
+      const el = container.firstElementChild as HTMLElement
+      const handlers: Record<string, (e: unknown) => void> = {}
+      const marker: MockMarker = {
+        getElement: () => el,
+        on: (event: string, cb: (e: unknown) => void) => {
+          handlers[event] = cb
+        },
+        addTo: () => {
+          markers.push(marker)
+          document.body.appendChild(el)
+        },
+        __handlers: handlers,
+      }
+      return marker
+    },
+    markerClusterGroup: () => ({
+      addLayer: (marker: MockMarker) => {
+        markers.push(marker)
+        document.body.appendChild(marker.getElement())
+      },
+      clearLayers: () => {
+        markers.length = 0
+        document
+          .querySelectorAll('[data-testid="marker"]')
+          .forEach((el) => el.remove())
+      },
+    }),
+    __markers: markers,
+  }
+})
+
+jest.mock('leaflet.markercluster', () => ({}), { virtual: true })
 
 const mockedUseRouter = useRouter as jest.Mock
-const mockedPhotoMap = PhotoMap as jest.Mock
 
 describe('PublicSharePage', () => {
   beforeEach(() => {
@@ -27,6 +83,10 @@ describe('PublicSharePage', () => {
       query: { token: 'tok1' },
     })
     window.localStorage.clear()
+    ;(L as unknown as { __markers: MockMarker[] }).__markers.length = 0
+    document
+      .querySelectorAll('[data-testid="marker"]')
+      .forEach((el) => el.remove())
   })
 
   it('fetches and displays photos', async () => {
@@ -203,20 +263,24 @@ describe('PublicSharePage', () => {
     jest.useRealTimers()
   })
 
-  it('shows map view with share token', async () => {
+  it('renders markers on map view', async () => {
     ;(apiClient.GET as jest.Mock)
       .mockResolvedValueOnce({ data: { download_allowed: true } })
       .mockResolvedValueOnce({ data: { items: [] } })
+      .mockResolvedValueOnce({
+        data: { items: [{ id: 1, ad_hoc_spot: { lat: 0, lon: 0 } }] },
+      })
 
     render(<PublicSharePage />)
 
     fireEvent.click(screen.getByText('Map'))
 
     await waitFor(() => {
-      expect(mockedPhotoMap).toHaveBeenCalledWith(
-        expect.objectContaining({ shareToken: 'tok1' }),
-        undefined,
-      )
+      expect(screen.getByTestId('photo-map')).toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.getAllByTestId('marker').length).toBeGreaterThan(0)
     })
   })
 })

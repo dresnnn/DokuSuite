@@ -96,6 +96,9 @@ beforeEach(() => {
   }) as unknown as typeof IntersectionObserver
   window.localStorage.clear()
   ;(L as unknown as { __markers: MockMarker[] }).__markers.length = 0
+  document
+    .querySelectorAll('[data-testid="marker"]')
+    .forEach((el) => el.remove())
 })
 
 describe('PhotosPage', () => {
@@ -616,6 +619,9 @@ describe('PhotoDetailPage', () => {
     })
     render(<PhotoDetailPage />)
     await waitFor(() => expect(apiClient.GET).toHaveBeenCalled())
+    await waitFor(() =>
+      expect(screen.getAllByTestId('marker').length).toBeGreaterThan(0),
+    )
     await waitFor(() =>
       expect((L as unknown as { __markers: MockMarker[] }).__markers).toHaveLength(1),
     )
