@@ -346,6 +346,45 @@ describe('PhotosPage', () => {
     await waitFor(() => expect(undoFn).toHaveBeenCalled())
   })
 
+  it('changes page with ArrowLeft', async () => {
+    jest.clearAllMocks()
+    const page1 = {
+      items: [{ id: 1, mode: 'MOBILE', uploader_id: 'u1' }],
+      meta: { page: 1, limit: 1, total: 2 },
+    }
+    const page2 = {
+      items: [{ id: 2, mode: 'FIXED_SITE', uploader_id: 'u2' }],
+      meta: { page: 2, limit: 1, total: 2 },
+    }
+    ;(apiClient.GET as jest.Mock)
+      .mockResolvedValueOnce({ data: page1 })
+      .mockResolvedValueOnce({ data: page2 })
+      .mockResolvedValueOnce({ data: page1 })
+
+    render(<PhotosPage />)
+
+    await waitFor(() =>
+      expect(screen.getByText('Photo 1')).toBeInTheDocument(),
+    )
+
+    fireEvent.keyDown(window, { key: 'ArrowRight', keyCode: 39, which: 39 })
+
+    await waitFor(() =>
+      expect(screen.getByText('Photo 2')).toBeInTheDocument(),
+    )
+
+    fireEvent.keyDown(window, { key: 'ArrowLeft', keyCode: 37, which: 37 })
+
+    await waitFor(() =>
+      expect(apiClient.GET).toHaveBeenLastCalledWith(
+        '/photos',
+        expect.objectContaining({
+          params: { query: expect.objectContaining({ page: 1 }) },
+        }),
+      ),
+    )
+  })
+
   it('hides selected photos', async () => {
     jest.clearAllMocks()
     ;(apiClient.GET as jest.Mock).mockResolvedValue({

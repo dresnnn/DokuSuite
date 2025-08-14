@@ -184,6 +184,8 @@ export default function PhotosPage() {
     const handler = (e: KeyboardEvent) => {
       if (e.key === 'ArrowRight') {
         if (meta.page! < totalPages) changePage((meta.page || 1) + 1)
+      } else if (e.key === 'ArrowLeft') {
+        if (meta.page! > 1) changePage((meta.page || 1) - 1)
       } else if (e.key.toLowerCase() === 'a') {
         setSelected((prev) =>
           prev.length === photos.length ? [] : photos.map((p) => p.id!),
