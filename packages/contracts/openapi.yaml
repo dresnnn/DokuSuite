@@ -1011,6 +1011,7 @@ components:
         expires_at: { type: string, format: date-time, nullable: true }
         download_allowed: { type: boolean, default: true }
         watermark_policy: { $ref: '#/components/schemas/WatermarkPolicy', nullable: true }
+        watermark_text: { type: string, nullable: true, description: "Only used when `watermark_policy` is `custom_text`." }
         email: { type: string, format: email, nullable: true }
     Share:
       type: object

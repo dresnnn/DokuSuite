@@ -59,6 +59,48 @@ describe('SharesPage', () => {
     })
   })
 
+  it('creates share with custom watermark text', async () => {
+    ;(apiClient.GET as jest.Mock).mockResolvedValue({
+      data: { items: [], meta: { page: 1, limit: 10, total: 0 } },
+    })
+    ;(apiClient.POST as jest.Mock).mockResolvedValue({
+      data: { id: 2, order_id: 3, url: 'http://u2' },
+    })
+
+    render(<SharesPage />)
+
+    await waitFor(() => {
+      expect(apiClient.GET).toHaveBeenCalledWith('/shares', {
+        params: { query: { page: 1, limit: 10 } },
+      })
+    })
+
+    fireEvent.change(screen.getByPlaceholderText('Order ID'), {
+      target: { value: '3' },
+    })
+    fireEvent.change(screen.getByLabelText('Watermark Policy'), {
+      target: { value: 'custom_text' },
+    })
+    fireEvent.change(screen.getByPlaceholderText('Watermark Text'), {
+      target: { value: 'secret' },
+    })
+    fireEvent.click(screen.getByText('Create'))
+
+    await waitFor(() => {
+      expect(apiClient.POST).toHaveBeenCalledWith('/shares', {
+        body: {
+          order_id: 3,
+          email: null,
+          download_allowed: true,
+          expires_at: null,
+          watermark_policy: 'custom_text',
+          watermark_text: 'secret',
+        },
+      })
+      expect(screen.getByText('http://u2')).toBeInTheDocument()
+    })
+  })
+
   it('revokes share', async () => {
     ;(apiClient.GET as jest.Mock).mockResolvedValue({
       data: {
