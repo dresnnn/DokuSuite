@@ -146,6 +146,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Initiate 2FA setup */
         post: {
             parameters: {
                 query?: never;
@@ -155,6 +156,7 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
+                /** @description OTP secret and QR code */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -162,6 +164,7 @@ export interface paths {
                     content: {
                         "application/json": {
                             secret?: string;
+                            /** @description Data URL for QR image */
                             qr_code?: string;
                         };
                     };
@@ -183,6 +186,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Verify 2FA token for login challenge */
         post: {
             parameters: {
                 query?: never;
@@ -199,6 +203,7 @@ export interface paths {
                 };
             };
             responses: {
+                /** @description JWT access token */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -721,6 +726,9 @@ export interface paths {
                     orderId?: string;
                     uploaderId?: string;
                     status?: components["schemas"]["PhotoStatus"];
+                    calendarWeek?: string;
+                    qualityFlag?: string;
+                    customerId?: string;
                 };
                 header?: never;
                 path?: never;
@@ -868,6 +876,141 @@ export interface paths {
             };
             responses: {
                 /** @description Assignment results */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            updated?: number;
+                            errors?: components["schemas"]["Error"][];
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/photos/batch/hide": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Hide multiple photos */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        photoIds: string[];
+                    };
+                };
+            };
+            responses: {
+                /** @description Hide results */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            updated?: number;
+                            errors?: components["schemas"]["Error"][];
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/photos/batch/curate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Mark multiple photos as curated */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        photoIds: string[];
+                    };
+                };
+            };
+            responses: {
+                /** @description Curate results */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            updated?: number;
+                            errors?: components["schemas"]["Error"][];
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/photos/batch/rematch": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Rematch multiple photos */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        photoIds: string[];
+                    };
+                };
+            };
+            responses: {
+                /** @description Rematch results */
                 200: {
                     headers: {
                         [name: string]: unknown;
