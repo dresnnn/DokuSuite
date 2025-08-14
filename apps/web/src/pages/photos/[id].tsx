@@ -1,8 +1,12 @@
 import { useRouter } from 'next/router'
 import { useEffect, useState } from 'react'
+import dynamic from 'next/dynamic'
 import { apiClient } from '../../../lib/api'
-import PhotoMap from '../../components/PhotoMap'
 import { useToast } from '../../components/Toast'
+
+const PhotoMap = dynamic(() => import('../../components/PhotoMap'), {
+  ssr: false,
+})
 
 type Photo = {
   quality_flag?: string | null

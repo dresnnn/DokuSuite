@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import dynamic from 'next/dynamic'
 import { apiClient } from '../../../lib/api'
 import { useAuth } from '../../context/AuthContext'
 import { undoStack } from '../../lib/undoStack'
-import PhotoMap from '../../components/PhotoMap'
 import PhotoUpload from '../../components/PhotoUpload'
 import { useToast } from '../../components/Toast'
 import {
@@ -10,6 +10,10 @@ import {
   loadExportJobs,
   saveExportJobs,
 } from '../../../lib/exportJobs'
+
+const PhotoMap = dynamic(() => import('../../components/PhotoMap'), {
+  ssr: false,
+})
 
 type Photo = {
   id?: number
