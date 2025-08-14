@@ -32,7 +32,7 @@ Kernfunktionen:
 - Logout löscht das Token und navigiert zu `/login`.
 - Bei abgelaufener Sitzung (HTTP 401) löscht das Frontend das Token und leitet automatisch auf `/login` weiter.
 - Registrierung neuer Nutzer über Formular (`POST /auth/register`), leitet nach erfolgreicher Registrierung zu `/login`.
-- Navigationsleiste nur für eingeloggte Nutzer mit Links zu `Photos`, `Users`, `Orders`, `Shares` und `Exports`.
+- Navigationsleiste nur für eingeloggte Nutzer mit Links zu `Photos`, `Orders` und `Exports`; Admins sehen zusätzlich `Users`, `Shares` und `Locations`.
 - Branding/Wasserzeichen-Policy je Kunde/Share (Agenturkunden i. d. R. ohne Wasserzeichen).
 
 ## Profilverwaltung

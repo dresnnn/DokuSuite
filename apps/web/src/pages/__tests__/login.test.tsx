@@ -287,49 +287,81 @@ describe('LoginPage', () => {
     expect(push).toHaveBeenCalledWith('/login');
   });
 
-    it('renders exports link in navigation', () => {
-      store['token'] = 'token123';
-      const push = jest.fn();
-      mockedUseRouter.mockReturnValue({
-        pathname: '/photos',
-        replace: push,
-        push,
-        prefetch: jest.fn(),
-        events: { on: jest.fn(), off: jest.fn() },
-        beforePopState: jest.fn(),
-      });
-
-      render(
-        <AuthProvider>
-          <Layout>
-            <div>content</div>
-          </Layout>
-        </AuthProvider>,
-      );
-
-      expect(screen.getByText('Exports')).toBeInTheDocument();
+  it('renders exports link in navigation', () => {
+    store['token'] = 'token123';
+    const push = jest.fn();
+    mockedUseRouter.mockReturnValue({
+      pathname: '/photos',
+      replace: push,
+      push,
+      prefetch: jest.fn(),
+      events: { on: jest.fn(), off: jest.fn() },
+      beforePopState: jest.fn(),
     });
 
-    it('does not render navigation links when unauthenticated', () => {
-      const push = jest.fn();
-      mockedUseRouter.mockReturnValue({
-        pathname: '/photos',
-        replace: push,
-        push,
-        prefetch: jest.fn(),
-        events: { on: jest.fn(), off: jest.fn() },
-        beforePopState: jest.fn(),
-      });
+    render(
+      <AuthProvider>
+        <Layout>
+          <div>content</div>
+        </Layout>
+      </AuthProvider>,
+    );
 
-      render(
-        <AuthProvider>
-          <Layout>
-            <div>content</div>
-          </Layout>
-        </AuthProvider>,
-      );
+    expect(screen.getByText('Exports')).toBeInTheDocument();
+  });
 
-      expect(screen.queryByText('Photos')).not.toBeInTheDocument();
-      expect(screen.queryByText('Exports')).not.toBeInTheDocument();
+  it('hides admin links for non-admin users', async () => {
+    store['token'] = 'token123';
+    (apiClient.GET as jest.Mock).mockResolvedValueOnce({
+      data: { id: 1, email: 'user@example.com', role: 'USER' },
+    } as unknown as Awaited<ReturnType<typeof apiClient.GET>>);
+    const push = jest.fn();
+    mockedUseRouter.mockReturnValue({
+      pathname: '/photos',
+      replace: push,
+      push,
+      prefetch: jest.fn(),
+      events: { on: jest.fn(), off: jest.fn() },
+      beforePopState: jest.fn(),
     });
+
+    render(
+      <AuthProvider>
+        <Layout>
+          <div>content</div>
+        </Layout>
+      </AuthProvider>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Photos')).toBeInTheDocument();
+    });
+
+    expect(screen.queryByText('Users')).not.toBeInTheDocument();
+    expect(screen.queryByText('Shares')).not.toBeInTheDocument();
+    expect(screen.queryByText('Locations')).not.toBeInTheDocument();
+  });
+
+  it('does not render navigation links when unauthenticated', () => {
+    const push = jest.fn();
+    mockedUseRouter.mockReturnValue({
+      pathname: '/photos',
+      replace: push,
+      push,
+      prefetch: jest.fn(),
+      events: { on: jest.fn(), off: jest.fn() },
+      beforePopState: jest.fn(),
+    });
+
+    render(
+      <AuthProvider>
+        <Layout>
+          <div>content</div>
+        </Layout>
+      </AuthProvider>,
+    );
+
+    expect(screen.queryByText('Photos')).not.toBeInTheDocument();
+    expect(screen.queryByText('Exports')).not.toBeInTheDocument();
+  });
   });
