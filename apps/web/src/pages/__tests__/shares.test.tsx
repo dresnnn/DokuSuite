@@ -85,6 +85,37 @@ describe('SharesPage', () => {
     })
   })
 
+  it('copies share URL to clipboard', async () => {
+    ;(apiClient.GET as jest.Mock).mockResolvedValue({
+      data: {
+        items: [{ id: 1, order_id: 2, url: 'http://u1', download_allowed: true }],
+        meta: { page: 1, limit: 10, total: 1 },
+      },
+    })
+    const writeText = jest.fn().mockResolvedValue(undefined)
+    const original = navigator.clipboard
+    Object.assign(navigator, { clipboard: { writeText } })
+
+    render(
+      <ToastProvider>
+        <SharesPage />
+      </ToastProvider>,
+    )
+
+    await waitFor(() => {
+      expect(screen.getByText('http://u1')).toBeInTheDocument()
+    })
+
+    fireEvent.click(screen.getByText('Copy'))
+
+    await waitFor(() => {
+      expect(writeText).toHaveBeenCalledWith('http://u1')
+      expect(screen.getByText('URL copied')).toBeInTheDocument()
+    })
+
+    Object.assign(navigator, { clipboard: original })
+  })
+
   it('creates share with custom watermark text', async () => {
     ;(apiClient.GET as jest.Mock)
       .mockResolvedValueOnce({
