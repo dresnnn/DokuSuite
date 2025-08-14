@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { undoStack } from '../../lib/undoStack'
 import L from 'leaflet'
 
@@ -75,6 +75,20 @@ jest.mock('leaflet', () => {
 
 jest.mock('leaflet.markercluster', () => ({}), { virtual: true })
 
+let ioCallback: (entries: IntersectionObserverEntry[]) => void
+
+beforeEach(() => {
+  ioCallback = () => {}
+  ;(window as unknown as { IntersectionObserver: typeof IntersectionObserver }).IntersectionObserver = jest.fn((cb) => {
+    ioCallback = cb
+    return {
+      observe: jest.fn(),
+      disconnect: jest.fn(),
+      unobserve: jest.fn(),
+    }
+  }) as unknown as typeof IntersectionObserver
+})
+
 describe('PhotosPage', () => {
   const authMock = useAuth as jest.Mock
 
@@ -82,7 +96,7 @@ describe('PhotosPage', () => {
     authMock.mockReturnValue({ role: 'ADMIN', userId: 1 })
   })
 
-  it('displays photos and paginates', async () => {
+  it('displays photos and loads more on scroll', async () => {
     const page1 = {
       items: [{ id: 1, mode: 'MOBILE', uploader_id: 'u1' }],
       meta: { page: 1, limit: 1, total: 2 },
@@ -102,7 +116,9 @@ describe('PhotosPage', () => {
     });
     expect(screen.getByRole('table')).toBeInTheDocument();
 
-    fireEvent.click(screen.getByText('Next'));
+    act(() => {
+      ioCallback([{ isIntersecting: true } as IntersectionObserverEntry]);
+    });
 
     await waitFor(() => {
       expect(screen.getByText('Photo 2')).toBeInTheDocument();
@@ -116,7 +132,9 @@ describe('PhotosPage', () => {
 
     fireEvent.click(screen.getByText('Grid'))
     expect(screen.queryByRole('table')).not.toBeInTheDocument()
-    expect(screen.getByTestId('photo')).toHaveTextContent('Photo 2')
+    const photos = screen.getAllByTestId('photo')
+    expect(photos).toHaveLength(2)
+    expect(photos[1]).toHaveTextContent('Photo 2')
   });
 
   it('submits filters', async () => {
