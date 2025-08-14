@@ -30,14 +30,16 @@ describe('PublicSharePage', () => {
   })
 
   it('fetches and displays photos', async () => {
-    ;(apiClient.GET as jest.Mock).mockResolvedValueOnce({
-      data: {
-        items: [
-          { id: 1, thumbnail_url: 't1', original_url: 'o1' },
-          { id: 2, thumbnail_url: 't2', original_url: 'o2' },
-        ],
-      },
-    })
+    ;(apiClient.GET as jest.Mock)
+      .mockResolvedValueOnce({ data: { download_allowed: true } })
+      .mockResolvedValueOnce({
+        data: {
+          items: [
+            { id: 1, thumbnail_url: 't1', original_url: 'o1' },
+            { id: 2, thumbnail_url: 't2', original_url: 'o2' },
+          ],
+        },
+      })
 
     render(<PublicSharePage />)
 
@@ -45,19 +47,41 @@ describe('PublicSharePage', () => {
       expect(screen.getAllByRole('img')).toHaveLength(2)
     })
 
-    expect(apiClient.GET).toHaveBeenCalledTimes(1)
+    expect(apiClient.GET).toHaveBeenCalledWith('/public/shares/{token}', {
+      params: { path: { token: 'tok1' } },
+    })
     expect(apiClient.GET).toHaveBeenCalledWith('/public/shares/{token}/photos', {
       params: { path: { token: 'tok1' } },
     })
   })
 
+  it('hides export buttons when downloads are forbidden', async () => {
+    ;(apiClient.GET as jest.Mock)
+      .mockResolvedValueOnce({ data: { download_allowed: false } })
+      .mockResolvedValueOnce({
+        data: { items: [{ id: 1, thumbnail_url: 't1', original_url: 'o1' }] },
+      })
+
+    render(<PublicSharePage />)
+
+    await waitFor(() => {
+      expect(screen.getByRole('img')).toBeInTheDocument()
+    })
+
+    expect(screen.queryByText('Download ZIP')).not.toBeInTheDocument()
+    expect(screen.queryByText('Download Excel')).not.toBeInTheDocument()
+    expect(screen.queryByText('Download PDF')).not.toBeInTheDocument()
+  })
+
   it('posts exports for selected photos', async () => {
     jest.useFakeTimers()
-    ;(apiClient.GET as jest.Mock).mockResolvedValueOnce({
-      data: {
-        items: [{ id: 1, thumbnail_url: 't1', original_url: 'o1' }],
-      },
-    })
+    ;(apiClient.GET as jest.Mock)
+      .mockResolvedValueOnce({ data: { download_allowed: true } })
+      .mockResolvedValueOnce({
+        data: {
+          items: [{ id: 1, thumbnail_url: 't1', original_url: 'o1' }],
+        },
+      })
     ;(apiClient.POST as jest.Mock).mockResolvedValue({
       data: { id: 'e1', status: 'queued' },
     })
@@ -90,6 +114,7 @@ describe('PublicSharePage', () => {
   it('polls export job until done and shows download link', async () => {
     jest.useFakeTimers()
     ;(apiClient.GET as jest.Mock)
+      .mockResolvedValueOnce({ data: { download_allowed: true } })
       .mockResolvedValueOnce({
         data: {
           items: [{ id: 1, thumbnail_url: 't1', original_url: 'o1' }],
@@ -157,9 +182,13 @@ describe('PublicSharePage', () => {
       },
       configurable: true,
     })
-    ;(apiClient.GET as jest.Mock).mockResolvedValue({
-      data: { items: [{ id: 1, thumbnail_url: 't1', original_url: 'o1' }] },
-    })
+    ;(apiClient.GET as jest.Mock)
+      .mockResolvedValueOnce({ data: { download_allowed: true } })
+      .mockResolvedValueOnce({
+        data: { items: [{ id: 1, thumbnail_url: 't1', original_url: 'o1' }] },
+      })
+      .mockResolvedValueOnce({ data: { download_allowed: true } })
+      .mockResolvedValueOnce({ data: { items: [] } })
     ;(apiClient.POST as jest.Mock).mockResolvedValue({
       data: { id: 's1', status: 'queued' },
     })
@@ -169,16 +198,15 @@ describe('PublicSharePage', () => {
     fireEvent.click(screen.getByText('Download ZIP'))
     await waitFor(() => expect(screen.getByText('s1')).toBeInTheDocument())
     unmount()
-    ;(apiClient.GET as jest.Mock).mockResolvedValue({ data: { items: [] } })
     render(<PublicSharePage />)
     await waitFor(() => expect(screen.getByText('s1')).toBeInTheDocument())
     jest.useRealTimers()
   })
 
   it('shows map view with share token', async () => {
-    ;(apiClient.GET as jest.Mock).mockResolvedValueOnce({
-      data: { items: [] },
-    })
+    ;(apiClient.GET as jest.Mock)
+      .mockResolvedValueOnce({ data: { download_allowed: true } })
+      .mockResolvedValueOnce({ data: { items: [] } })
 
     render(<PublicSharePage />)
 

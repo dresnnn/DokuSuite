@@ -1504,6 +1504,45 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/public/shares/{token}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get public share metadata */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    token: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Public share */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["PublicShare"];
+                    };
+                };
+                404: components["responses"]["NotFound"];
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/public/shares/{token}/photos/{id}": {
         parameters: {
             query?: never;
@@ -1943,6 +1982,9 @@ export interface components {
             expires_at?: string | null;
             download_allowed?: boolean;
             watermark_policy?: components["schemas"]["WatermarkPolicy"];
+        };
+        PublicShare: {
+            download_allowed?: boolean;
         };
         PublicPhoto: {
             id?: number;
