@@ -15,7 +15,14 @@ export const authFetch: typeof fetch = async (input, init = {}) => {
   if (token) {
     headers.set('Authorization', `Bearer ${token}`);
   }
-  return fetch(input, { ...init, headers });
+  const response = await fetch(input, { ...init, headers });
+  if (response.status === 401) {
+    clearAuthToken();
+    if (typeof window !== 'undefined') {
+      window.location.assign('/login');
+    }
+  }
+  return response;
 };
 
 export const apiClient = createClient<paths>({
