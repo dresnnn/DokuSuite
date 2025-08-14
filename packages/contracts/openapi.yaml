@@ -13,6 +13,7 @@ tags:
   - name: users
   - name: photos
   - name: locations
+  - name: customers
   - name: orders
   - name: shares
   - name: public-shares
@@ -545,6 +546,49 @@ paths:
                   updated: { type: integer }
                   errors: { type: array, items: { $ref: '#/components/schemas/Error' } }
 
+  /customers:
+    get:
+      tags: [customers]
+      summary: List customers
+      parameters:
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/limit'
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/Page_Customer_' } } } }
+    post:
+      tags: [customers]
+      summary: Create customer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CustomerCreate' }
+      responses:
+        '201': { description: Created, content: { application/json: { schema: { $ref: '#/components/schemas/Customer' } } } }
+
+  /customers/{id}:
+    patch:
+      tags: [customers]
+      summary: Update customer
+      parameters:
+        - $ref: '#/components/parameters/id'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CustomerUpdate' }
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/Customer' } } } }
+        '404': { $ref: '#/components/responses/NotFound' }
+    delete:
+      tags: [customers]
+      summary: Delete customer
+      parameters:
+        - $ref: '#/components/parameters/id'
+      responses:
+        '204': { description: No Content }
+        '404': { $ref: '#/components/responses/NotFound' }
+
   /orders:
     get:
       tags: [orders]
@@ -817,6 +861,13 @@ components:
           type: array
           items: { $ref: '#/components/schemas/Share' }
         meta: { $ref: '#/components/schemas/PageMeta' }
+    Page_Customer_:
+      type: object
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/Customer' }
+        meta: { $ref: '#/components/schemas/PageMeta' }
     GeoPoint:
       type: object
       properties:
@@ -912,6 +963,26 @@ components:
         site_id: { type: string, nullable: true }
         device_id: { type: string, nullable: true }
         uploader_id: { type: string, nullable: true }
+    CustomerCreate:
+      type: object
+      required: [name]
+      properties:
+        name: { type: string }
+        watermark_policy: { $ref: '#/components/schemas/WatermarkPolicy', nullable: true }
+        watermark_text: { type: string, nullable: true }
+    CustomerUpdate:
+      type: object
+      properties:
+        name: { type: string, nullable: true }
+        watermark_policy: { $ref: '#/components/schemas/WatermarkPolicy', nullable: true }
+        watermark_text: { type: string, nullable: true }
+    Customer:
+      type: object
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        watermark_policy: { $ref: '#/components/schemas/WatermarkPolicy', nullable: true }
+        watermark_text: { type: string, nullable: true }
     OrderCreate:
       type: object
       required: [customer_id, name, status]
