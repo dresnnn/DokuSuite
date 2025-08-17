@@ -228,7 +228,7 @@ describe('LoginPage', () => {
     });
   });
 
-  it.each(['/users', '/shares', '/locations'])(
+  it.each(['/users', '/shares', '/locations', '/customers'])(
     'redirects normal users from %s',
     async (path) => {
       store['token'] = 'token123';
@@ -261,6 +261,34 @@ describe('LoginPage', () => {
       });
     },
   );
+
+  it('renders customers link in navigation for admin users', async () => {
+    store['token'] = 'token123';
+    (apiClient.GET as jest.Mock).mockResolvedValueOnce({
+      data: { id: 1, email: 'admin@example.com', role: 'ADMIN' },
+    } as unknown as Awaited<ReturnType<typeof apiClient.GET>>);
+    const push = jest.fn();
+    mockedUseRouter.mockReturnValue({
+      pathname: '/photos',
+      replace: push,
+      push,
+      prefetch: jest.fn(),
+      events: { on: jest.fn(), off: jest.fn() },
+      beforePopState: jest.fn(),
+    });
+
+    render(
+      <AuthProvider>
+        <Layout>
+          <div>content</div>
+        </Layout>
+      </AuthProvider>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Customers')).toBeInTheDocument();
+    });
+  });
 
   it('clears token and redirects to login on logout', () => {
     store['token'] = 'token123';
@@ -340,6 +368,7 @@ describe('LoginPage', () => {
     expect(screen.queryByText('Users')).not.toBeInTheDocument();
     expect(screen.queryByText('Shares')).not.toBeInTheDocument();
     expect(screen.queryByText('Locations')).not.toBeInTheDocument();
+    expect(screen.queryByText('Customers')).not.toBeInTheDocument();
   });
 
   it('does not render navigation links when unauthenticated', () => {

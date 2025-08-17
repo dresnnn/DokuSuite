@@ -24,7 +24,7 @@ export function AuthGuard({ children }: { children: ReactNode }) {
   const { showToast } = useToast();
 
   useEffect(() => {
-    const adminPaths = ['/users', '/shares', '/locations'];
+    const adminPaths = ['/users', '/shares', '/locations', '/customers'];
     const isPublicPath = publicPaths.some((p) =>
       router.pathname.startsWith(p),
     );

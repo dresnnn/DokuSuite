@@ -29,11 +29,11 @@ Kernfunktionen:
 - `AuthContext` verwaltet Loginstatus und Token im Frontend.
 - `AuthGuard` schützt Seiten und leitet nicht authentifizierte Nutzer auf `/login`.
 - Öffentliche Seiten ohne Login: `/login`, `/register`, `/forgot-password`, `/reset`, `/accept`, `/public`, `/2fa/verify`.
-- Admin-Seiten (`Users`, `Shares`, `Locations`) sind nur für Nutzer mit `role === 'ADMIN'` zugänglich und leiten sonst auf `/photos` weiter.
+- Admin-Seiten (`Users`, `Customers`, `Shares`, `Locations`) sind nur für Nutzer mit `role === 'ADMIN'` zugänglich und leiten sonst auf `/photos` weiter.
 - Logout löscht das Token und navigiert zu `/login`.
 - Bei abgelaufener Sitzung (HTTP 401) löscht das Frontend das Token und leitet automatisch auf `/login` weiter.
 - Registrierung neuer Nutzer über Formular (`POST /auth/register`), leitet nach erfolgreicher Registrierung zu `/login`.
-- Navigationsleiste nur für eingeloggte Nutzer mit Links zu `Photos`, `Orders` und `Exports`; Admins sehen zusätzlich `Users`, `Shares` und `Locations`.
+- Navigationsleiste nur für eingeloggte Nutzer mit Links zu `Photos`, `Orders` und `Exports`; Admins sehen zusätzlich `Users`, `Customers`, `Shares` und `Locations`.
 - Branding/Wasserzeichen-Policy je Kunde/Share (Agenturkunden i. d. R. ohne Wasserzeichen).
 
 ## Profilverwaltung
@@ -44,6 +44,7 @@ Kernfunktionen:
 
 ## Kundenverwaltung
 
+- Nur Administratoren haben Zugriff auf die Kundenverwaltung.
 - Kunden paginiert listen (`GET /customers`).
 - Neue Kunden anlegen (`POST /customers`).
 - Kunden bearbeiten (`PATCH /customers/{id}`) und löschen (`DELETE /customers/{id}`).
