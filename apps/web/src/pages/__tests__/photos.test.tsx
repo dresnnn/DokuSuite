@@ -686,5 +686,8 @@ describe('PhotoDetailPage', () => {
         }),
       ),
     )
+    await waitFor(() =>
+      expect(screen.getByRole('alert')).toHaveTextContent('Location updated'),
+    )
   })
 })
