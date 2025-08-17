@@ -11,22 +11,27 @@ type User = {
 export default function UsersPage() {
   const [users, setUsers] = useState<User[]>([])
   const [inviteEmail, setInviteEmail] = useState('')
+  const [page, setPage] = useState(1)
+  const limit = 10
+  const [total, setTotal] = useState(0)
   const { showToast } = useToast()
 
-  const fetchUsers = async () => {
-    try {
-      const { data } = await apiClient.GET('/users')
-      if (data) {
-        setUsers(data)
-      }
-    } catch {
-      showToast('error', 'Failed to load users')
-    }
-  }
-
   useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const { data } = await apiClient.GET('/users', {
+          params: { query: { page, limit } },
+        })
+        if (data) {
+          setUsers(data.items)
+          setTotal(data.meta.total)
+        }
+      } catch {
+        showToast('error', 'Failed to load users')
+      }
+    }
     fetchUsers()
-  }, [])
+  }, [page, showToast])
 
   const handleRoleChange = async (id: number, role: string) => {
     try {
@@ -47,6 +52,7 @@ export default function UsersPage() {
         params: { path: { id } },
       })
       setUsers((prev) => prev.filter((u) => u.id !== id))
+      setTotal((t) => t - 1)
       showToast('success', 'User deleted')
     } catch {
       showToast('error', 'Failed to delete user')
@@ -104,6 +110,17 @@ export default function UsersPage() {
           ))}
         </tbody>
       </table>
+      <div>
+        <button onClick={() => setPage((p) => p - 1)} disabled={page === 1}>
+          Prev
+        </button>
+        <button
+          onClick={() => setPage((p) => p + 1)}
+          disabled={page * limit >= total}
+        >
+          Next
+        </button>
+      </div>
     </div>
   )
 }

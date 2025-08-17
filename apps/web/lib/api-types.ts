@@ -515,7 +515,10 @@ export interface paths {
         /** List users */
         get: {
             parameters: {
-                query?: never;
+                query?: {
+                    page?: number;
+                    limit?: number;
+                };
                 header?: never;
                 path?: never;
                 cookie?: never;
@@ -528,7 +531,7 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/json": components["schemas"]["User"][];
+                        "application/json": components["schemas"]["Page_User_"];
                     };
                 };
             };
@@ -1834,6 +1837,10 @@ export interface components {
         };
         Page_Customer_: {
             items?: components["schemas"]["Customer"][];
+            meta?: components["schemas"]["PageMeta"];
+        };
+        Page_User_: {
+            items?: components["schemas"]["User"][];
             meta?: components["schemas"]["PageMeta"];
         };
         GeoPoint: {

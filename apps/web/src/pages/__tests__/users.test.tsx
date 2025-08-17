@@ -19,7 +19,10 @@ describe('UsersPage', () => {
 
   it('renders users and updates role', async () => {
     ;(apiClient.GET as jest.Mock).mockResolvedValue({
-      data: [{ id: 1, email: 'u1@example.com', role: 'USER' }],
+      data: {
+        items: [{ id: 1, email: 'u1@example.com', role: 'USER' }],
+        meta: { page: 1, limit: 10, total: 1 },
+      },
     })
     ;(apiClient.PATCH as jest.Mock).mockResolvedValue({ data: {} })
 
@@ -47,7 +50,10 @@ describe('UsersPage', () => {
 
   it('deletes user', async () => {
     ;(apiClient.GET as jest.Mock).mockResolvedValue({
-      data: [{ id: 1, email: 'u1@example.com', role: 'USER' }],
+      data: {
+        items: [{ id: 1, email: 'u1@example.com', role: 'USER' }],
+        meta: { page: 1, limit: 10, total: 1 },
+      },
     })
     ;(apiClient.DELETE as jest.Mock).mockResolvedValue({})
 
@@ -72,7 +78,9 @@ describe('UsersPage', () => {
   })
 
   it('invites user', async () => {
-    ;(apiClient.GET as jest.Mock).mockResolvedValue({ data: [] })
+    ;(apiClient.GET as jest.Mock).mockResolvedValue({
+      data: { items: [], meta: { page: 1, limit: 10, total: 0 } },
+    })
     ;(apiClient.POST as jest.Mock).mockResolvedValue({ data: {} })
 
     render(
@@ -99,7 +107,9 @@ describe('UsersPage', () => {
   })
 
   it('shows toast on invite error', async () => {
-    ;(apiClient.GET as jest.Mock).mockResolvedValue({ data: [] })
+    ;(apiClient.GET as jest.Mock).mockResolvedValue({
+      data: { items: [], meta: { page: 1, limit: 10, total: 0 } },
+    })
     ;(apiClient.POST as jest.Mock).mockResolvedValue({ error: 'oops' })
 
     render(
@@ -116,5 +126,59 @@ describe('UsersPage', () => {
     await waitFor(() =>
       expect(screen.getByRole('alert')).toHaveTextContent('Invite failed'),
     )
+  })
+
+  it('navigates pages', async () => {
+    ;(apiClient.GET as jest.Mock)
+      .mockResolvedValueOnce({
+        data: {
+          items: [{ id: 1, email: 'u1@example.com', role: 'USER' }],
+          meta: { page: 1, limit: 10, total: 20 },
+        },
+      })
+      .mockResolvedValueOnce({
+        data: {
+          items: [{ id: 2, email: 'u2@example.com', role: 'USER' }],
+          meta: { page: 2, limit: 10, total: 20 },
+        },
+      })
+      .mockResolvedValueOnce({
+        data: {
+          items: [{ id: 1, email: 'u1@example.com', role: 'USER' }],
+          meta: { page: 1, limit: 10, total: 20 },
+        },
+      })
+
+    render(
+      <ToastProvider>
+        <UsersPage />
+      </ToastProvider>,
+    )
+
+    await waitFor(() => {
+      expect(screen.getByText('u1@example.com')).toBeInTheDocument()
+    })
+
+    fireEvent.click(screen.getByText('Next'))
+
+    await waitFor(() => {
+      expect(screen.getByText('u2@example.com')).toBeInTheDocument()
+    })
+
+    fireEvent.click(screen.getByText('Prev'))
+
+    await waitFor(() => {
+      expect(screen.getByText('u1@example.com')).toBeInTheDocument()
+    })
+
+    expect(apiClient.GET).toHaveBeenNthCalledWith(1, '/users', {
+      params: { query: { page: 1, limit: 10 } },
+    })
+    expect(apiClient.GET).toHaveBeenNthCalledWith(2, '/users', {
+      params: { query: { page: 2, limit: 10 } },
+    })
+    expect(apiClient.GET).toHaveBeenNthCalledWith(3, '/users', {
+      params: { query: { page: 1, limit: 10 } },
+    })
   })
 })
