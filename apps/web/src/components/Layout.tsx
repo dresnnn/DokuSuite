@@ -21,6 +21,7 @@ export default function Layout({ children }: { children: ReactNode }) {
           <div className="nav-links">
             <Link href="/photos">Photos</Link>
             {role === 'ADMIN' && <Link href="/users">Users</Link>}
+            {role === 'ADMIN' && <Link href="/customers">Customers</Link>}
             <Link href="/orders">Orders</Link>
             {role === 'ADMIN' && <Link href="/shares">Shares</Link>}
             {role === 'ADMIN' && <Link href="/locations">Locations</Link>}
