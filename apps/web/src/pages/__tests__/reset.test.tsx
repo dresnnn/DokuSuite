@@ -45,13 +45,12 @@ describe('ResetPage', () => {
         body: { token: 'tok1', password: 'pw' },
       });
       expect(replace).toHaveBeenCalledWith('/login');
-      expect(screen.getByRole('alert')).toHaveTextContent(
-        'Password reset. You can now log in.',
-      );
     });
+    const toast = await screen.findByRole('alert');
+    expect(toast).toHaveTextContent('Password reset. You can now log in.');
   });
 
-  it('shows error on failure', async () => {
+  it('shows error toast on failure', async () => {
     (apiClient.POST as jest.Mock).mockResolvedValue({ error: {} });
 
     render(
@@ -65,12 +64,11 @@ describe('ResetPage', () => {
     });
     fireEvent.click(screen.getByText('Reset Password'));
 
-    await waitFor(() => {
-      expect(screen.getByRole('alert')).toHaveTextContent('Reset failed');
-    });
+    const toast = await screen.findByRole('alert');
+    expect(toast).toHaveTextContent('Reset failed');
   });
 
-  it('redirects on invalid token', async () => {
+  it('redirects on invalid token and shows toast', async () => {
     (apiClient.POST as jest.Mock).mockResolvedValue({ error: { status: 404 } });
 
     render(
@@ -85,8 +83,7 @@ describe('ResetPage', () => {
     fireEvent.click(screen.getByText('Reset Password'));
 
     await waitFor(() => expect(replace).toHaveBeenCalledWith('/login'));
-    await waitFor(() =>
-      expect(screen.getByRole('alert')).toHaveTextContent('Invalid token'),
-    );
+    const toast = await screen.findByRole('alert');
+    expect(toast).toHaveTextContent('Invalid token');
   });
 });

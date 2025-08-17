@@ -114,3 +114,4 @@ UX/Leistung:
 - Zentrale Toast-Komponente f\u00fcr Erfolg- und Fehlermeldungen.
 - `AuthGuard` informiert \u00fcber fehlende Berechtigungen oder nicht eingeloggte Nutzer.
 - Seiten wie `Register`, `Forgot Password`, `Accept`, `Profile`, `Photos`, `Orders` (inkl. Detailseiten), `Shares`, `Users`, `Customers` und `Locations` zeigen Ergebnis von API-Aktionen über Toasts an (z. B. Einladungen oder Rollenänderungen, Kundenanlage/-aktualisierung, Standort-Updates).
+- Die Reset-Seite nutzt ausschließlich Toasts für Fehlermeldungen.
