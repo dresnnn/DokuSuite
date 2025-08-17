@@ -2,12 +2,13 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { apiClient } from '../../lib/api';
 import { useAuth } from '../../context/AuthContext';
+import { useToast } from '../../components/Toast';
 
 export default function TwoFAVerifyPage() {
   const { challenge, login } = useAuth();
   const router = useRouter();
+  const { showToast } = useToast();
   const [token, setToken] = useState('');
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!challenge) {
@@ -18,14 +19,19 @@ export default function TwoFAVerifyPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!challenge) return;
-    const { data } = await apiClient.POST('/auth/2fa/verify', {
-      body: { challenge, token },
-    });
-    if (data?.access_token) {
-      login(data.access_token);
-      router.replace('/photos');
-    } else {
-      setError('Verification failed');
+    try {
+      const { data } = await apiClient.POST('/auth/2fa/verify', {
+        body: { challenge, token },
+      });
+      if (data?.access_token) {
+        login(data.access_token);
+        showToast('success', '2FA verification successful');
+        router.replace('/photos');
+      } else {
+        showToast('error', 'Verification failed');
+      }
+    } catch {
+      showToast('error', 'Verification failed');
     }
   };
 
@@ -37,11 +43,6 @@ export default function TwoFAVerifyPage() {
         onChange={(e) => setToken(e.target.value)}
       />
       <button type="submit">Verify</button>
-      {error && (
-        <div role="alert" style={{ color: 'red' }}>
-          {error}
-        </div>
-      )}
     </form>
   );
 }

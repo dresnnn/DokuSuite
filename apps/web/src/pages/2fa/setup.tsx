@@ -1,13 +1,21 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import { apiClient } from '../../lib/api';
+import { useToast } from '../../components/Toast';
 
 export default function TwoFASetupPage() {
   const [info, setInfo] = useState<{ secret?: string; qr_code?: string } | null>(null);
+  const { showToast } = useToast();
 
   const handleSetup = async () => {
-    const { data } = await apiClient.POST('/auth/2fa/setup', {});
-    setInfo(data ?? null);
+    try {
+      const { data } = await apiClient.POST('/auth/2fa/setup', {});
+      setInfo(data ?? null);
+      showToast('success', '2FA secret generated');
+    } catch {
+      setInfo(null);
+      showToast('error', 'Failed to generate 2FA secret');
+    }
   };
 
   return (
