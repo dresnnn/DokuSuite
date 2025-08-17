@@ -17,7 +17,12 @@ export default function AcceptPage() {
         body: { token, password },
       });
       if (error) {
-        showToast('error', 'Accept failed');
+        if (error.status === 404) {
+          showToast('error', 'Invalid token');
+          router.push('/login');
+        } else {
+          showToast('error', 'Accept failed');
+        }
       } else {
         showToast('success', 'Password set. You can now log in.');
         router.push('/login');

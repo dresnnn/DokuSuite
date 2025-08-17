@@ -56,6 +56,7 @@ Kernfunktionen:
 ## Kunden-Flow
 
 - Kunde öffnet einen Freigabe-Link `/public/{token}`.
+- Bei ungültigem Token erscheint die Fehlermeldung „Freigabe nicht gefunden“ und es wird ein leeres UI angezeigt.
 - Die Galerie lädt die Fotos inklusive URLs direkt über `/public/shares/{token}/photos`; keine Einzelrequests pro Bild.
 - Der Kunde kann einzelne Fotos auswählen und ZIP-, Excel- oder PDF-Exporte (`POST /exports/zip`, `POST /exports/excel`, `POST /exports/pdf`) starten; der Status der Export-Jobs wird im UI angezeigt, über Polling von `/exports/{id}` aktualisiert und bei `status=done` als Download-Link bereitgestellt. Beim ZIP-Export kann zusätzlich ein Titel angegeben und die Einbindung von EXIF-Daten aktiviert werden (`title`, `includeExif`).
 - Export-Buttons werden nur angezeigt, wenn die Freigabe Downloads erlaubt (`download_allowed=false` blendet sie aus).
@@ -66,6 +67,7 @@ Kernfunktionen:
 - Ein Administrator lädt einen Nutzer über `POST /auth/invite` ein.
 - Der Nutzer erhält einen Link `/accept/{token}`.
 - Auf der Accept-Seite setzt der Nutzer ein neues Passwort; das Frontend sendet `POST /auth/accept` mit Token und Passwort.
+- Ist der Token ungültig oder abgelaufen, erhält der Nutzer eine Fehlermeldung und wird auf `/login` weitergeleitet.
 - Nach erfolgreichem Setzen des Passworts kann sich der Nutzer über `/login` anmelden.
 
 ## 2FA-Flow
@@ -80,6 +82,7 @@ Kernfunktionen:
 - Ein Administrator lädt einen Nutzer über `POST /auth/invite` ein.
 - Der Nutzer erhält einen Link `/accept/{token}`.
 - Auf der Accept-Seite setzt der Nutzer ein neues Passwort; das Frontend sendet `POST /auth/accept` mit Token und Passwort.
+- Ist der Token ungültig oder abgelaufen, erhält der Nutzer eine Fehlermeldung und wird auf `/login` weitergeleitet.
 - Nach erfolgreichem Setzen des Passworts kann sich der Nutzer über `/login` anmelden.
 
 ## Password-Reset-Flow
@@ -87,6 +90,7 @@ Kernfunktionen:
 - Nutzer fordert über `/forgot-password` einen Reset an (`POST /auth/reset-request`).
 - Er erhält einen Link `/reset/{token}` per E-Mail.
 - Auf der Reset-Seite setzt der Nutzer ein neues Passwort; das Frontend sendet `POST /auth/reset` mit Token und Passwort.
+- Ist der Token ungültig oder abgelaufen, erhält der Nutzer eine Fehlermeldung und wird auf `/login` weitergeleitet.
 - Nach erfolgreichem Reset leitet das Frontend auf `/login` weiter und zeigt einen Erfolgs-Toast an; anschließend kann sich der Nutzer mit dem neuen Passwort anmelden.
 
 ## Plakatierer-Flow

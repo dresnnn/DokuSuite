@@ -69,4 +69,24 @@ describe('ResetPage', () => {
       expect(screen.getByRole('alert')).toHaveTextContent('Reset failed');
     });
   });
+
+  it('redirects on invalid token', async () => {
+    (apiClient.POST as jest.Mock).mockResolvedValue({ error: { status: 404 } });
+
+    render(
+      <ToastProvider>
+        <ResetPage />
+      </ToastProvider>,
+    );
+
+    fireEvent.change(screen.getByPlaceholderText('Password'), {
+      target: { value: 'pw' },
+    });
+    fireEvent.click(screen.getByText('Reset Password'));
+
+    await waitFor(() => expect(replace).toHaveBeenCalledWith('/login'));
+    await waitFor(() =>
+      expect(screen.getByRole('alert')).toHaveTextContent('Invalid token'),
+    );
+  });
 });
