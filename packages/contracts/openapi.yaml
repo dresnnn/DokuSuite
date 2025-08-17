@@ -253,15 +253,20 @@ paths:
     get:
       tags: [users]
       summary: List users
+      parameters:
+        - in: query
+          name: page
+          schema: { type: integer }
+        - in: query
+          name: limit
+          schema: { type: integer }
       responses:
         '200':
           description: List of users
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/User'
+                $ref: '#/components/schemas/Page_User_'
 
   /users/{id}:
     patch:
@@ -911,6 +916,13 @@ components:
         items:
           type: array
           items: { $ref: '#/components/schemas/Customer' }
+        meta: { $ref: '#/components/schemas/PageMeta' }
+    Page_User_:
+      type: object
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/User' }
         meta: { $ref: '#/components/schemas/PageMeta' }
     GeoPoint:
       type: object
