@@ -314,5 +314,24 @@ describe('PublicSharePage', () => {
       expect(screen.getAllByTestId('marker').length).toBeGreaterThan(0)
     })
   })
+
+  it('shows toast on map fetch error', async () => {
+    ;(apiClient.GET as jest.Mock)
+      .mockResolvedValueOnce({ data: { download_allowed: true } })
+      .mockResolvedValueOnce({ data: { items: [] } })
+      .mockResolvedValueOnce({ error: {} })
+
+    renderPage()
+
+    fireEvent.click(screen.getByText('Map'))
+
+    await waitFor(() => {
+      expect(screen.getByTestId('photo-map')).toBeInTheDocument()
+    })
+
+    await waitFor(() =>
+      expect(screen.getByRole('alert')).toHaveTextContent('Failed to load photos'),
+    )
+  })
 })
 

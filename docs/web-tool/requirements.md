@@ -11,7 +11,8 @@ Kernfunktionen:
 - Galerie mit schneller Filterung (Plakatierer, Woche, Standort, Modus, Qualität, Auftrag, Kunde, Zeitraum, Status) sowie spezifischen Parametern `from`, `to`, `orderId`, `status`, `siteId`, `calendarWeek`, `qualityFlag`, `customerId`. Weitere Seiten werden beim Scrollen automatisch über einen `IntersectionObserver` nachgeladen (`page`/`limit`-basiertes Infinite Scroll).
 - Kartenansicht mit Leaflet, lädt `/photos?bbox=` abhängig vom Kartenausschnitt,
   clustert Marker und erlaubt Standortkorrektur per Drag-and-Drop
-  (`PATCH /photos/{id}` aktualisiert die Koordinaten).
+  (`PATCH /photos/{id}` aktualisiert die Koordinaten) und gibt
+  nach Standortänderungen über Toasts Rückmeldung (Erfolg/Fehler).
 - Leaflet-Styles (`leaflet/dist/leaflet.css`, `leaflet.markercluster/dist/MarkerCluster.css`) müssen eingebunden werden.
 - Bulk-Operationen: Multi-Select, Zuweisen (`POST /photos/batch/assign`), Ausblenden (`POST /photos/batch/hide`), Curate-Flag (`POST /photos/batch/curate`), Re-Matching (`POST /photos/batch/rematch`), Export ausgewählter Fotos als ZIP/Excel/PDF (`POST /exports/zip`, `POST /exports/excel`, `POST /exports/pdf`).
 - Mehrfachauswahl im Grid/Table mit Auftragszuweisung via `POST /photos/batch/assign`; weitere Batch-Aktionen über `POST /photos/batch/hide`, `POST /photos/batch/curate` und `POST /photos/batch/rematch`.
