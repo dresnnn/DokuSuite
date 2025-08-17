@@ -65,7 +65,7 @@ describe('TwoFAVerifyPage', () => {
 
     await waitFor(() => {
       expect(login).toHaveBeenCalledWith('token123');
-      expect(replace).toHaveBeenCalledWith('/');
+      expect(replace).toHaveBeenCalledWith('/photos');
     });
   });
 });

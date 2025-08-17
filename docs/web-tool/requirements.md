@@ -76,6 +76,7 @@ Kernfunktionen:
 - Beim Login ohne gültiges 2FA-Token liefert `/auth/login` einen `challenge_token`.
 - Der Nutzer wird zu `/2fa/verify` geleitet und sendet `POST /auth/2fa/verify` mit `challenge` und Einmalcode.
 - Bei erfolgreicher Verifizierung erhält der Browser wie gewohnt ein JWT (`access_token`).
+- Nach der Verifizierung leitet das Frontend zur Galerie `/photos` weiter.
 
 ## Invite-Flow
 
