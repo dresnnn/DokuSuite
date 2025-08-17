@@ -2,6 +2,7 @@ import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { undoStack } from '../../lib/undoStack'
 import L from 'leaflet'
 import { ToastProvider } from '../../components/Toast'
+import PhotoUpload from '../../components/PhotoUpload'
 
 jest.mock('../../context/AuthContext', () => ({
   useAuth: jest.fn(),
@@ -586,6 +587,35 @@ describe('PhotosPage', () => {
       </ToastProvider>,
     )
     await waitFor(() => expect(screen.getByText('j1')).toBeInTheDocument())
+  })
+
+  it('shows toast on successful upload', async () => {
+    jest.clearAllMocks()
+    const file = new File(['data'], 'photo.jpg', { type: 'image/jpeg' })
+    ;(apiClient.POST as jest.Mock).mockResolvedValueOnce({
+      data: { url: 'http://upload', fields: {} },
+    })
+    const originalFetch = global.fetch
+    global.fetch = jest
+      .fn()
+      .mockResolvedValueOnce({ ok: true }) as unknown as typeof fetch
+
+    render(
+      <ToastProvider>
+        <PhotoUpload />
+      </ToastProvider>,
+    )
+
+    fireEvent.change(screen.getByTestId('photo-upload-input'), {
+      target: { files: [file] },
+    })
+    fireEvent.click(screen.getByTestId('photo-upload-button'))
+
+    await waitFor(() =>
+      expect(screen.getByRole('alert')).toHaveTextContent('Photo uploaded'),
+    )
+
+    global.fetch = originalFetch
   })
 })
 
