@@ -8,6 +8,8 @@ import {
 
 export default function ExportsPage() {
   const [jobs, setJobs] = useState<ExportJob[]>([])
+  const [title, setTitle] = useState('')
+  const [includeExif, setIncludeExif] = useState(false)
 
   useEffect(() => {
     setJobs(loadExportJobs())
@@ -23,7 +25,9 @@ export default function ExportsPage() {
   }
 
   const triggerZipExport = async () => {
-    const { data } = await client.POST('/exports/zip', {})
+    const { data } = await client.POST('/exports/zip', {
+      body: { title: title || undefined, includeExif },
+    })
     if (data) setJobs((prev) => [...prev, data as ExportJob])
   }
 
@@ -59,6 +63,18 @@ export default function ExportsPage() {
 
   return (
     <div>
+      <label>
+        Title:
+        <input value={title} onChange={(e) => setTitle(e.target.value)} />
+      </label>
+      <label>
+        Include EXIF:
+        <input
+          type="checkbox"
+          checked={includeExif}
+          onChange={(e) => setIncludeExif(e.target.checked)}
+        />
+      </label>
       <button onClick={triggerZipExport}>Start ZIP Export</button>
       <button onClick={triggerExcelExport}>Start Excel Export</button>
       <button onClick={triggerPdfExport}>Start PDF Export</button>

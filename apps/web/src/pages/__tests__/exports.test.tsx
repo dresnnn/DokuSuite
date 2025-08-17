@@ -29,10 +29,16 @@ describe('ExportsPage', () => {
 
     render(<ExportsPage />)
 
+    fireEvent.change(screen.getByLabelText('Title:'), {
+      target: { value: 'All Photos' },
+    })
+    fireEvent.click(screen.getByLabelText('Include EXIF:'))
     fireEvent.click(screen.getByText('Start ZIP Export'))
 
     await waitFor(() => {
-      expect(apiClient.POST).toHaveBeenCalledWith('/exports/zip', {})
+      expect(apiClient.POST).toHaveBeenCalledWith('/exports/zip', {
+        body: { title: 'All Photos', includeExif: true },
+      })
     })
 
     await waitFor(() => {

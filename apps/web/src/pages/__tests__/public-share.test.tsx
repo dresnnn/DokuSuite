@@ -152,14 +152,18 @@ describe('PublicSharePage', () => {
       expect(screen.getByRole('img')).toBeInTheDocument()
     })
 
-    fireEvent.click(screen.getByRole('checkbox'))
+    fireEvent.click(screen.getAllByRole('checkbox')[0])
+    fireEvent.change(screen.getByLabelText('Title:'), {
+      target: { value: 'Public Zip' },
+    })
+    fireEvent.click(screen.getByLabelText('Include EXIF:'))
     fireEvent.click(screen.getByText('Download ZIP'))
     fireEvent.click(screen.getByText('Download Excel'))
     fireEvent.click(screen.getByText('Download PDF'))
 
     await waitFor(() => {
       expect(apiClient.POST).toHaveBeenCalledWith('/exports/zip', {
-        body: { photoIds: ['1'] },
+        body: { photoIds: ['1'], title: 'Public Zip', includeExif: true },
       })
       expect(apiClient.POST).toHaveBeenCalledWith('/exports/excel', {
         body: { photoIds: ['1'] },
@@ -193,12 +197,16 @@ describe('PublicSharePage', () => {
       expect(screen.getByRole('img')).toBeInTheDocument()
     })
 
-    fireEvent.click(screen.getByRole('checkbox'))
+    fireEvent.click(screen.getAllByRole('checkbox')[0])
+    fireEvent.change(screen.getByLabelText('Title:'), {
+      target: { value: 'Public Zip' },
+    })
+    fireEvent.click(screen.getByLabelText('Include EXIF:'))
     fireEvent.click(screen.getByText('Download ZIP'))
 
     await waitFor(() => {
       expect(apiClient.POST).toHaveBeenCalledWith('/exports/zip', {
-        body: { photoIds: ['1'] },
+        body: { photoIds: ['1'], title: 'Public Zip', includeExif: true },
       })
     })
 
@@ -254,7 +262,7 @@ describe('PublicSharePage', () => {
     })
     const { unmount } = render(<PublicSharePage />)
     await waitFor(() => expect(screen.getByRole('img')).toBeInTheDocument())
-    fireEvent.click(screen.getByRole('checkbox'))
+    fireEvent.click(screen.getAllByRole('checkbox')[0])
     fireEvent.click(screen.getByText('Download ZIP'))
     await waitFor(() => expect(screen.getByText('s1')).toBeInTheDocument())
     unmount()

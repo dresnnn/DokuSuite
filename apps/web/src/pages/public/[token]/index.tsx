@@ -26,6 +26,8 @@ export default function PublicSharePage() {
   const [view, setView] = useState<'grid' | 'map'>('grid')
   const [jobs, setJobs] = useState<ExportJob[]>([])
   const [downloadAllowed, setDownloadAllowed] = useState(true)
+  const [title, setTitle] = useState('')
+  const [includeExif, setIncludeExif] = useState(false)
 
   const client = apiClient as unknown as {
     GET: typeof apiClient.GET
@@ -61,7 +63,11 @@ export default function PublicSharePage() {
   const exportZip = async () => {
     if (selected.length === 0) return
     const { data } = await client.POST('/exports/zip', {
-      body: { photoIds: selected.map(String) },
+      body: {
+        photoIds: selected.map(String),
+        title: title || undefined,
+        includeExif,
+      },
     })
     if (data) setJobs((prev) => [...prev, data as ExportJob])
   }
@@ -147,6 +153,18 @@ export default function PublicSharePage() {
 
       {downloadAllowed && (
         <div>
+          <label>
+            Title:
+            <input value={title} onChange={(e) => setTitle(e.target.value)} />
+          </label>
+          <label>
+            Include EXIF:
+            <input
+              type="checkbox"
+              checked={includeExif}
+              onChange={(e) => setIncludeExif(e.target.checked)}
+            />
+          </label>
           <button onClick={exportZip}>Download ZIP</button>
           <button onClick={exportExcel}>Download Excel</button>
           <button onClick={exportPdf}>Download PDF</button>

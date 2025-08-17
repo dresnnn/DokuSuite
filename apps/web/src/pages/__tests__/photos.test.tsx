@@ -527,12 +527,18 @@ describe('PhotosPage', () => {
     await waitFor(() =>
       expect(screen.getAllByRole('checkbox')[0]).toBeInTheDocument(),
     )
+    fireEvent.change(screen.getByLabelText('Title:'), {
+      target: { value: 'My Zip' },
+    })
+    fireEvent.click(screen.getByLabelText('Include EXIF:'))
     fireEvent.click(screen.getAllByRole('checkbox')[0])
     fireEvent.click(screen.getByText('Export ZIP'))
     await waitFor(() =>
       expect(apiClient.POST).toHaveBeenCalledWith(
         '/exports/zip',
-        expect.objectContaining({ body: { photoIds: ['1'] } }),
+        expect.objectContaining({
+          body: { photoIds: ['1'], title: 'My Zip', includeExif: true },
+        }),
       ),
     )
   })
