@@ -23,7 +23,7 @@ export default function TwoFAVerifyPage() {
     });
     if (data?.access_token) {
       login(data.access_token);
-      router.replace('/');
+      router.replace('/photos');
     } else {
       setError('Verification failed');
     }
