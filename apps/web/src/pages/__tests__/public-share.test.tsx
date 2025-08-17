@@ -3,6 +3,7 @@ import PublicSharePage from '../public/[token]'
 import { apiClient } from '../../../lib/api'
 import { useRouter } from 'next/router'
 import L from 'leaflet'
+import { ToastProvider } from '../../components/Toast'
 
 jest.mock('next/router', () => ({
   useRouter: jest.fn(),
@@ -76,6 +77,13 @@ jest.mock('leaflet.markercluster', () => ({}), { virtual: true })
 
 const mockedUseRouter = useRouter as jest.Mock
 
+const renderPage = () =>
+  render(
+    <ToastProvider>
+      <PublicSharePage />
+    </ToastProvider>,
+  )
+
 describe('PublicSharePage', () => {
   beforeEach(() => {
     jest.resetAllMocks()
@@ -87,6 +95,21 @@ describe('PublicSharePage', () => {
     document
       .querySelectorAll('[data-testid="marker"]')
       .forEach((el) => el.remove())
+  })
+
+  it('shows toast on 404 and renders empty UI', async () => {
+    ;(apiClient.GET as jest.Mock)
+      .mockResolvedValueOnce({ error: { status: 404 } })
+      .mockResolvedValueOnce({ error: { status: 404 } })
+
+    renderPage()
+
+    await waitFor(() => {
+      expect(screen.getByRole('alert')).toHaveTextContent(
+        'Freigabe nicht gefunden',
+      )
+    })
+    expect(screen.queryByTestId('photo')).not.toBeInTheDocument()
   })
 
   it('fetches and displays photos', async () => {
@@ -101,7 +124,7 @@ describe('PublicSharePage', () => {
         },
       })
 
-    render(<PublicSharePage />)
+    renderPage()
 
     await waitFor(() => {
       expect(screen.getAllByRole('img')).toHaveLength(2)
@@ -122,7 +145,7 @@ describe('PublicSharePage', () => {
         data: { items: [{ id: 1, thumbnail_url: 't1', original_url: 'o1' }] },
       })
 
-    render(<PublicSharePage />)
+    renderPage()
 
     await waitFor(() => {
       expect(screen.getByRole('img')).toBeInTheDocument()
@@ -146,7 +169,7 @@ describe('PublicSharePage', () => {
       data: { id: 'e1', status: 'queued' },
     })
 
-    render(<PublicSharePage />)
+    renderPage()
 
     await waitFor(() => {
       expect(screen.getByRole('img')).toBeInTheDocument()
@@ -191,7 +214,7 @@ describe('PublicSharePage', () => {
       data: { id: 'e2', status: 'queued' },
     })
 
-    render(<PublicSharePage />)
+    renderPage()
 
     await waitFor(() => {
       expect(screen.getByRole('img')).toBeInTheDocument()
@@ -260,13 +283,13 @@ describe('PublicSharePage', () => {
     ;(apiClient.POST as jest.Mock).mockResolvedValue({
       data: { id: 's1', status: 'queued' },
     })
-    const { unmount } = render(<PublicSharePage />)
+    const { unmount } = renderPage()
     await waitFor(() => expect(screen.getByRole('img')).toBeInTheDocument())
     fireEvent.click(screen.getAllByRole('checkbox')[0])
     fireEvent.click(screen.getByText('Download ZIP'))
     await waitFor(() => expect(screen.getByText('s1')).toBeInTheDocument())
     unmount()
-    render(<PublicSharePage />)
+    renderPage()
     await waitFor(() => expect(screen.getByText('s1')).toBeInTheDocument())
     jest.useRealTimers()
   })
@@ -279,7 +302,7 @@ describe('PublicSharePage', () => {
         data: { items: [{ id: 1, ad_hoc_spot: { lat: 0, lon: 0 } }] },
       })
 
-    render(<PublicSharePage />)
+    renderPage()
 
     fireEvent.click(screen.getByText('Map'))
 

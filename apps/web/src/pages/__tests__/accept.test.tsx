@@ -71,4 +71,26 @@ describe('AcceptPage', () => {
       expect(screen.getByRole('alert')).toHaveTextContent('Accept failed'),
     );
   });
+
+  it('redirects on invalid token', async () => {
+    const push = jest.fn();
+    mockedUseRouter.mockReturnValue({ query: { token: 'tok1' }, push });
+    (apiClient.POST as jest.Mock).mockResolvedValue({ error: { status: 404 } });
+
+    render(
+      <ToastProvider>
+        <AcceptPage />
+      </ToastProvider>,
+    );
+
+    fireEvent.change(screen.getByPlaceholderText('Password'), {
+      target: { value: 'pw' },
+    });
+    fireEvent.click(screen.getByText('Set Password'));
+
+    await waitFor(() => expect(push).toHaveBeenCalledWith('/login'));
+    await waitFor(() =>
+      expect(screen.getByRole('alert')).toHaveTextContent('Invalid token'),
+    );
+  });
 });

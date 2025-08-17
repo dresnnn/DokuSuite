@@ -18,7 +18,12 @@ export default function ResetPage() {
       body: { token, password },
     });
     if (err) {
-      setError('Reset failed');
+      if (err.status === 404) {
+        showToast('error', 'Invalid token');
+        router.replace('/login');
+      } else {
+        setError('Reset failed');
+      }
     } else {
       showToast('success', 'Password reset. You can now log in.');
       router.replace('/login');

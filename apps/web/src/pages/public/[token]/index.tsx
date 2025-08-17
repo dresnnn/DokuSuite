@@ -1,5 +1,5 @@
 import { useRouter } from 'next/router'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import dynamic from 'next/dynamic'
 import { apiClient } from '../../../../lib/api'
 import {
@@ -7,6 +7,7 @@ import {
   loadExportJobs,
   saveExportJobs,
 } from '../../../../lib/exportJobs'
+import { useToast } from '../../../components/Toast'
 
 const PhotoMap = dynamic(() => import('../../../components/PhotoMap'), {
   ssr: false,
@@ -28,33 +29,55 @@ export default function PublicSharePage() {
   const [downloadAllowed, setDownloadAllowed] = useState(true)
   const [title, setTitle] = useState('')
   const [includeExif, setIncludeExif] = useState(false)
+  const [notFound, setNotFound] = useState(false)
+  const toastShown = useRef(false)
+  const { showToast } = useToast()
 
   const client = apiClient as unknown as {
     GET: typeof apiClient.GET
     POST: typeof apiClient.POST
   }
 
-  useEffect(() => {
-    const load = async () => {
-      if (!token || Array.isArray(token)) return
-      const { data } = await apiClient.GET('/public/shares/{token}', {
-        params: { path: { token } },
-      })
-      setDownloadAllowed(data?.download_allowed !== false)
+  const handleNotFound = () => {
+    if (!toastShown.current) {
+      showToast('error', 'Freigabe nicht gefunden')
+      toastShown.current = true
     }
-    load()
-  }, [token])
+    setNotFound(true)
+  }
 
   useEffect(() => {
     const load = async () => {
-      if (!token || Array.isArray(token)) return
-      const list = await apiClient.GET('/public/shares/{token}/photos', {
+      if (!token || Array.isArray(token) || notFound) return
+      const { data, error } = await apiClient.GET('/public/shares/{token}', {
         params: { path: { token } },
       })
-      setPhotos((list.data?.items as Photo[]) || [])
+      if (error?.status === 404) {
+        handleNotFound()
+        return
+      }
+      setDownloadAllowed(data?.download_allowed !== false)
     }
     load()
-  }, [token])
+  }, [token, notFound])
+
+  useEffect(() => {
+    const load = async () => {
+      if (!token || Array.isArray(token) || notFound) return
+      const { data, error } = await apiClient.GET(
+        '/public/shares/{token}/photos',
+        {
+          params: { path: { token } },
+        },
+      )
+      if (error?.status === 404) {
+        handleNotFound()
+        return
+      }
+      setPhotos((data?.items as Photo[]) || [])
+    }
+    load()
+  }, [token, notFound])
 
   const toggleSelect = (id: number) => {
     setSelected((prev) => (prev.includes(id) ? prev.filter((p) => p !== id) : [...prev, id]))
@@ -115,6 +138,8 @@ export default function PublicSharePage() {
 
     return () => clearInterval(interval)
   }, [jobs, client])
+
+  if (notFound) return <div />
 
   return (
     <div>
