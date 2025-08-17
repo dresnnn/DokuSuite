@@ -43,6 +43,8 @@ export default function PhotosPage() {
   const [selected, setSelected] = useState<number[]>([])
   const [assignOrder, setAssignOrder] = useState('')
   const [assignWeek, setAssignWeek] = useState('')
+  const [exportTitle, setExportTitle] = useState('')
+  const [includeExif, setIncludeExif] = useState(false)
   const [view, setView] = useState<'table' | 'grid' | 'map'>('table')
   const [jobs, setJobs] = useState<ExportJob[]>([])
   const [loading, setLoading] = useState(false)
@@ -199,7 +201,7 @@ export default function PhotosPage() {
     const photoIds = selected.map(String)
     try {
       const { data } = await client.POST('/exports/zip', {
-        body: { photoIds },
+        body: { photoIds, title: exportTitle || undefined, includeExif },
       })
       if (data) setJobs((prev) => [...prev, data as ExportJob])
       setSelected([])
@@ -487,6 +489,21 @@ export default function PhotosPage() {
       <div style={{ marginTop: '1rem' }}>
         <h3>Export Selected</h3>
         <div>Selected: {selected.length}</div>
+        <label>
+          Title:
+          <input
+            value={exportTitle}
+            onChange={(e) => setExportTitle(e.target.value)}
+          />
+        </label>
+        <label>
+          Include EXIF:
+          <input
+            type="checkbox"
+            checked={includeExif}
+            onChange={(e) => setIncludeExif(e.target.checked)}
+          />
+        </label>
         <button onClick={triggerZipExport}>Export ZIP</button>
         <button onClick={triggerExcelExport}>Export Excel</button>
         <button onClick={triggerPdfExport}>Export PDF</button>
