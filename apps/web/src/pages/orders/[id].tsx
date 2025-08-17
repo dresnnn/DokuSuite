@@ -1,6 +1,7 @@
 import { useRouter } from 'next/router'
 import { useEffect, useState } from 'react'
 import { apiClient } from '../../../lib/api'
+import { loadExportJobs, saveExportJobs, ExportJob } from '../../../lib/exportJobs'
 import { useToast } from '../../components/Toast'
 
 type Order = {
@@ -51,6 +52,26 @@ export default function OrderDetailPage() {
     }
   }
 
+  const triggerExport = async (type: 'zip' | 'excel' | 'pdf') => {
+    if (!id) return
+    const endpoint:
+      | '/exports/zip'
+      | '/exports/excel'
+      | '/exports/pdf' =
+      type === 'zip'
+        ? '/exports/zip'
+        : type === 'excel'
+        ? '/exports/excel'
+        : '/exports/pdf'
+    const { data } = await apiClient.POST(endpoint, {
+      body: { orderId: Number(id) },
+    })
+    if (data) {
+      const jobs = loadExportJobs()
+      saveExportJobs([...jobs, data as ExportJob])
+    }
+  }
+
   return (
     <form onSubmit={handleSubmit}>
       <label>
@@ -79,6 +100,15 @@ export default function OrderDetailPage() {
         </select>
       </label>
       <button type="submit">Save</button>
+      <button type="button" onClick={() => triggerExport('zip')}>
+        Export ZIP
+      </button>
+      <button type="button" onClick={() => triggerExport('excel')}>
+        Export Excel
+      </button>
+      <button type="button" onClick={() => triggerExport('pdf')}>
+        Export PDF
+      </button>
     </form>
   )
 }

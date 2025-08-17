@@ -137,8 +137,12 @@ describe('OrdersPage', () => {
 })
 
 describe('OrderDetailPage', () => {
-  it('updates order', async () => {
+  beforeEach(() => {
     jest.clearAllMocks()
+    window.localStorage.clear()
+  })
+
+  it('updates order', async () => {
     ;(apiClient.GET as jest.Mock).mockResolvedValue({
       data: { customer_id: 'c1', name: 'Order 1', status: 'reserved' },
     })
@@ -168,5 +172,37 @@ describe('OrderDetailPage', () => {
     await waitFor(() =>
       expect(screen.getByRole('alert')).toHaveTextContent('Order updated'),
     )
+  })
+
+  it('triggers exports with orderId', async () => {
+    ;(apiClient.GET as jest.Mock).mockResolvedValue({
+      data: { customer_id: 'c1', name: 'Order 1', status: 'reserved' },
+    })
+    ;(apiClient.POST as jest.Mock).mockResolvedValue({
+      data: { id: 'e1', status: 'queued' },
+    })
+
+    render(
+      <ToastProvider>
+        <OrderDetailPage />
+      </ToastProvider>,
+    )
+    await waitFor(() => expect(apiClient.GET).toHaveBeenCalled())
+
+    fireEvent.click(screen.getByText('Export ZIP'))
+    fireEvent.click(screen.getByText('Export Excel'))
+    fireEvent.click(screen.getByText('Export PDF'))
+
+    await waitFor(() => {
+      expect(apiClient.POST).toHaveBeenCalledWith('/exports/zip', {
+        body: { orderId: 1 },
+      })
+      expect(apiClient.POST).toHaveBeenCalledWith('/exports/excel', {
+        body: { orderId: 1 },
+      })
+      expect(apiClient.POST).toHaveBeenCalledWith('/exports/pdf', {
+        body: { orderId: 1 },
+      })
+    })
   })
 })
