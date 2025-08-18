@@ -50,7 +50,10 @@ export default function CustomersPage() {
         body: {
           name: newCustomer.name,
           watermark_policy: newCustomer.watermark_policy,
-          watermark_text: newCustomer.watermark_text || undefined,
+          ...(newCustomer.watermark_policy === 'custom_text' &&
+          newCustomer.watermark_text
+            ? { watermark_text: newCustomer.watermark_text }
+            : {}),
         },
       })
       setNewCustomer({ name: '', watermark_policy: 'none', watermark_text: '' })
@@ -148,27 +151,31 @@ export default function CustomersPage() {
         />
         <select
           value={newCustomer.watermark_policy}
-          onChange={(e) =>
+          onChange={(e) => {
+            const policy = e.target.value
             setNewCustomer((c) => ({
               ...c,
-              watermark_policy: e.target.value,
+              watermark_policy: policy,
+              watermark_text: policy === 'custom_text' ? c.watermark_text : '',
             }))
-          }
+          }}
         >
           <option value="none">none</option>
           <option value="default">default</option>
           <option value="custom_text">custom_text</option>
         </select>
-        <input
-          placeholder="Watermark Text"
-          value={newCustomer.watermark_text}
-          onChange={(e) =>
-            setNewCustomer((c) => ({
-              ...c,
-              watermark_text: e.target.value,
-            }))
-          }
-        />
+        {newCustomer.watermark_policy === 'custom_text' && (
+          <input
+            placeholder="Watermark Text"
+            value={newCustomer.watermark_text}
+            onChange={(e) =>
+              setNewCustomer((c) => ({
+                ...c,
+                watermark_text: e.target.value,
+              }))
+            }
+          />
+        )}
         <button type="submit">Create</button>
       </form>
 
