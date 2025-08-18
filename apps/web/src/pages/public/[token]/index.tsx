@@ -6,6 +6,7 @@ import {
   ExportJob,
   loadExportJobs,
   saveExportJobs,
+  deleteExportJob,
 } from '../../../../lib/exportJobs'
 import { useToast } from '../../../components/Toast'
 
@@ -136,12 +137,14 @@ export default function PublicSharePage() {
   }
 
   useEffect(() => {
-    setJobs(loadExportJobs())
-  }, [])
+    if (!token || Array.isArray(token)) return
+    setJobs(loadExportJobs(token))
+  }, [token])
 
   useEffect(() => {
-    saveExportJobs(jobs)
-  }, [jobs])
+    if (!token || Array.isArray(token)) return
+    saveExportJobs(jobs, token)
+  }, [jobs, token])
 
   useEffect(() => {
     const pending = jobs.filter(
@@ -172,6 +175,11 @@ export default function PublicSharePage() {
 
     return () => clearInterval(interval)
   }, [jobs, client, showToast])
+
+  const removeJob = (id?: string) => {
+    if (!id || !token || Array.isArray(token)) return
+    setJobs(deleteExportJob(id, token))
+  }
 
   if (notFound) return <div>Freigabe nicht gefunden</div>
 
@@ -239,6 +247,7 @@ export default function PublicSharePage() {
                 <th>ID</th>
                 <th>Status</th>
                 <th>Result</th>
+                <th>Remove</th>
               </tr>
             </thead>
             <tbody>
@@ -256,6 +265,9 @@ export default function PublicSharePage() {
                         Download
                       </a>
                     ) : null}
+                  </td>
+                  <td>
+                    <button onClick={() => removeJob(job.id)}>Remove</button>
                   </td>
                 </tr>
               ))}

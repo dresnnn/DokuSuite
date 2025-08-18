@@ -9,6 +9,7 @@ import {
   ExportJob,
   loadExportJobs,
   saveExportJobs,
+  deleteExportJob,
 } from '../../../lib/exportJobs'
 
 const PhotoMap = dynamic(() => import('../../components/PhotoMap'), {
@@ -307,6 +308,11 @@ export default function PhotosPage() {
     return () => clearInterval(interval)
   }, [jobs, client])
 
+  const removeJob = (id?: string) => {
+    if (!id) return
+    setJobs(deleteExportJob(id))
+  }
+
   return (
     <div>
         <PhotoUpload onUploaded={() => fetchPhotos(1)} />
@@ -518,6 +524,7 @@ export default function PhotosPage() {
                 <th>ID</th>
                 <th>Status</th>
                 <th>Result</th>
+                <th>Remove</th>
               </tr>
             </thead>
             <tbody>
@@ -535,6 +542,9 @@ export default function PhotosPage() {
                         Download
                       </a>
                     ) : null}
+                  </td>
+                  <td>
+                    <button onClick={() => removeJob(job.id)}>Remove</button>
                   </td>
                 </tr>
               ))}
