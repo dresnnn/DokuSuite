@@ -97,7 +97,7 @@ describe('PublicSharePage', () => {
       .forEach((el) => el.remove())
   })
 
-  it('shows toast on 404 and renders empty UI', async () => {
+  it('shows toast on 404 and renders error message', async () => {
     ;(apiClient.GET as jest.Mock)
       .mockResolvedValueOnce({ error: { status: 404 } })
       .mockResolvedValueOnce({ error: { status: 404 } })
@@ -109,7 +109,7 @@ describe('PublicSharePage', () => {
         'Freigabe nicht gefunden',
       )
     })
-    expect(screen.queryByTestId('photo')).not.toBeInTheDocument()
+    expect(screen.getAllByText('Freigabe nicht gefunden')).toHaveLength(2)
   })
 
   it('fetches and displays photos', async () => {
