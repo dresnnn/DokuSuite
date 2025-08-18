@@ -200,7 +200,11 @@ export default function PublicSharePage() {
           }}
         >
           {photos.map((p) => (
-            <label key={p.id} data-testid="photo" style={{ border: '1px solid #ccc', padding: '4px' }}>
+            <label
+              key={p.id}
+              data-testid="photo"
+              style={{ border: '1px solid #ccc', padding: '4px' }}
+            >
               <input
                 type="checkbox"
                 checked={selected.includes(p.id)}
@@ -210,6 +214,16 @@ export default function PublicSharePage() {
                 <img src={p.thumbnail_url} alt={`Photo ${p.id}`} />
               ) : (
                 <span>Photo {p.id}</span>
+              )}
+              {downloadAllowed && p.original_url && (
+                <a
+                  href={p.original_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ marginLeft: '4px' }}
+                >
+                  Original
+                </a>
               )}
             </label>
           ))}
