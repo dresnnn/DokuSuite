@@ -67,6 +67,8 @@ Kernfunktionen:
 - Beim Start oder Fehlschlagen eines Exports erhält der Kunde ein Toast-Feedback.
 - Export-Buttons werden nur angezeigt, wenn die Freigabe Downloads erlaubt (`download_allowed=false` blendet sie aus).
 - Sind Downloads erlaubt, steht neben jedem Thumbnail ein Link zum Originalfoto für den Einzel-Download.
+- Das Ablaufdatum der Freigabe wird oberhalb der Galerie angezeigt ("Freigabe gültig bis …").
+- Bei `watermark_policy` ≠ `none` wird über jedem Foto ein Wasserzeichen mit dem Text aus `watermark_text` oder einem Standardtext eingeblendet.
 - Zusätzlich kann der Kunde eine Kartenansicht aufrufen, die Fotos abhängig vom Kartenausschnitt über `/public/shares/{token}/photos?bbox` lädt.
 
 ## Invite-Flow

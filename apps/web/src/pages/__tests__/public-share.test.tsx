@@ -112,6 +112,28 @@ describe('PublicSharePage', () => {
     expect(screen.getAllByText('Freigabe nicht gefunden')).toHaveLength(2)
   })
 
+  it('renders expiration date and watermark overlay', async () => {
+    ;(apiClient.GET as jest.Mock)
+      .mockResolvedValueOnce({
+        data: {
+          download_allowed: true,
+          expires_at: '2024-01-01T12:00:00Z',
+          watermark_policy: 'custom_text',
+          watermark_text: 'WM',
+        },
+      })
+      .mockResolvedValueOnce({
+        data: { items: [{ id: 1, thumbnail_url: 't1' }] },
+      })
+
+    renderPage()
+
+    await waitFor(() =>
+      expect(screen.getByText(/Freigabe gültig bis/)).toBeInTheDocument(),
+    )
+    expect(screen.getByTestId('watermark')).toHaveTextContent('WM')
+  })
+
   it('fetches and displays photos', async () => {
     ;(apiClient.GET as jest.Mock)
       .mockResolvedValueOnce({ data: { download_allowed: true } })

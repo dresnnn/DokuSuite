@@ -1082,6 +1082,9 @@ components:
       type: object
       properties:
         download_allowed: { type: boolean }
+        expires_at: { type: string, format: date-time, nullable: true }
+        watermark_policy: { $ref: '#/components/schemas/WatermarkPolicy', nullable: true }
+        watermark_text: { type: string, nullable: true }
     PublicPhoto:
       type: object
       properties:
