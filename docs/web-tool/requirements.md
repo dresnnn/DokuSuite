@@ -51,7 +51,7 @@ Kernfunktionen:
 - Kunden paginiert listen (`GET /customers`).
 - Neue Kunden anlegen (`POST /customers`).
 - Kunden bearbeiten (`PATCH /customers/{id}`) und löschen (`DELETE /customers/{id}`).
-- Ein Wasserzeichen-Text (`watermark_text`) ist nur anzugeben, wenn die Wasserzeichen-Policy auf `custom_text` gesetzt ist.
+- Beim Speichern wird ein Wasserzeichen-Text (`watermark_text`) nur übertragen, wenn die Wasserzeichen-Policy auf `custom_text` gesetzt ist.
 
 ## Login-Flow
 

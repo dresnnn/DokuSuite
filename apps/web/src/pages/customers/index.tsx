@@ -83,7 +83,9 @@ export default function CustomersPage() {
         body: {
           name: c.name,
           watermark_policy: c.watermark_policy,
-          watermark_text: c.watermark_text,
+          ...(c.watermark_policy === 'custom_text'
+            ? { watermark_text: c.watermark_text }
+            : {}),
         },
       })
       showToast('success', 'Customer updated')
@@ -204,9 +206,13 @@ export default function CustomersPage() {
               <td>
                 <select
                   value={c.watermark_policy || ''}
-                  onChange={(e) =>
-                    handleFieldChange(idx, 'watermark_policy', e.target.value)
-                  }
+                  onChange={(e) => {
+                    const policy = e.target.value
+                    handleFieldChange(idx, 'watermark_policy', policy)
+                    if (policy !== 'custom_text') {
+                      handleFieldChange(idx, 'watermark_text', '')
+                    }
+                  }}
                 >
                   <option value="none">none</option>
                   <option value="default">default</option>
@@ -214,12 +220,15 @@ export default function CustomersPage() {
                 </select>
               </td>
               <td>
-                <input
-                  value={c.watermark_text || ''}
-                  onChange={(e) =>
-                    handleFieldChange(idx, 'watermark_text', e.target.value)
-                  }
-                />
+                {c.watermark_policy === 'custom_text' && (
+                  <input
+                    placeholder="Watermark Text"
+                    value={c.watermark_text || ''}
+                    onChange={(e) =>
+                      handleFieldChange(idx, 'watermark_text', e.target.value)
+                    }
+                  />
+                )}
               </td>
               <td>
                 <button onClick={() => handleUpdate(c)}>Save</button>
