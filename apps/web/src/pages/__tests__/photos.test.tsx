@@ -260,6 +260,40 @@ describe('PhotosPage', () => {
     )
   })
 
+  it('applies persisted filters on reload', async () => {
+    ;(apiClient.GET as jest.Mock).mockResolvedValue({ data: { items: [], meta: {} } })
+    const { unmount } = render(
+      <ToastProvider>
+        <PhotosPage />
+      </ToastProvider>,
+    )
+
+    await waitFor(() => expect(apiClient.GET).toHaveBeenCalled())
+    ;(apiClient.GET as jest.Mock).mockClear()
+
+    fireEvent.change(screen.getAllByLabelText('Order ID:')[0], {
+      target: { value: '123' },
+    })
+    fireEvent.click(screen.getByText('Fetch'))
+
+    await waitFor(() => expect(apiClient.GET).toHaveBeenCalled())
+    expect(window.localStorage.getItem('photoFilters')).toContain('123')
+
+    unmount()
+    ;(apiClient.GET as jest.Mock).mockClear()
+    render(
+      <ToastProvider>
+        <PhotosPage />
+      </ToastProvider>,
+    )
+
+    await waitFor(() => expect(apiClient.GET).toHaveBeenCalled())
+    expect(
+      (apiClient.GET as jest.Mock).mock.calls[0][1].params.query.orderId,
+    ).toBe('123')
+    expect(screen.getAllByLabelText('Order ID:')[0]).toHaveValue('123')
+  })
+
   it('assigns selected photos', async () => {
     const resp = {
       items: [
