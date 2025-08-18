@@ -143,7 +143,6 @@ export default function PhotosPage() {
       /* ignore */
     }
     setFiltersLoaded(true)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [role, userId, filtersLoaded])
 
   useEffect(() => {
@@ -332,9 +331,13 @@ export default function PhotosPage() {
     }
   }
 
-  const changePage = (newPage: number) => {
-    fetchPhotos(newPage, true)
-  }
+  const changePage = useCallback(
+    (newPage: number) => {
+      fetchPhotos(newPage)
+      window.scrollTo(0, 0)
+    },
+    [fetchPhotos],
+  )
 
   useEffect(() => {
     setJobs(loadExportJobs())
@@ -360,8 +363,7 @@ export default function PhotosPage() {
     }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [meta, totalPages, photos])
+  }, [meta, totalPages, photos, changePage])
 
   useEffect(() => {
     const el = loader.current
