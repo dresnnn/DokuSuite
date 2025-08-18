@@ -181,6 +181,24 @@ describe('ExportsPage', () => {
     await waitFor(() => expect(screen.getByText('p1')).toBeInTheDocument())
     jest.useRealTimers()
   })
+  it('removes an export job', async () => {
+    window.localStorage.setItem(
+      'exportJobs',
+      JSON.stringify([{ id: 'r1', status: 'done' }]),
+    )
+    render(
+      <ToastProvider>
+        <ExportsPage />
+      </ToastProvider>,
+    )
+    await waitFor(() => expect(screen.getByText('r1')).toBeInTheDocument())
+    const removeButton = screen.getAllByRole('button', { name: 'Remove' })[0]
+    fireEvent.click(removeButton)
+    await waitFor(() =>
+      expect(screen.queryByText('r1')).not.toBeInTheDocument(),
+    )
+    expect(window.localStorage.getItem('exportJobs')).toBe('[]')
+  })
   it('shows error toast when export job fails during polling', async () => {
     jest.useFakeTimers()
     ;(apiClient.POST as jest.Mock).mockResolvedValue({
