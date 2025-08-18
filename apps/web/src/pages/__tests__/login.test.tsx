@@ -57,10 +57,11 @@ describe('LoginPage', () => {
   }
 
   it('shows toast on 403 responses', async () => {
-    const originalFetch = global.fetch;
-    (global as any).fetch = jest.fn().mockResolvedValue({
-      status: 403,
-    } as unknown as Response);
+    const globalWithFetch = global as unknown as { fetch: typeof fetch };
+    const originalFetch = globalWithFetch.fetch;
+    globalWithFetch.fetch = jest
+      .fn()
+      .mockResolvedValue({ status: 403 } as Response) as unknown as typeof fetch;
 
     render(
       <ToastProvider>
@@ -76,7 +77,7 @@ describe('LoginPage', () => {
       expect(screen.getByText('Access denied')).toBeInTheDocument();
     });
 
-    (global as any).fetch = originalFetch;
+    globalWithFetch.fetch = originalFetch;
   });
 
   it('stores token and redirects on successful login', async () => {
