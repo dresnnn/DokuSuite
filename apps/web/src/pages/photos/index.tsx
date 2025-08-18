@@ -61,6 +61,7 @@ export default function PhotosPage() {
   const [jobs, setJobs] = useState<ExportJob[]>([])
   const [loading, setLoading] = useState(false)
   const loader = useRef<HTMLDivElement | null>(null)
+  const [filtersLoaded, setFiltersLoaded] = useState(false)
 
   const { role, userId } = useAuth()
   const { showToast } = useToast()
@@ -120,13 +121,67 @@ export default function PhotosPage() {
   )
 
   useEffect(() => {
-    if (role === 'USER') setUploaderId(userId ? String(userId) : '')
-  }, [role, userId])
+    if (filtersLoaded) return
+    try {
+      const stored = localStorage.getItem('photoFilters')
+      if (stored) {
+        const f = JSON.parse(stored)
+        setMode(f.mode || '')
+        setFrom(f.from || '')
+        setTo(f.to || '')
+        setSiteId(f.siteId || '')
+        setOrderId(f.orderId || '')
+        setStatus(f.status || '')
+        setCalendarWeek(f.calendarWeek || '')
+        setQualityFlag(f.qualityFlag || '')
+        setCustomerId(f.customerId || '')
+        setMeta((m) => ({ ...m, limit: f.limit || m.limit }))
+        if (role !== 'USER') setUploaderId(f.uploaderId || '')
+      }
+      if (role === 'USER') setUploaderId(userId ? String(userId) : '')
+    } catch {
+      /* ignore */
+    }
+    setFiltersLoaded(true)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [role, userId, filtersLoaded])
 
   useEffect(() => {
+    if (!filtersLoaded) return
+    const filters = {
+      mode,
+      uploaderId,
+      from,
+      to,
+      siteId,
+      orderId,
+      status,
+      calendarWeek,
+      qualityFlag,
+      customerId,
+      limit: meta.limit,
+    }
+    localStorage.setItem('photoFilters', JSON.stringify(filters))
+  }, [
+    mode,
+    uploaderId,
+    from,
+    to,
+    siteId,
+    orderId,
+    status,
+    calendarWeek,
+    qualityFlag,
+    customerId,
+    meta.limit,
+    filtersLoaded,
+  ])
+
+  useEffect(() => {
+    if (!filtersLoaded) return
     fetchPhotos(1)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [uploaderId])
+  }, [filtersLoaded])
 
   const totalPages = Math.ceil((meta.total || 0) / (meta.limit || 1)) || 1
 
