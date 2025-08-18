@@ -63,12 +63,16 @@ export default function OrderDetailPage() {
         : type === 'excel'
         ? '/exports/excel'
         : '/exports/pdf'
-    const { data } = await apiClient.POST(endpoint, {
-      body: { orderId: Number(id) },
-    })
-    if (data) {
+    try {
+      const { data } = await apiClient.POST(endpoint, {
+        body: { orderId: Number(id) },
+      })
+      if (!data) throw new Error('no data')
       const jobs = loadExportJobs()
       saveExportJobs([...jobs, data as ExportJob])
+      showToast('success', 'Export started')
+    } catch {
+      showToast('error', 'Export failed')
     }
   }
 

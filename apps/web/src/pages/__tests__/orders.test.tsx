@@ -205,4 +205,24 @@ describe('OrderDetailPage', () => {
       })
     })
   })
+
+  it('shows toast on export error', async () => {
+    ;(apiClient.GET as jest.Mock).mockResolvedValue({
+      data: { customer_id: 'c1', name: 'Order 1', status: 'reserved' },
+    })
+    ;(apiClient.POST as jest.Mock).mockResolvedValue({ data: undefined })
+
+    render(
+      <ToastProvider>
+        <OrderDetailPage />
+      </ToastProvider>,
+    )
+    await waitFor(() => expect(apiClient.GET).toHaveBeenCalled())
+
+    fireEvent.click(screen.getByText('Export ZIP'))
+
+    await waitFor(() => {
+      expect(screen.getByRole('alert')).toHaveTextContent('Export failed')
+    })
+  })
 })
