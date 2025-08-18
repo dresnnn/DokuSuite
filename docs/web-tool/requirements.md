@@ -24,8 +24,9 @@ Kernfunktionen:
 - Auftragsverwaltung: Aufträge listen, nach Kunde und Status filtern, neue Aufträge anlegen sowie Details ansehen, den Status bearbeiten und Exporte als ZIP, Excel oder PDF starten (`GET /orders/{id}`, `PATCH /orders/{id}`, `POST /exports/zip`, `POST /exports/excel`, `POST /exports/pdf`). Beim Start oder Fehlschlagen eines Exports erfolgt eine Toast-Rückmeldung.
 - Standortpflege: Standorte suchen (`q`, `near`, `radius_m`), paginiert listen und Name, Adresse oder Aktivstatus bearbeiten (`PATCH /locations/{id}`).
 - Foto-Detailseite zur Bearbeitung von Metadaten (`quality_flag`, `note`, ...)
-  über `PATCH /photos/{id}` und Korrektur des Standorts per Karte
-  (Marker-Drag mit `PATCH /photos/{id}` aktualisiert die Koordinaten).
+  über `PATCH /photos/{id}` und Korrektur oder Erstplatzierung des Standorts per
+  Karte (Marker-Drag mit `PATCH /photos/{id}` legt bei fehlendem
+  `ad_hoc_spot` einen neuen an bzw. aktualisiert die Koordinaten).
 - Foto-Upload: Browser fordert über `POST /photos/upload-intent` eine signierte URL an und lädt die Datei direkt hoch. Nach erfolgreichem Upload erscheint ein Erfolgs-Toast, bei Fehlern ein Fehler-Toast.
 - Authentifizierung via Token: Browser speichert das Token und sendet es bei jeder API-Anfrage als `Authorization: Bearer <token>`.
 - `AuthContext` verwaltet Loginstatus und Token im Frontend.

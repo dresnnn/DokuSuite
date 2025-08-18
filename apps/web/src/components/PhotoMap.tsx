@@ -16,9 +16,15 @@ type Props = {
   shareToken?: string
   photoId?: number
   adHocSpot?: { lat: number; lon: number }
+  initialPosition?: { lat: number; lon: number }
 }
 
-export default function PhotoMap({ shareToken, photoId, adHocSpot }: Props) {
+export default function PhotoMap({
+  shareToken,
+  photoId,
+  adHocSpot,
+  initialPosition,
+}: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
   const { showToast } = useToast()
 
@@ -28,9 +34,10 @@ export default function PhotoMap({ shareToken, photoId, adHocSpot }: Props) {
     const map = L.map(containerRef.current)
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map)
 
-    if (photoId && adHocSpot) {
-      map.setView([adHocSpot.lat, adHocSpot.lon], 13)
-      const marker = L.marker([adHocSpot.lat, adHocSpot.lon], {
+    if (photoId) {
+      const start = adHocSpot || initialPosition || { lat: 0, lon: 0 }
+      map.setView([start.lat, start.lon], 13)
+      const marker = L.marker([start.lat, start.lon], {
         draggable: true,
         icon: L.divIcon({
           className: '',
@@ -120,7 +127,7 @@ export default function PhotoMap({ shareToken, photoId, adHocSpot }: Props) {
       map.off('moveend', fetchPhotos)
       map.remove()
     }
-  }, [shareToken, photoId, adHocSpot, showToast])
+  }, [shareToken, photoId, adHocSpot, initialPosition, showToast])
 
   return <div ref={containerRef} style={{ height: '400px' }} data-testid="photo-map" />
 }
