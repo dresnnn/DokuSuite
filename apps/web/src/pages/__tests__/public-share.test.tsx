@@ -138,6 +138,25 @@ describe('PublicSharePage', () => {
     })
   })
 
+  it('shows original links when downloads are allowed', async () => {
+    ;(apiClient.GET as jest.Mock)
+      .mockResolvedValueOnce({ data: { download_allowed: true } })
+      .mockResolvedValueOnce({
+        data: {
+          items: [{ id: 1, thumbnail_url: 't1', original_url: 'o1' }],
+        },
+      })
+
+    renderPage()
+
+    await waitFor(() => {
+      expect(screen.getByRole('img')).toBeInTheDocument()
+    })
+
+    const link = screen.getByRole('link', { name: 'Original' })
+    expect(link).toHaveAttribute('href', 'o1')
+  })
+
   it('hides export buttons when downloads are forbidden', async () => {
     ;(apiClient.GET as jest.Mock)
       .mockResolvedValueOnce({ data: { download_allowed: false } })
