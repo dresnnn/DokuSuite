@@ -1,6 +1,12 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import LoginPage from '../login';
-import { apiClient, setAuthToken, authFetch, onForbidden } from '../../../lib/api';
+import {
+  apiClient,
+  setAuthToken,
+  authFetch,
+  onForbidden,
+  onUnauthorized,
+} from '../../../lib/api';
 import { AuthProvider } from '../../context/AuthContext';
 import Layout from '../../components/Layout';
 import { AuthGuard } from '../_app';
@@ -53,6 +59,15 @@ describe('LoginPage', () => {
   function ForbiddenListener() {
     const { showToast } = useToast();
     useEffect(() => onForbidden(() => showToast('error', 'Access denied')), [showToast]);
+    return null;
+  }
+
+  function UnauthorizedListener() {
+    const { showToast } = useToast();
+    useEffect(
+      () => onUnauthorized(() => showToast('error', 'Session expired')),
+      [showToast],
+    );
     return null;
   }
 
@@ -193,7 +208,7 @@ describe('LoginPage', () => {
       global.fetch = originalFetch;
     });
 
-    it('clears token and redirects to login on 401 responses', async () => {
+    it('clears token, shows toast and redirects to login on 401 responses', async () => {
       setAuthToken('token123');
 
       const fetchMock = jest.fn().mockResolvedValue({ status: 401 });
@@ -201,10 +216,28 @@ describe('LoginPage', () => {
       // @ts-expect-error replace fetch for test
       global.fetch = fetchMock;
 
+      const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+
+      render(
+        <ToastProvider>
+          <UnauthorizedListener />
+        </ToastProvider>,
+      );
+
       await authFetch('/api/photos');
       expect(window.localStorage.removeItem).toHaveBeenCalledWith('token');
+      expect(
+        errorSpy.mock.calls.some((c) =>
+          String(c[0]).includes('navigation (except hash changes)'),
+        ),
+      ).toBe(true);
+
+      await waitFor(() => {
+        expect(screen.getByText('Session expired')).toBeInTheDocument();
+      });
 
       global.fetch = originalFetch;
+      errorSpy.mockRestore();
     });
 
     it('does not redirect unauthenticated users on public routes', async () => {

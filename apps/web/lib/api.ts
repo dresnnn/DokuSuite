@@ -6,6 +6,9 @@ const TOKEN_STORAGE_KEY = 'token';
 type ForbiddenListener = () => void;
 let forbiddenListeners: ForbiddenListener[] = [];
 
+type UnauthorizedListener = () => void;
+let unauthorizedListeners: UnauthorizedListener[] = [];
+
 export const onForbidden = (listener: ForbiddenListener) => {
   forbiddenListeners.push(listener);
   return () => {
@@ -13,8 +16,19 @@ export const onForbidden = (listener: ForbiddenListener) => {
   };
 };
 
+export const onUnauthorized = (listener: UnauthorizedListener) => {
+  unauthorizedListeners.push(listener);
+  return () => {
+    unauthorizedListeners = unauthorizedListeners.filter((l) => l !== listener);
+  };
+};
+
 const notifyForbidden = () => {
   for (const listener of forbiddenListeners) listener();
+};
+
+const notifyUnauthorized = () => {
+  for (const listener of unauthorizedListeners) listener();
 };
 
 export const setAuthToken = (token: string) =>
@@ -32,6 +46,7 @@ export const authFetch: typeof fetch = async (input, init = {}) => {
   const response = await fetch(input, { ...init, headers });
   if (response.status === 401) {
     clearAuthToken();
+    notifyUnauthorized();
     if (typeof window !== 'undefined') {
       window.location.assign('/login');
     }
