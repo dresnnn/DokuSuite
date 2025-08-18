@@ -62,6 +62,7 @@ export default function PhotosPage() {
   const [loading, setLoading] = useState(false)
   const loader = useRef<HTMLDivElement | null>(null)
   const [filtersLoaded, setFiltersLoaded] = useState(false)
+  const latestRequest = useRef(0)
 
   const { role, userId } = useAuth()
   const { showToast } = useToast()
@@ -74,6 +75,7 @@ export default function PhotosPage() {
   const fetchPhotos = useCallback(
     async (page: number, append = false) => {
       setLoading(true)
+      const requestId = ++latestRequest.current
       try {
         const { data } = await apiClient.GET('/photos', {
           params: {
@@ -93,6 +95,7 @@ export default function PhotosPage() {
             },
           },
         })
+        if (latestRequest.current !== requestId) return
         if (data) {
           setPhotos((prev) =>
             append ? [...prev, ...(data.items || [])] : data.items || [],
@@ -100,9 +103,10 @@ export default function PhotosPage() {
           setMeta(data.meta || { page, limit: meta.limit, total: 0 })
         }
       } catch {
-        showToast('error', 'Failed to load photos')
+        if (latestRequest.current === requestId)
+          showToast('error', 'Failed to load photos')
       }
-      setLoading(false)
+      if (latestRequest.current === requestId) setLoading(false)
     },
     [
       meta.limit,
@@ -143,7 +147,6 @@ export default function PhotosPage() {
       /* ignore */
     }
     setFiltersLoaded(true)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [role, userId, filtersLoaded])
 
   useEffect(() => {
@@ -332,9 +335,13 @@ export default function PhotosPage() {
     }
   }
 
-  const changePage = (newPage: number) => {
-    fetchPhotos(newPage, true)
-  }
+  const changePage = useCallback(
+    (newPage: number) => {
+      fetchPhotos(newPage)
+      window.scrollTo(0, 0)
+    },
+    [fetchPhotos],
+  )
 
   useEffect(() => {
     setJobs(loadExportJobs())
@@ -360,8 +367,7 @@ export default function PhotosPage() {
     }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [meta, totalPages, photos])
+  }, [meta, totalPages, photos, changePage])
 
   useEffect(() => {
     const el = loader.current

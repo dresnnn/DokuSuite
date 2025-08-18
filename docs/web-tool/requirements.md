@@ -117,6 +117,7 @@ UX/Leistung:
 - Virtualisierte Tabellen und Grids rendern nur sichtbare Elemente, um die DOM-Größe klein zu halten.
 - Tastaturkürzel, Batch-Workflows, Undo.
   - Navigation mit Pfeiltasten (\u2190/\u2192) und Auswahl aller Fotos per `A`.
+    - Seitenwechsel ersetzen die aktuelle Liste (keine Duplikate).
   - Letzte Batch-Zuweisung l\u00e4sst sich mit `Ctrl+Z` r\u00fcckg\u00e4ngig machen.
   - Undo stellt alte Auftrags- und Wochenwerte wieder her.
 
