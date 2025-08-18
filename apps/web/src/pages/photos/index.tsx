@@ -206,6 +206,18 @@ export default function PhotosPage() {
     if (!assignOrder || selected.length === 0) return
     const photoIds = selected.map(String)
     try {
+      const previous = await Promise.all(
+        photoIds.map(async (id) => {
+          const { data } = await apiClient.GET('/photos/{id}', {
+            params: { path: { id } },
+          })
+          return {
+            id,
+            orderId: data?.orderId || '',
+            calendarWeek: data?.calendarWeek || '',
+          }
+        }),
+      )
       await apiClient.POST('/photos/batch/assign', {
         body: {
           photoIds,
@@ -213,11 +225,17 @@ export default function PhotosPage() {
           calendarWeek: assignWeek || undefined,
         },
       })
-      undoStack.push(() =>
-        apiClient.POST('/photos/batch/assign', {
-          body: { photoIds, orderId: '' },
-        }),
-      )
+      undoStack.push(() => {
+        previous.forEach(({ id, orderId, calendarWeek }) => {
+          apiClient.POST('/photos/batch/assign', {
+            body: {
+              photoIds: [id],
+              orderId,
+              calendarWeek: calendarWeek || undefined,
+            },
+          })
+        })
+      })
       setSelected([])
       setAssignOrder('')
       setAssignWeek('')
