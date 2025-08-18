@@ -23,16 +23,30 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
   const [token, setToken] = useState<string | null>(null);
   const [role, setRole] = useState<'ADMIN' | 'USER' | null>(null);
   const [userId, setUserId] = useState<number | null>(null);
-  const [challenge, setChallenge] = useState<string | null>(null);
+  const [challenge, setChallengeState] = useState<string | null>(null);
+
+  const setChallenge = (value: string | null) => {
+    if (typeof window !== 'undefined') {
+      if (value) sessionStorage.setItem('challenge', value);
+      else sessionStorage.removeItem('challenge');
+    }
+    setChallengeState(value);
+  };
 
   useEffect(() => {
-    const existing = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-    if (existing) {
-      setToken(existing);
-      apiClient.GET('/auth/me').then(({ data }) => {
-        setRole(data?.role ?? null);
-        setUserId(data?.id ?? null);
-      });
+    if (typeof window !== 'undefined') {
+      const existing = localStorage.getItem('token');
+      const storedChallenge = sessionStorage.getItem('challenge');
+      if (existing) {
+        setToken(existing);
+        apiClient.GET('/auth/me').then(({ data }) => {
+          setRole(data?.role ?? null);
+          setUserId(data?.id ?? null);
+        });
+      }
+      if (storedChallenge) {
+        setChallengeState(storedChallenge);
+      }
     }
   }, []);
 

@@ -78,6 +78,7 @@ Kernfunktionen:
 
 - Nutzer generiert auf `/2fa/setup` ein TOTP-Secret (`POST /auth/2fa/setup`).
 - Beim Login ohne gültiges 2FA-Token liefert `/auth/login` einen `challenge_token`.
+- Der `challenge_token` wird im `sessionStorage` gespeichert, damit die Verifizierung auch nach einem Seiten-Reload möglich bleibt.
 - Der Nutzer wird zu `/2fa/verify` geleitet und sendet `POST /auth/2fa/verify` mit `challenge` und Einmalcode.
 - Bei erfolgreicher Verifizierung erhält der Browser wie gewohnt ein JWT (`access_token`).
 - Nach der Verifizierung leitet das Frontend zur Galerie `/photos` weiter.
