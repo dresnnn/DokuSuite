@@ -333,5 +333,74 @@ describe('PublicSharePage', () => {
       expect(screen.getByRole('alert')).toHaveTextContent('Failed to load photos'),
     )
   })
+
+  it('shows toast when export request fails', async () => {
+    ;(apiClient.GET as jest.Mock)
+      .mockResolvedValueOnce({ data: { download_allowed: true } })
+      .mockResolvedValueOnce({
+        data: { items: [{ id: 1, thumbnail_url: 't1', original_url: 'o1' }] },
+      })
+    ;(apiClient.POST as jest.Mock).mockRejectedValue(new Error('fail'))
+
+    renderPage()
+
+    await waitFor(() => expect(screen.getByRole('img')).toBeInTheDocument())
+
+    fireEvent.click(screen.getAllByRole('checkbox')[0])
+    fireEvent.click(screen.getByText('Download ZIP'))
+
+    await waitFor(() =>
+      expect(
+        screen
+          .getAllByRole('alert')
+          .some((el) => el.textContent?.includes('Export fehlgeschlagen')),
+      ).toBe(true),
+    )
+    expect(apiClient.POST).toHaveBeenCalledTimes(1)
+    expect(screen.queryByText('Export Jobs')).not.toBeInTheDocument()
+  })
+
+  it('shows toast and stops polling on export job error', async () => {
+    jest.useFakeTimers()
+    ;(apiClient.GET as jest.Mock)
+      .mockResolvedValueOnce({ data: { download_allowed: true } })
+      .mockResolvedValueOnce({
+        data: { items: [{ id: 1, thumbnail_url: 't1', original_url: 'o1' }] },
+      })
+      .mockResolvedValueOnce({ data: { id: 'e1', status: 'error' } })
+    ;(apiClient.POST as jest.Mock).mockResolvedValue({
+      data: { id: 'e1', status: 'queued' },
+    })
+
+    renderPage()
+
+    await waitFor(() => expect(screen.getByRole('img')).toBeInTheDocument())
+    fireEvent.click(screen.getAllByRole('checkbox')[0])
+    fireEvent.click(screen.getByText('Download ZIP'))
+    await waitFor(() => expect(screen.getByText('e1')).toBeInTheDocument())
+
+    await act(async () => {
+      jest.advanceTimersByTime(2000)
+      await Promise.resolve()
+    })
+
+    await waitFor(() =>
+      expect(
+        screen
+          .getAllByRole('alert')
+          .some((el) => el.textContent?.includes('Export fehlgeschlagen')),
+      ).toBe(true),
+    )
+
+    await act(async () => {
+      jest.advanceTimersByTime(2000)
+      await Promise.resolve()
+    })
+    const pollCalls = (apiClient.GET as jest.Mock).mock.calls.filter(
+      (c) => c[0] === '/exports/{id}',
+    )
+    expect(pollCalls).toHaveLength(1)
+    jest.useRealTimers()
+  })
 })
 

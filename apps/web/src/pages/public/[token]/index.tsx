@@ -85,30 +85,54 @@ export default function PublicSharePage() {
 
   const exportZip = async () => {
     if (selected.length === 0) return
-    const { data } = await client.POST('/exports/zip', {
-      body: {
-        photoIds: selected.map(String),
-        title: title || undefined,
-        includeExif,
-      },
-    })
-    if (data) setJobs((prev) => [...prev, data as ExportJob])
+    try {
+      const { data, error } = await client.POST('/exports/zip', {
+        body: {
+          photoIds: selected.map(String),
+          title: title || undefined,
+          includeExif,
+        },
+      })
+      if (error) throw error
+      if (data) {
+        setJobs((prev) => [...prev, data as ExportJob])
+        showToast('success', 'Export gestartet')
+      }
+    } catch {
+      showToast('error', 'Export fehlgeschlagen')
+    }
   }
 
   const exportExcel = async () => {
     if (selected.length === 0) return
-    const { data } = await client.POST('/exports/excel', {
-      body: { photoIds: selected.map(String) },
-    })
-    if (data) setJobs((prev) => [...prev, data as ExportJob])
+    try {
+      const { data, error } = await client.POST('/exports/excel', {
+        body: { photoIds: selected.map(String) },
+      })
+      if (error) throw error
+      if (data) {
+        setJobs((prev) => [...prev, data as ExportJob])
+        showToast('success', 'Export gestartet')
+      }
+    } catch {
+      showToast('error', 'Export fehlgeschlagen')
+    }
   }
 
   const exportPdf = async () => {
     if (selected.length === 0) return
-    const { data } = await client.POST('/exports/pdf', {
-      body: { photoIds: selected.map(String) },
-    })
-    if (data) setJobs((prev) => [...prev, data as ExportJob])
+    try {
+      const { data, error } = await client.POST('/exports/pdf', {
+        body: { photoIds: selected.map(String) },
+      })
+      if (error) throw error
+      if (data) {
+        setJobs((prev) => [...prev, data as ExportJob])
+        showToast('success', 'Export gestartet')
+      }
+    } catch {
+      showToast('error', 'Export fehlgeschlagen')
+    }
   }
 
   useEffect(() => {
@@ -120,24 +144,34 @@ export default function PublicSharePage() {
   }, [jobs])
 
   useEffect(() => {
-    const pending = jobs.filter((j) => j.status !== 'done')
+    const pending = jobs.filter(
+      (j) => j.status !== 'done' && j.status !== 'error',
+    )
     if (pending.length === 0) return
 
     const interval = setInterval(async () => {
       for (const job of pending) {
         if (!job.id) continue
-        const { data } = await client.GET('/exports/{id}', {
-          params: { path: { id: job.id } },
-        })
-        if (data)
-          setJobs((prev) =>
-            prev.map((j) => (j.id === job.id ? (data as ExportJob) : j)),
-          )
+        try {
+          const { data } = await client.GET('/exports/{id}', {
+            params: { path: { id: job.id } },
+          })
+          if (data) {
+            setJobs((prev) =>
+              prev.map((j) => (j.id === job.id ? (data as ExportJob) : j)),
+            )
+            if ((data as ExportJob).status === 'error') {
+              showToast('error', 'Export fehlgeschlagen')
+            }
+          }
+        } catch {
+          showToast('error', 'Export fehlgeschlagen')
+        }
       }
     }, 2000)
 
     return () => clearInterval(interval)
-  }, [jobs, client])
+  }, [jobs, client, showToast])
 
   if (notFound) return <div />
 
