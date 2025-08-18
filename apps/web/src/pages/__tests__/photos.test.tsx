@@ -696,6 +696,35 @@ describe('PhotosPage', () => {
     expect(window.localStorage.getItem('exportJobs')).toBe('[]')
   })
 
+  it('renders thumbnails in table and grid views', async () => {
+    ;(apiClient.GET as jest.Mock).mockResolvedValue({
+      data: {
+        items: [
+          { id: 1, mode: 'MOBILE', uploader_id: 'u1', thumbnail_url: 'thumb1.jpg' },
+        ],
+        meta: { page: 1, limit: 10, total: 1 },
+      },
+    })
+
+    render(
+      <ToastProvider>
+        <PhotosPage />
+      </ToastProvider>,
+    )
+
+    await waitFor(() =>
+      expect(
+        screen.getByAltText('Thumbnail for photo 1'),
+      ).toHaveAttribute('src', 'thumb1.jpg'),
+    )
+
+    fireEvent.click(screen.getByText('Grid'))
+
+    await waitFor(() =>
+      expect(screen.getByAltText('Thumbnail for photo 1')).toBeInTheDocument(),
+    )
+  })
+
   it('opens detail page when photo ID is clicked', async () => {
     ;(apiClient.GET as jest.Mock).mockResolvedValue({
       data: { items: [{ id: 1, mode: 'MOBILE', uploader_id: 'u1' }], meta: { page: 1, limit: 10, total: 1 } },

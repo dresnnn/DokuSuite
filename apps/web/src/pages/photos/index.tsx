@@ -21,6 +21,7 @@ type Photo = {
   id?: number
   mode?: string
   uploader_id?: string | null
+  thumbnail_url?: string
 }
 
 type PageMeta = {
@@ -414,6 +415,7 @@ export default function PhotosPage() {
           <thead>
             <tr>
               <th></th>
+              <th>Thumbnail</th>
               <th>ID</th>
               <th>Mode</th>
               <th>Uploader</th>
@@ -428,6 +430,14 @@ export default function PhotosPage() {
                     checked={selected.includes(p.id!)}
                     onChange={() => toggleSelect(p.id!)}
                   />
+                </td>
+                <td>
+                  {p.thumbnail_url && (
+                    <img
+                      src={p.thumbnail_url}
+                      alt={`Thumbnail for photo ${p.id}`}
+                    />
+                  )}
                 </td>
                 <td>
                   {p.id !== undefined && (
@@ -459,6 +469,12 @@ export default function PhotosPage() {
                 checked={selected.includes(p.id!)}
                 onChange={() => toggleSelect(p.id!)}
               />
+              {p.thumbnail_url && (
+                <img
+                  src={p.thumbnail_url}
+                  alt={`Thumbnail for photo ${p.id}`}
+                />
+              )}
               {p.id !== undefined && (
                 <Link href={`/photos/${p.id}`}>Photo {p.id}</Link>
               )}

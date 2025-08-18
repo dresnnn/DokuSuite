@@ -8,7 +8,7 @@ Hauptnutzergruppen:
 
 Kernfunktionen:
 
-- Galerie mit schneller Filterung (Plakatierer, Woche, Standort, Modus, Qualität, Auftrag, Kunde, Zeitraum, Status) sowie spezifischen Parametern `from`, `to`, `orderId`, `status`, `siteId`, `calendarWeek`, `qualityFlag`, `customerId`. Weitere Seiten werden beim Scrollen automatisch über einen `IntersectionObserver` nachgeladen (`page`/`limit`-basiertes Infinite Scroll). Ein Klick auf die Foto-ID oder das Vorschaubild öffnet die Detailansicht.
+- Galerie mit schneller Filterung (Plakatierer, Woche, Standort, Modus, Qualität, Auftrag, Kunde, Zeitraum, Status) sowie spezifischen Parametern `from`, `to`, `orderId`, `status`, `siteId`, `calendarWeek`, `qualityFlag`, `customerId`. Weitere Seiten werden beim Scrollen automatisch über einen `IntersectionObserver` nachgeladen (`page`/`limit`-basiertes Infinite Scroll). Sowohl in Tabellen- als auch in Grid-Ansicht zeigt die Galerie Vorschaubilder (Thumbnails); ein Klick auf die Foto-ID oder das Vorschaubild öffnet die Detailansicht.
 - Kartenansicht mit Leaflet, lädt `/photos?bbox=` abhängig vom Kartenausschnitt,
   clustert Marker und erlaubt Standortkorrektur per Drag-and-Drop
   (`PATCH /photos/{id}` aktualisiert die Koordinaten) und gibt
