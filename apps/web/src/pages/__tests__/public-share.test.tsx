@@ -294,6 +294,35 @@ describe('PublicSharePage', () => {
     jest.useRealTimers()
   })
 
+  it('isolates export jobs per token', async () => {
+    const store: Record<string, string> = {}
+    Object.defineProperty(window, 'localStorage', {
+      value: {
+        getItem: (k: string) => store[k] || null,
+        setItem: (k: string, v: string) => {
+          store[k] = v
+        },
+        removeItem: (k: string) => {
+          delete store[k]
+        },
+        clear: () => {
+          for (const k of Object.keys(store)) delete store[k]
+        },
+      },
+      configurable: true,
+    })
+    store['exportJobs'] = JSON.stringify([{ id: 'global', status: 'done' }])
+    store['exportJobs:tok2'] = JSON.stringify([{ id: 't2', status: 'done' }])
+    store['exportJobs:tok1'] = JSON.stringify([{ id: 't1', status: 'done' }])
+    ;(apiClient.GET as jest.Mock)
+      .mockResolvedValueOnce({ data: { download_allowed: true } })
+      .mockResolvedValueOnce({ data: { items: [] } })
+    renderPage()
+    await waitFor(() => expect(screen.getByText('t1')).toBeInTheDocument())
+    expect(screen.queryByText('t2')).not.toBeInTheDocument()
+    expect(screen.queryByText('global')).not.toBeInTheDocument()
+  })
+
   it('renders markers on map view', async () => {
     ;(apiClient.GET as jest.Mock)
       .mockResolvedValueOnce({ data: { download_allowed: true } })

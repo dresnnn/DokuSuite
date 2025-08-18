@@ -4,15 +4,15 @@ export type ExportJob = {
   url?: string;
 };
 
-const STORAGE_KEY = 'exportJobs'
+const STORAGE_PREFIX = 'exportJobs'
 
-const storageKey = (token?: string) =>
-  token ? `${STORAGE_KEY}:${token}` : STORAGE_KEY
+const getStorageKey = (token?: string) =>
+  token ? `${STORAGE_PREFIX}:${token}` : STORAGE_PREFIX
 
 export const loadExportJobs = (token?: string): ExportJob[] => {
   if (typeof window === 'undefined') return []
   try {
-    const raw = localStorage.getItem(storageKey(token))
+    const raw = localStorage.getItem(getStorageKey(token))
     return raw ? (JSON.parse(raw) as ExportJob[]) : []
   } catch {
     return []
@@ -22,7 +22,7 @@ export const loadExportJobs = (token?: string): ExportJob[] => {
 export const saveExportJobs = (jobs: ExportJob[], token?: string) => {
   if (typeof window === 'undefined') return
   try {
-    localStorage.setItem(storageKey(token), JSON.stringify(jobs))
+    localStorage.setItem(getStorageKey(token), JSON.stringify(jobs))
   } catch {
     // ignore write errors
   }

@@ -589,6 +589,38 @@ describe('PhotosPage', () => {
     await waitFor(() => expect(screen.getByText('j1')).toBeInTheDocument())
   })
 
+  it('does not load export jobs for other tokens', async () => {
+    jest.clearAllMocks()
+    const store: Record<string, string> = {}
+    Object.defineProperty(window, 'localStorage', {
+      value: {
+        getItem: (k: string) => store[k] || null,
+        setItem: (k: string, v: string) => {
+          store[k] = v
+        },
+        removeItem: (k: string) => {
+          delete store[k]
+        },
+        clear: () => {
+          for (const k of Object.keys(store)) delete store[k]
+        },
+      },
+      configurable: true,
+    })
+    store['exportJobs:tok1'] = JSON.stringify([{ id: 't1', status: 'done' }])
+    store['exportJobs'] = JSON.stringify([{ id: 'g1', status: 'done' }])
+    ;(apiClient.GET as jest.Mock).mockResolvedValue({
+      data: { items: [], meta: {} },
+    })
+    render(
+      <ToastProvider>
+        <PhotosPage />
+      </ToastProvider>,
+    )
+    await waitFor(() => expect(screen.getByText('g1')).toBeInTheDocument())
+    expect(screen.queryByText('t1')).not.toBeInTheDocument()
+  })
+
   it('shows toast on successful upload', async () => {
     jest.clearAllMocks()
     const file = new File(['data'], 'photo.jpg', { type: 'image/jpeg' })
