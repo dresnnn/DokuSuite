@@ -1,4 +1,10 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from '@testing-library/react'
 import CustomersPage from '../customers'
 import { apiClient } from '../../../lib/api'
 import { ToastProvider } from '../../components/Toast'
@@ -90,7 +96,7 @@ describe('CustomersPage', () => {
     )
   })
 
-  it('shows watermark text field only for custom_text policy', async () => {
+  it('shows watermark text field only for custom_text policy in create form', async () => {
     ;(apiClient.GET as jest.Mock).mockResolvedValue({
       data: { items: [], meta: { page: 1, limit: 10, total: 0 } },
     })
@@ -112,10 +118,43 @@ describe('CustomersPage', () => {
     expect(screen.queryByPlaceholderText('Watermark Text')).toBeNull()
   })
 
-  it('updates customer', async () => {
+  it('shows watermark text field in table only for custom_text policy', async () => {
     const page = {
       items: [
-        { id: 1, name: 'Cust1', watermark_policy: 'none', watermark_text: null },
+        { id: 1, name: 'Cust1', watermark_policy: 'default', watermark_text: 'w' },
+      ],
+      meta: { page: 1, limit: 10, total: 1 },
+    }
+    ;(apiClient.GET as jest.Mock).mockResolvedValue({ data: page })
+
+    render(
+      <ToastProvider>
+        <CustomersPage />
+      </ToastProvider>,
+    )
+
+    await waitFor(() =>
+      expect(screen.getByDisplayValue('Cust1')).toBeInTheDocument(),
+    )
+
+    const row = screen.getByDisplayValue('Cust1').closest('tr')!
+    expect(within(row).queryByPlaceholderText('Watermark Text')).toBeNull()
+    fireEvent.change(within(row).getByDisplayValue('default'), {
+      target: { value: 'custom_text' },
+    })
+    expect(
+      within(row).getByPlaceholderText('Watermark Text'),
+    ).toBeInTheDocument()
+    fireEvent.change(within(row).getByDisplayValue('custom_text'), {
+      target: { value: 'none' },
+    })
+    expect(within(row).queryByPlaceholderText('Watermark Text')).toBeNull()
+  })
+
+  it('updates customer without sending watermark text when policy is not custom_text', async () => {
+    const page = {
+      items: [
+        { id: 1, name: 'Cust1', watermark_policy: 'none', watermark_text: 'old' },
       ],
       meta: { page: 1, limit: 10, total: 1 },
     }
@@ -142,7 +181,48 @@ describe('CustomersPage', () => {
           body: {
             name: 'Cust1b',
             watermark_policy: 'none',
-            watermark_text: null,
+          },
+        }),
+      )
+    })
+  })
+
+  it('updates customer with custom watermark text', async () => {
+    const page = {
+      items: [
+        {
+          id: 1,
+          name: 'Cust1',
+          watermark_policy: 'custom_text',
+          watermark_text: 'old',
+        },
+      ],
+      meta: { page: 1, limit: 10, total: 1 },
+    }
+    ;(apiClient.GET as jest.Mock).mockResolvedValue({ data: page })
+
+    render(
+      <ToastProvider>
+        <CustomersPage />
+      </ToastProvider>,
+    )
+
+    await waitFor(() => expect(screen.getByDisplayValue('Cust1')).toBeInTheDocument())
+
+    fireEvent.change(screen.getByPlaceholderText('Watermark Text'), {
+      target: { value: 'new' },
+    })
+    fireEvent.click(screen.getByText('Save'))
+
+    await waitFor(() => {
+      expect(apiClient.PATCH).toHaveBeenCalledWith(
+        '/customers/{id}',
+        expect.objectContaining({
+          params: { path: { id: 1 } },
+          body: {
+            name: 'Cust1',
+            watermark_policy: 'custom_text',
+            watermark_text: 'new',
           },
         }),
       )
