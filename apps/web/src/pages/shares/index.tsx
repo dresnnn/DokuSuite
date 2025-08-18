@@ -8,6 +8,8 @@ type Share = {
   order_id?: number
   url?: string
   download_allowed?: boolean
+  expires_at?: string | null
+  watermark_policy?: string | null
 }
 
 type PageMeta = {
@@ -210,6 +212,8 @@ export default function SharesPage() {
             <th>ID</th>
             <th>Order ID</th>
             <th>URL</th>
+            <th>Expires at</th>
+            <th>Watermark</th>
             <th>Download erlaubt</th>
             <th>Actions</th>
           </tr>
@@ -231,6 +235,8 @@ export default function SharesPage() {
                   </>
                 ) : null}
               </td>
+              <td>{s.expires_at}</td>
+              <td>{s.watermark_policy}</td>
               <td>{s.download_allowed ? 'Yes' : 'No'}</td>
               <td>
                 <button onClick={() => handleDelete(s.id!)}>Revoke</button>

@@ -16,7 +16,16 @@ describe('SharesPage', () => {
     ;(apiClient.GET as jest.Mock)
       .mockResolvedValueOnce({
         data: {
-          items: [{ id: 1, order_id: 2, url: 'http://u1', download_allowed: true }],
+          items: [
+            {
+              id: 1,
+              order_id: 2,
+              url: 'http://u1',
+              download_allowed: true,
+              expires_at: '2024-01-01T00:00:00.000Z',
+              watermark_policy: 'default',
+            },
+          ],
           meta: { page: 1, limit: 10, total: 1 },
         },
       })
@@ -24,9 +33,18 @@ describe('SharesPage', () => {
       .mockResolvedValueOnce({
         data: { watermark_policy: 'default', watermark_text: null },
       })
-    ;(apiClient.POST as jest.Mock).mockResolvedValue({
-      data: { id: 2, order_id: 3, url: 'http://u2', download_allowed: true },
-    })
+    ;(apiClient.POST as jest.Mock).mockImplementation((_url, { body }) =>
+      Promise.resolve({
+        data: {
+          id: 2,
+          order_id: 3,
+          url: 'http://u2',
+          download_allowed: true,
+          expires_at: body.expires_at,
+          watermark_policy: body.watermark_policy,
+        },
+      }),
+    )
 
     render(
       <ToastProvider>
@@ -41,7 +59,9 @@ describe('SharesPage', () => {
           params: { query: expect.objectContaining({ page: 1, limit: 10 }) },
         }),
       )
-      expect(screen.getByText('http://u1')).toBeInTheDocument()
+      const firstRow = screen.getByText('http://u1').closest('tr')!
+      expect(firstRow).toHaveTextContent('2024-01-01T00:00:00.000Z')
+      expect(firstRow).toHaveTextContent('default')
     })
 
     fireEvent.change(screen.getByPlaceholderText('Order ID'), {
@@ -84,6 +104,8 @@ describe('SharesPage', () => {
       expect(iso).toMatch(/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z/)
       const row = screen.getByText('http://u2').closest('tr')!
       expect(row).toHaveTextContent('Yes')
+      expect(row).toHaveTextContent(iso)
+      expect(row).toHaveTextContent('default')
     })
   })
 
