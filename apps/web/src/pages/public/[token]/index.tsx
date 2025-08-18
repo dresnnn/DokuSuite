@@ -173,7 +173,7 @@ export default function PublicSharePage() {
     return () => clearInterval(interval)
   }, [jobs, client, showToast])
 
-  if (notFound) return <div />
+  if (notFound) return <div>Freigabe nicht gefunden</div>
 
   return (
     <div>
