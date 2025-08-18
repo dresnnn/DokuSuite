@@ -854,4 +854,34 @@ describe('PhotoDetailPage', () => {
       expect(screen.getByRole('alert')).toHaveTextContent('Location updated'),
     )
   })
+
+  it('creates ad_hoc_spot when dragging marker from initial position', async () => {
+    jest.clearAllMocks()
+    ;(apiClient.GET as jest.Mock).mockResolvedValue({ data: {} })
+    render(
+      <ToastProvider>
+        <PhotoDetailPage />
+      </ToastProvider>,
+    )
+    await waitFor(() => expect(apiClient.GET).toHaveBeenCalled())
+    await waitFor(() =>
+      expect(screen.getAllByTestId('marker').length).toBeGreaterThan(0),
+    )
+    const marker = (L as unknown as { __markers: MockMarker[] }).__markers[0]
+    marker.__handlers.dragend({
+      target: { getLatLng: () => ({ lat: 7, lng: 8 }) },
+    })
+    await waitFor(() =>
+      expect(apiClient.PATCH).toHaveBeenCalledWith(
+        '/photos/{id}',
+        expect.objectContaining({
+          params: { path: { id: 1 } },
+          body: { ad_hoc_spot: { lat: 7, lon: 8 } },
+        }),
+      ),
+    )
+    await waitFor(() =>
+      expect(screen.getByRole('alert')).toHaveTextContent('Location updated'),
+    )
+  })
 })

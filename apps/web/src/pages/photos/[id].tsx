@@ -112,10 +112,11 @@ export default function PhotoDetailPage() {
       </label>
       <button type="submit">Save</button>
       </form>
-      {id && photo.ad_hoc_spot && (
+      {id && (
         <PhotoMap
           photoId={Number(id)}
-          adHocSpot={{ lat: photo.ad_hoc_spot.lat, lon: photo.ad_hoc_spot.lon }}
+          adHocSpot={photo.ad_hoc_spot ?? undefined}
+          initialPosition={{ lat: 0, lon: 0 }}
         />
       )}
     </>
