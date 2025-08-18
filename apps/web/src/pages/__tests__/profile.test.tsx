@@ -102,4 +102,30 @@ describe('ProfilePage', () => {
       expect(screen.getByRole('alert')).toHaveTextContent('2FA deaktiviert'),
     );
   });
+
+  it('shows error when 2FA disable fails', async () => {
+    store['token'] = 'token123';
+    const del = jest
+      .spyOn(apiClient, 'DELETE')
+      .mockResolvedValue({ error: 'oops' } as unknown as Awaited<ReturnType<typeof apiClient.DELETE>>);
+
+    render(
+      <AuthProvider>
+        <ToastProvider>
+          <ProfilePage />
+        </ToastProvider>
+      </AuthProvider>,
+    );
+
+    fireEvent.click(screen.getByText('2FA deaktivieren'));
+
+    await waitFor(() => {
+      expect(del).toHaveBeenCalledWith('/auth/2fa', {});
+      expect(window.localStorage.removeItem).not.toHaveBeenCalled();
+    });
+
+    await waitFor(() =>
+      expect(screen.getByRole('alert')).toHaveTextContent('2FA konnte nicht deaktiviert werden'),
+    );
+  });
 });

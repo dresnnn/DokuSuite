@@ -55,7 +55,8 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
   };
 
   const disable2FA = async () => {
-    await apiClient.DELETE('/auth/2fa', {});
+    const { error } = await apiClient.DELETE('/auth/2fa', {});
+    if (error) throw error;
     logout();
   };
 
