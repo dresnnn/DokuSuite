@@ -1992,6 +1992,10 @@ export interface components {
         };
         PublicShare: {
             download_allowed?: boolean;
+            /** Format: date-time */
+            expires_at?: string | null;
+            watermark_policy?: components["schemas"]["WatermarkPolicy"];
+            watermark_text?: string | null;
         };
         PublicPhoto: {
             id?: number;

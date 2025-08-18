@@ -28,6 +28,9 @@ export default function PublicSharePage() {
   const [view, setView] = useState<'grid' | 'map'>('grid')
   const [jobs, setJobs] = useState<ExportJob[]>([])
   const [downloadAllowed, setDownloadAllowed] = useState(true)
+  const [expiresAt, setExpiresAt] = useState<string | null>(null)
+  const [watermarkPolicy, setWatermarkPolicy] = useState('none')
+  const [watermarkText, setWatermarkText] = useState('')
   const [title, setTitle] = useState('')
   const [includeExif, setIncludeExif] = useState(false)
   const [notFound, setNotFound] = useState(false)
@@ -58,6 +61,9 @@ export default function PublicSharePage() {
         return
       }
       setDownloadAllowed(data?.download_allowed !== false)
+      setExpiresAt(data?.expires_at ?? null)
+      setWatermarkPolicy(data?.watermark_policy || 'none')
+      setWatermarkText(data?.watermark_text || '')
     }
     load()
   }, [token, notFound])
@@ -190,6 +196,13 @@ export default function PublicSharePage() {
         <button onClick={() => setView('map')}>Map</button>
       </div>
 
+      {expiresAt && (
+        <div>
+          Freigabe gültig bis{' '}
+          {new Date(expiresAt).toLocaleString('de-DE')}
+        </div>
+      )}
+
       {view === 'grid' ? (
         <div
           style={{
@@ -211,7 +224,25 @@ export default function PublicSharePage() {
                 onChange={() => toggleSelect(p.id)}
               />
               {p.thumbnail_url ? (
-                <img src={p.thumbnail_url} alt={`Photo ${p.id}`} />
+                <div style={{ position: 'relative', display: 'inline-block' }}>
+                  <img src={p.thumbnail_url} alt={`Photo ${p.id}`} />
+                  {watermarkPolicy !== 'none' && (
+                    <span
+                      data-testid="watermark"
+                      style={{
+                        position: 'absolute',
+                        top: '50%',
+                        left: '50%',
+                        transform: 'translate(-50%, -50%)',
+                        color: 'rgba(255,255,255,0.7)',
+                        fontSize: '1.5rem',
+                        pointerEvents: 'none',
+                      }}
+                    >
+                      {watermarkText || 'WATERMARK'}
+                    </span>
+                  )}
+                </div>
               ) : (
                 <span>Photo {p.id}</span>
               )}
