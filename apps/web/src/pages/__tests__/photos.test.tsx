@@ -320,15 +320,97 @@ describe('PhotosPage', () => {
     })
     fireEvent.click(screen.getByText('Assign'))
 
-    expect(apiClient.POST).toHaveBeenCalledWith(
-      '/photos/batch/assign',
-      expect.objectContaining({
-        body: {
-          photoIds: ['1', '2'],
-          orderId: '999',
-          calendarWeek: '2025-W01',
-        },
-      }),
+    await waitFor(() =>
+      expect(apiClient.POST).toHaveBeenCalledWith(
+        '/photos/batch/assign',
+        expect.objectContaining({
+          body: {
+            photoIds: ['1', '2'],
+            orderId: '999',
+            calendarWeek: '2025-W01',
+          },
+        }),
+      ),
+    )
+  })
+
+  it('restores previous assignment on undo', async () => {
+    undoStack.clear()
+    const resp = {
+      items: [
+        { id: 1, mode: 'MOBILE', uploader_id: 'u1' },
+        { id: 2, mode: 'MOBILE', uploader_id: 'u1' },
+      ],
+      meta: { page: 1, limit: 10, total: 2 },
+    }
+    ;(apiClient.GET as jest.Mock)
+      .mockResolvedValueOnce({ data: resp })
+      .mockResolvedValueOnce({
+        data: { orderId: '123', calendarWeek: '2024-W10' },
+      })
+      .mockResolvedValueOnce({ data: { orderId: '', calendarWeek: '' } })
+    ;(apiClient.POST as jest.Mock).mockResolvedValue({})
+
+    render(
+      <ToastProvider>
+        <PhotosPage />
+      </ToastProvider>,
+    )
+    await waitFor(() => screen.getByText('Photo 1'))
+
+    fireEvent.click(screen.getAllByTestId('row-checkbox')[0])
+    fireEvent.click(screen.getAllByTestId('row-checkbox')[1])
+    fireEvent.change(screen.getAllByLabelText('Order ID:')[1], {
+      target: { value: '999' },
+    })
+    fireEvent.change(screen.getAllByLabelText('Calendar Week:')[1], {
+      target: { value: '2025-W01' },
+    })
+    fireEvent.click(screen.getByText('Assign'))
+
+    await waitFor(() =>
+      expect(apiClient.POST).toHaveBeenCalledWith(
+        '/photos/batch/assign',
+        expect.objectContaining({
+          body: {
+            photoIds: ['1', '2'],
+            orderId: '999',
+            calendarWeek: '2025-W01',
+          },
+        }),
+      ),
+    )
+
+    expect(apiClient.GET).toHaveBeenCalledWith(
+      '/photos/{id}',
+      expect.objectContaining({ params: { path: { id: '1' } } }),
+    )
+    expect(apiClient.GET).toHaveBeenCalledWith(
+      '/photos/{id}',
+      expect.objectContaining({ params: { path: { id: '2' } } }),
+    )
+
+    undoStack.undo()
+
+    await waitFor(() =>
+      expect(apiClient.POST).toHaveBeenCalledWith(
+        '/photos/batch/assign',
+        expect.objectContaining({
+          body: {
+            photoIds: ['1'],
+            orderId: '123',
+            calendarWeek: '2024-W10',
+          },
+        }),
+      ),
+    )
+    await waitFor(() =>
+      expect(apiClient.POST).toHaveBeenCalledWith(
+        '/photos/batch/assign',
+        expect.objectContaining({
+          body: { photoIds: ['2'], orderId: '' },
+        }),
+      ),
     )
   })
 

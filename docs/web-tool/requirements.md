@@ -118,6 +118,7 @@ UX/Leistung:
 - Tastaturkürzel, Batch-Workflows, Undo.
   - Navigation mit Pfeiltasten (\u2190/\u2192) und Auswahl aller Fotos per `A`.
   - Letzte Batch-Zuweisung l\u00e4sst sich mit `Ctrl+Z` r\u00fcckg\u00e4ngig machen.
+  - Undo stellt alte Auftrags- und Wochenwerte wieder her.
 
 ## Fehler-/Statusmeldungen
 
