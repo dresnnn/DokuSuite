@@ -1,6 +1,15 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import {
+  useCallback,
+  useEffect,
+  useState,
+  useRef,
+  forwardRef,
+  type CSSProperties,
+  type ComponentType,
+} from 'react'
 import dynamic from 'next/dynamic'
 import Link from 'next/link'
+import { FixedSizeGrid as Grid, FixedSizeList as List, GridChildComponentProps } from 'react-window'
 import { apiClient } from '../../../lib/api'
 import { useAuth } from '../../context/AuthContext'
 import { undoStack } from '../../lib/undoStack'
@@ -120,6 +129,12 @@ export default function PhotosPage() {
   }, [uploaderId])
 
   const totalPages = Math.ceil((meta.total || 0) / (meta.limit || 1)) || 1
+
+  const loadMore = (index: number) => {
+    if (index >= photos.length - 1 && !loading && meta.page! < totalPages) {
+      fetchPhotos((meta.page || 1) + 1, true)
+    }
+  }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -288,7 +303,8 @@ export default function PhotosPage() {
     })
     observer.observe(el)
     return () => observer.disconnect()
-  }, [loader, meta, totalPages, fetchPhotos, loading])
+  }, [loader, loading, meta, totalPages, fetchPhotos])
+
 
   useEffect(() => {
     const pending = jobs.filter((j) => j.status !== 'done')
@@ -315,9 +331,69 @@ export default function PhotosPage() {
     setJobs(deleteExportJob(id))
   }
 
+  const TableRow = ({ index, style }: { index: number; style: CSSProperties }) => {
+    const p = photos[index]
+    if (!p) return null
+    return (
+      <div
+        key={p.id}
+        style={{
+          ...style,
+          display: 'grid',
+          gridTemplateColumns: '40px 80px 80px 100px 100px',
+          alignItems: 'center',
+          borderBottom: '1px solid #ccc',
+        }}
+      >
+        <input
+          data-testid="row-checkbox"
+          type="checkbox"
+          checked={selected.includes(p.id!)}
+          onChange={() => toggleSelect(p.id!)}
+        />
+        {p.thumbnail_url && (
+          <img src={p.thumbnail_url} alt={`Thumbnail for photo ${p.id}`} />
+        )}
+        {p.id !== undefined && <Link href={`/photos/${p.id}`}>Photo {p.id}</Link>}
+        <span>{p.mode}</span>
+        <span>{p.uploader_id}</span>
+      </div>
+    )
+  }
+
+  const columnCount = 3
+
+  const GridOuter = forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>((props, ref) => (
+    <div ref={ref} data-testid="grid-container" {...props} />
+  ))
+  GridOuter.displayName = 'GridOuter'
+
+  const Cell = ({ columnIndex, rowIndex, style }: GridChildComponentProps) => {
+    const index = rowIndex * columnCount + columnIndex
+    const p = photos[index]
+    if (!p) return null
+    return (
+      <label
+        key={p.id}
+        data-testid="photo"
+        style={{ ...style, border: '1px solid #ccc', padding: '4px' }}
+      >
+        <input
+          type="checkbox"
+          checked={selected.includes(p.id!)}
+          onChange={() => toggleSelect(p.id!)}
+        />
+        {p.thumbnail_url && (
+          <img src={p.thumbnail_url} alt={`Thumbnail for photo ${p.id}`} />
+        )}
+        {p.id !== undefined && <Link href={`/photos/${p.id}`}>Photo {p.id}</Link>}
+      </label>
+    )
+  }
+
   return (
     <div>
-        <PhotoUpload onUploaded={() => fetchPhotos(1)} />
+      <PhotoUpload onUploaded={() => fetchPhotos(1)} />
       <form onSubmit={handleSubmit} style={{ marginBottom: '1rem' }}>
         <label>
           Limit:
@@ -411,76 +487,47 @@ export default function PhotosPage() {
       </div>
 
       {view === 'table' ? (
-        <table>
-          <thead>
-            <tr>
-              <th></th>
-              <th>Thumbnail</th>
-              <th>ID</th>
-              <th>Mode</th>
-              <th>Uploader</th>
-            </tr>
-          </thead>
-          <tbody>
-            {photos.map((p) => (
-              <tr key={p.id}>
-                <td>
-                  <input
-                    type="checkbox"
-                    checked={selected.includes(p.id!)}
-                    onChange={() => toggleSelect(p.id!)}
-                  />
-                </td>
-                <td>
-                  {p.thumbnail_url && (
-                    <img
-                      src={p.thumbnail_url}
-                      alt={`Thumbnail for photo ${p.id}`}
-                    />
-                  )}
-                </td>
-                <td>
-                  {p.id !== undefined && (
-                    <Link href={`/photos/${p.id}`}>Photo {p.id}</Link>
-                  )}
-                </td>
-                <td>{p.mode}</td>
-                <td>{p.uploader_id}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      ) : view === 'grid' ? (
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(3, 1fr)',
-            gap: '8px',
-          }}
-        >
-          {photos.map((p) => (
-            <label
-              key={p.id}
-              data-testid="photo"
-              style={{ border: '1px solid #ccc', padding: '4px' }}
-            >
-              <input
-                type="checkbox"
-                checked={selected.includes(p.id!)}
-                onChange={() => toggleSelect(p.id!)}
-              />
-              {p.thumbnail_url && (
-                <img
-                  src={p.thumbnail_url}
-                  alt={`Thumbnail for photo ${p.id}`}
-                />
-              )}
-              {p.id !== undefined && (
-                <Link href={`/photos/${p.id}`}>Photo {p.id}</Link>
-              )}
-            </label>
-          ))}
+        <div>
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: '40px 80px 80px 100px 100px',
+              fontWeight: 'bold',
+            }}
+          >
+            <span />
+            <span>Thumbnail</span>
+            <span>ID</span>
+            <span>Mode</span>
+            <span>Uploader</span>
+          </div>
+          <List
+            height={400}
+            itemCount={photos.length}
+            itemSize={50}
+            width="100%"
+            onItemsRendered={({ visibleStopIndex }) => loadMore(visibleStopIndex)}
+            overscanCount={5}
+          >
+            {TableRow}
+          </List>
         </div>
+      ) : view === 'grid' ? (
+        <Grid
+          height={400}
+          width={600}
+          columnCount={columnCount}
+          columnWidth={200}
+          rowCount={Math.ceil(photos.length / columnCount)}
+          rowHeight={200}
+          outerElementType={GridOuter as unknown as ComponentType}
+          onItemsRendered={({ visibleRowStopIndex }) =>
+            loadMore((visibleRowStopIndex + 1) * columnCount - 1)
+          }
+          overscanRowCount={1}
+        >
+        {Cell}
+        </Grid>
       ) : (
         <PhotoMap />
       )}

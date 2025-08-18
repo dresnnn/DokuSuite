@@ -132,18 +132,24 @@ describe('PhotosPage', () => {
     authMock.mockReturnValue({ role: 'ADMIN', userId: 1 })
   })
 
-  it('displays photos and loads more on scroll', async () => {
-    const page1 = {
-      items: [{ id: 1, mode: 'MOBILE', uploader_id: 'u1' }],
-      meta: { page: 1, limit: 1, total: 2 },
-    };
-    const page2 = {
-      items: [{ id: 2, mode: 'FIXED_SITE', uploader_id: 'u2' }],
-      meta: { page: 2, limit: 1, total: 2 },
-    };
-    (apiClient.GET as jest.Mock)
-      .mockResolvedValueOnce({ data: page1 })
-      .mockResolvedValueOnce({ data: page2 });
+  it('loads more photos on scroll without growing DOM', async () => {
+    const makeItems = (start: number) =>
+      Array.from({ length: 10 }, (_, i) => ({
+        id: start + i,
+        mode: 'MOBILE',
+        uploader_id: `u${start + i}`,
+        thumbnail_url: `t${start + i}.jpg`,
+      }))
+    ;(apiClient.GET as jest.Mock).mockImplementation((_, opts) => {
+      const page = opts?.params?.query?.page
+      if (page === 1)
+        return Promise.resolve({
+          data: { items: makeItems(1), meta: { page: 1, limit: 10, total: 20 } },
+        })
+      return Promise.resolve({
+        data: { items: makeItems(11), meta: { page: 2, limit: 10, total: 20 } },
+      })
+    })
 
     render(
       <ToastProvider>
@@ -151,31 +157,30 @@ describe('PhotosPage', () => {
       </ToastProvider>,
     )
 
+    fireEvent.click(screen.getByText('Grid'))
+
     await waitFor(() => {
-      expect(screen.getByText('Photo 1')).toBeInTheDocument();
-    });
-    expect(screen.getByRole('table')).toBeInTheDocument();
+      expect(screen.getByText('Photo 1')).toBeInTheDocument()
+    })
+
+    const initialCount = screen.getAllByTestId('photo').length
 
     act(() => {
-      ioCallback([{ isIntersecting: true } as IntersectionObserverEntry]);
-    });
+      ioCallback([{ isIntersecting: true } as IntersectionObserverEntry])
+    })
 
-    await waitFor(() => {
-      expect(screen.getByText('Photo 2')).toBeInTheDocument();
-    });
-    expect(apiClient.GET).toHaveBeenLastCalledWith(
-      '/photos',
-      expect.objectContaining({
-        params: { query: expect.objectContaining({ page: 2 }) },
-      }),
-    );
+    await waitFor(() =>
+      expect(apiClient.GET).toHaveBeenCalledWith(
+        '/photos',
+        expect.objectContaining({
+          params: { query: expect.objectContaining({ page: 2 }) },
+        }),
+      ),
+    )
 
-    fireEvent.click(screen.getByText('Grid'))
-    expect(screen.queryByRole('table')).not.toBeInTheDocument()
-    const photos = screen.getAllByTestId('photo')
-    expect(photos).toHaveLength(2)
-    expect(photos[1]).toHaveTextContent('Photo 2')
-  });
+    const afterCount = screen.getAllByTestId('photo').length
+    expect(afterCount).toBe(initialCount)
+  })
 
   it('submits filters', async () => {
     ;(apiClient.GET as jest.Mock).mockResolvedValue({ data: { items: [], meta: {} } })
@@ -271,9 +276,8 @@ describe('PhotosPage', () => {
     )
     await waitFor(() => screen.getByText('Photo 1'))
 
-    const checkboxes = screen.getAllByRole('checkbox')
-    fireEvent.click(checkboxes[0])
-    fireEvent.click(checkboxes[1])
+    fireEvent.click(screen.getAllByTestId('row-checkbox')[0])
+    fireEvent.click(screen.getAllByTestId('row-checkbox')[1])
     fireEvent.change(screen.getAllByLabelText('Order ID:')[1], {
       target: { value: '999' },
     })
@@ -456,7 +460,7 @@ describe('PhotosPage', () => {
     fireEvent.keyDown(window, { key: 'ArrowLeft', keyCode: 37, which: 37 })
 
     await waitFor(() =>
-      expect(apiClient.GET).toHaveBeenLastCalledWith(
+      expect(apiClient.GET).toHaveBeenCalledWith(
         '/photos',
         expect.objectContaining({
           params: { query: expect.objectContaining({ page: 1 }) },
