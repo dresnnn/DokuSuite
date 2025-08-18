@@ -5,16 +5,24 @@ import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../components/Toast';
 
 export default function TwoFAVerifyPage() {
-  const { challenge, login } = useAuth();
+  const { challenge, login, setChallenge } = useAuth();
   const router = useRouter();
   const { showToast } = useToast();
   const [token, setToken] = useState('');
 
   useEffect(() => {
     if (!challenge) {
-      router.replace('/login');
+      const stored =
+        typeof window !== 'undefined'
+          ? sessionStorage.getItem('challenge')
+          : null;
+      if (stored) {
+        setChallenge(stored);
+      } else {
+        router.replace('/login');
+      }
     }
-  }, [challenge, router]);
+  }, [challenge, router, setChallenge]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
