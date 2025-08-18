@@ -360,6 +360,23 @@ describe('PublicSharePage', () => {
     expect(screen.queryByText('Export Jobs')).not.toBeInTheDocument()
   })
 
+  it('removes an export job', async () => {
+    ;(apiClient.GET as jest.Mock)
+      .mockResolvedValueOnce({ data: { download_allowed: true } })
+      .mockResolvedValueOnce({ data: { items: [] } })
+    window.localStorage.setItem(
+      'exportJobs:tok1',
+      JSON.stringify([{ id: 'r1', status: 'done' }]),
+    )
+    renderPage()
+    await waitFor(() => expect(screen.getByText('r1')).toBeInTheDocument())
+    fireEvent.click(screen.getByRole('button', { name: 'Remove' }))
+    await waitFor(() =>
+      expect(screen.queryByText('r1')).not.toBeInTheDocument(),
+    )
+    expect(window.localStorage.getItem('exportJobs:tok1')).toBe('[]')
+  })
+
   it('shows toast and stops polling on export job error', async () => {
     jest.useFakeTimers()
     ;(apiClient.GET as jest.Mock)

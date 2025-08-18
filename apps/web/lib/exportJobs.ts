@@ -4,29 +4,35 @@ export type ExportJob = {
   url?: string;
 };
 
-const STORAGE_KEY = 'exportJobs';
+const STORAGE_KEY = 'exportJobs'
 
-export const loadExportJobs = (): ExportJob[] => {
-  if (typeof window === 'undefined') return [];
+const storageKey = (token?: string) =>
+  token ? `${STORAGE_KEY}:${token}` : STORAGE_KEY
+
+export const loadExportJobs = (token?: string): ExportJob[] => {
+  if (typeof window === 'undefined') return []
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? (JSON.parse(raw) as ExportJob[]) : [];
+    const raw = localStorage.getItem(storageKey(token))
+    return raw ? (JSON.parse(raw) as ExportJob[]) : []
   } catch {
-    return [];
+    return []
   }
-};
+}
 
-export const saveExportJobs = (jobs: ExportJob[]) => {
-  if (typeof window === 'undefined') return;
+export const saveExportJobs = (jobs: ExportJob[], token?: string) => {
+  if (typeof window === 'undefined') return
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(jobs));
+    localStorage.setItem(storageKey(token), JSON.stringify(jobs))
   } catch {
     // ignore write errors
   }
-};
+}
 
-export const deleteExportJob = (id: string): ExportJob[] => {
-  const jobs = loadExportJobs().filter((job) => job.id !== id);
-  saveExportJobs(jobs);
-  return jobs;
-};
+export const deleteExportJob = (
+  id: string,
+  token?: string,
+): ExportJob[] => {
+  const jobs = loadExportJobs(token).filter((job) => job.id !== id)
+  saveExportJobs(jobs, token)
+  return jobs
+}

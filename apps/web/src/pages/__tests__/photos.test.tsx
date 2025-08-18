@@ -617,6 +617,29 @@ describe('PhotosPage', () => {
 
     global.fetch = originalFetch
   })
+
+  it('removes an export job', async () => {
+    jest.clearAllMocks()
+    ;(apiClient.GET as jest.Mock).mockResolvedValue({
+      data: { items: [], meta: {} },
+    })
+    window.localStorage.setItem(
+      'exportJobs',
+      JSON.stringify([{ id: 'r1', status: 'done' }]),
+    )
+    render(
+      <ToastProvider>
+        <PhotosPage />
+      </ToastProvider>,
+    )
+    await waitFor(() => expect(screen.getByText('r1')).toBeInTheDocument())
+    const removeButton = screen.getAllByRole('button', { name: 'Remove' })[0]
+    fireEvent.click(removeButton)
+    await waitFor(() =>
+      expect(screen.queryByText('r1')).not.toBeInTheDocument(),
+    )
+    expect(window.localStorage.getItem('exportJobs')).toBe('[]')
+  })
 })
 
 describe('PhotoDetailPage', () => {
