@@ -4,7 +4,7 @@ import { useEffect, ReactNode } from 'react';
 import { AuthProvider, useAuth } from '../context/AuthContext';
 import Layout from '../components/Layout';
 import { ToastProvider, useToast } from '../components/Toast';
-import { onForbidden } from '../../lib/api';
+import { onForbidden, onUnauthorized } from '../../lib/api';
 import '../styles/globals.css';
 import 'leaflet/dist/leaflet.css';
 import 'leaflet.markercluster/dist/MarkerCluster.css';
@@ -44,7 +44,14 @@ export function AuthGuard({ children }: { children: ReactNode }) {
     }
   }, [isAuthenticated, role, router, showToast]);
 
-  useEffect(() => onForbidden(() => showToast('error', 'Access denied')), [showToast]);
+  useEffect(
+    () => onForbidden(() => showToast('error', 'Access denied')),
+    [showToast],
+  );
+  useEffect(
+    () => onUnauthorized(() => showToast('error', 'Session expired')),
+    [showToast],
+  );
 
   return <>{children}</>;
 }
