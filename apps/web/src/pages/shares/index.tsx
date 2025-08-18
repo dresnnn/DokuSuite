@@ -77,7 +77,7 @@ export default function SharesPage() {
           setWatermarkText(customer.data?.watermark_text || '')
         }
       } catch {
-        /* ignore */
+        showToast('error', 'Failed to load defaults')
       }
     }
     loadDefaults()

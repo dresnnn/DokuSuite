@@ -367,4 +367,26 @@ describe('SharesPage', () => {
       )
     })
   })
+
+  it('shows error toast when loading defaults fails', async () => {
+    ;(apiClient.GET as jest.Mock)
+      .mockResolvedValueOnce({
+        data: { items: [], meta: { page: 1, limit: 10, total: 0 } },
+      })
+      .mockRejectedValueOnce(new Error('fail'))
+
+    render(
+      <ToastProvider>
+        <SharesPage />
+      </ToastProvider>,
+    )
+
+    fireEvent.change(screen.getByPlaceholderText('Order ID'), {
+      target: { value: '3' },
+    })
+
+    await waitFor(() => {
+      expect(screen.getByText('Failed to load defaults')).toBeInTheDocument()
+    })
+  })
 })
