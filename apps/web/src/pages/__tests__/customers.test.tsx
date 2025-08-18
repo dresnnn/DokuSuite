@@ -68,7 +68,7 @@ describe('CustomersPage', () => {
       target: { value: 'Cust' },
     })
     fireEvent.change(screen.getByDisplayValue('none'), {
-      target: { value: 'default' },
+      target: { value: 'custom_text' },
     })
     fireEvent.change(screen.getByPlaceholderText('Watermark Text'), {
       target: { value: 'txt' },
@@ -79,7 +79,7 @@ describe('CustomersPage', () => {
       expect(apiClient.POST).toHaveBeenCalledWith('/customers', {
         body: {
           name: 'Cust',
-          watermark_policy: 'default',
+          watermark_policy: 'custom_text',
           watermark_text: 'txt',
         },
       })
@@ -88,6 +88,28 @@ describe('CustomersPage', () => {
     await waitFor(() =>
       expect(screen.getByRole('alert')).toHaveTextContent('Customer created'),
     )
+  })
+
+  it('shows watermark text field only for custom_text policy', async () => {
+    ;(apiClient.GET as jest.Mock).mockResolvedValue({
+      data: { items: [], meta: { page: 1, limit: 10, total: 0 } },
+    })
+
+    render(
+      <ToastProvider>
+        <CustomersPage />
+      </ToastProvider>,
+    )
+
+    expect(screen.queryByPlaceholderText('Watermark Text')).toBeNull()
+    fireEvent.change(screen.getByDisplayValue('none'), {
+      target: { value: 'custom_text' },
+    })
+    expect(screen.getByPlaceholderText('Watermark Text')).toBeInTheDocument()
+    fireEvent.change(screen.getByDisplayValue('custom_text'), {
+      target: { value: 'default' },
+    })
+    expect(screen.queryByPlaceholderText('Watermark Text')).toBeNull()
   })
 
   it('updates customer', async () => {
