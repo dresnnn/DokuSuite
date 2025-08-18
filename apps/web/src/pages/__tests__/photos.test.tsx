@@ -16,6 +16,23 @@ import { apiClient } from '../../../lib/api'
 import PhotosPage from '../photos'
 import PhotoDetailPage from '../photos/[id]'
 import { useAuth } from '../../context/AuthContext'
+import { RouterContext } from 'next/dist/shared/lib/router-context.shared-runtime'
+import type { NextRouter } from 'next/router'
+
+const pushMock = jest.fn()
+const router = {
+  push: pushMock,
+  prefetch: jest.fn().mockResolvedValue(undefined),
+  route: '/photos',
+  pathname: '/photos',
+  query: {},
+  asPath: '/photos',
+  basePath: '',
+  isReady: true,
+  isPreview: false,
+  isFallback: false,
+  events: { on: jest.fn(), off: jest.fn(), emit: jest.fn() },
+}
 
 jest.mock('next/router', () => ({
   useRouter: () => ({ query: { id: '1' } }),
@@ -106,6 +123,12 @@ describe('PhotosPage', () => {
   const authMock = useAuth as jest.Mock
 
   beforeEach(() => {
+    pushMock.mockReset()
+    router.push = pushMock
+    router.asPath = '/photos'
+    router.pathname = '/photos'
+    router.route = '/photos'
+    router.query = {}
     authMock.mockReturnValue({ role: 'ADMIN', userId: 1 })
   })
 
@@ -671,6 +694,25 @@ describe('PhotosPage', () => {
       expect(screen.queryByText('r1')).not.toBeInTheDocument(),
     )
     expect(window.localStorage.getItem('exportJobs')).toBe('[]')
+  })
+
+  it('opens detail page when photo ID is clicked', async () => {
+    ;(apiClient.GET as jest.Mock).mockResolvedValue({
+      data: { items: [{ id: 1, mode: 'MOBILE', uploader_id: 'u1' }], meta: { page: 1, limit: 10, total: 1 } },
+    })
+    render(
+      <RouterContext.Provider value={router as unknown as NextRouter}>
+        <ToastProvider>
+          <PhotosPage />
+        </ToastProvider>
+      </RouterContext.Provider>,
+    )
+    await waitFor(() =>
+      expect(screen.getByRole('link', { name: 'Photo 1' })).toBeInTheDocument(),
+    )
+    fireEvent.click(screen.getByRole('link', { name: 'Photo 1' }))
+    expect(pushMock).toHaveBeenCalled()
+    expect(pushMock.mock.calls[0][0]).toBe('/photos/1')
   })
 })
 

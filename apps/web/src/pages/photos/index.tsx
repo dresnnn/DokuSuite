@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import dynamic from 'next/dynamic'
+import Link from 'next/link'
 import { apiClient } from '../../../lib/api'
 import { useAuth } from '../../context/AuthContext'
 import { undoStack } from '../../lib/undoStack'
@@ -428,7 +429,11 @@ export default function PhotosPage() {
                     onChange={() => toggleSelect(p.id!)}
                   />
                 </td>
-                <td>Photo {p.id}</td>
+                <td>
+                  {p.id !== undefined && (
+                    <Link href={`/photos/${p.id}`}>Photo {p.id}</Link>
+                  )}
+                </td>
                 <td>{p.mode}</td>
                 <td>{p.uploader_id}</td>
               </tr>
@@ -454,7 +459,9 @@ export default function PhotosPage() {
                 checked={selected.includes(p.id!)}
                 onChange={() => toggleSelect(p.id!)}
               />
-              Photo {p.id}
+              {p.id !== undefined && (
+                <Link href={`/photos/${p.id}`}>Photo {p.id}</Link>
+              )}
             </label>
           ))}
         </div>
