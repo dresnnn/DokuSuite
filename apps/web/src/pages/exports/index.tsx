@@ -5,11 +5,13 @@ import {
   loadExportJobs,
   saveExportJobs,
 } from '../../../lib/exportJobs'
+import { useToast } from '../../components/Toast'
 
 export default function ExportsPage() {
   const [jobs, setJobs] = useState<ExportJob[]>([])
   const [title, setTitle] = useState('')
   const [includeExif, setIncludeExif] = useState(false)
+  const { showToast } = useToast()
 
   useEffect(() => {
     setJobs(loadExportJobs())
@@ -25,20 +27,41 @@ export default function ExportsPage() {
   }
 
   const triggerZipExport = async () => {
-    const { data } = await client.POST('/exports/zip', {
-      body: { title: title || undefined, includeExif },
-    })
-    if (data) setJobs((prev) => [...prev, data as ExportJob])
+    try {
+      const { data } = await client.POST('/exports/zip', {
+        body: { title: title || undefined, includeExif },
+      })
+      if (data) {
+        setJobs((prev) => [...prev, data as ExportJob])
+        showToast('success', 'Export started')
+      }
+    } catch {
+      showToast('error', 'Export failed')
+    }
   }
 
   const triggerExcelExport = async () => {
-    const { data } = await client.POST('/exports/excel', {})
-    if (data) setJobs((prev) => [...prev, data as ExportJob])
+    try {
+      const { data } = await client.POST('/exports/excel', {})
+      if (data) {
+        setJobs((prev) => [...prev, data as ExportJob])
+        showToast('success', 'Export started')
+      }
+    } catch {
+      showToast('error', 'Export failed')
+    }
   }
 
   const triggerPdfExport = async () => {
-    const { data } = await client.POST('/exports/pdf', {})
-    if (data) setJobs((prev) => [...prev, data as ExportJob])
+    try {
+      const { data } = await client.POST('/exports/pdf', {})
+      if (data) {
+        setJobs((prev) => [...prev, data as ExportJob])
+        showToast('success', 'Export started')
+      }
+    } catch {
+      showToast('error', 'Export failed')
+    }
   }
 
   useEffect(() => {
@@ -51,15 +74,18 @@ export default function ExportsPage() {
         const { data } = await client.GET('/exports/{id}', {
           params: { path: { id: job.id } },
         })
-        if (data)
+        if (data) {
+          const updated = data as ExportJob
           setJobs((prev) =>
-            prev.map((j) => (j.id === job.id ? (data as ExportJob) : j)),
+            prev.map((j) => (j.id === job.id ? updated : j)),
           )
+          if (updated.status === 'error') showToast('error', 'Export failed')
+        }
       }
     }, 2000)
 
     return () => clearInterval(interval)
-  }, [jobs, client])
+  }, [jobs, client, showToast])
 
   return (
     <div>
