@@ -24,3 +24,9 @@ export const saveExportJobs = (jobs: ExportJob[]) => {
     // ignore write errors
   }
 };
+
+export const deleteExportJob = (id: string): ExportJob[] => {
+  const jobs = loadExportJobs().filter((job) => job.id !== id);
+  saveExportJobs(jobs);
+  return jobs;
+};

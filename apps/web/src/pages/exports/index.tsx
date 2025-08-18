@@ -4,6 +4,7 @@ import {
   ExportJob,
   loadExportJobs,
   saveExportJobs,
+  deleteExportJob,
 } from '../../../lib/exportJobs'
 import { useToast } from '../../components/Toast'
 
@@ -87,6 +88,11 @@ export default function ExportsPage() {
     return () => clearInterval(interval)
   }, [jobs, client, showToast])
 
+  const removeJob = (id?: string) => {
+    if (!id) return
+    setJobs(deleteExportJob(id))
+  }
+
   return (
     <div>
       <label>
@@ -110,6 +116,7 @@ export default function ExportsPage() {
             <th>ID</th>
             <th>Status</th>
             <th>Result</th>
+            <th>Remove</th>
           </tr>
         </thead>
         <tbody>
@@ -123,6 +130,9 @@ export default function ExportsPage() {
                     Download
                   </a>
                 ) : null}
+              </td>
+              <td>
+                <button onClick={() => removeJob(job.id)}>Remove</button>
               </td>
             </tr>
           ))}
