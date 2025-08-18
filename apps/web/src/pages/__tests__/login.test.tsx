@@ -1,11 +1,12 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import LoginPage from '../login';
-import { apiClient, setAuthToken, authFetch } from '../../../lib/api';
+import { apiClient, setAuthToken, authFetch, onForbidden } from '../../../lib/api';
 import { AuthProvider } from '../../context/AuthContext';
 import Layout from '../../components/Layout';
 import { AuthGuard } from '../_app';
 import { useRouter } from 'next/router';
-import { ToastProvider } from '../../components/Toast';
+import { ToastProvider, useToast } from '../../components/Toast';
+import { useEffect } from 'react';
 
 jest.mock('next/router', () => ({
   useRouter: jest.fn(),
@@ -47,6 +48,35 @@ describe('LoginPage', () => {
 
   afterEach(() => {
     jest.restoreAllMocks();
+  });
+
+  function ForbiddenListener() {
+    const { showToast } = useToast();
+    useEffect(() => onForbidden(() => showToast('error', 'Access denied')), [showToast]);
+    return null;
+  }
+
+  it('shows toast on 403 responses', async () => {
+    const originalFetch = global.fetch;
+    (global as any).fetch = jest.fn().mockResolvedValue({
+      status: 403,
+    } as unknown as Response);
+
+    render(
+      <ToastProvider>
+        <ForbiddenListener />
+      </ToastProvider>,
+    );
+
+    try {
+      await authFetch('/api/test');
+    } catch {}
+
+    await waitFor(() => {
+      expect(screen.getByText('Access denied')).toBeInTheDocument();
+    });
+
+    (global as any).fetch = originalFetch;
   });
 
   it('stores token and redirects on successful login', async () => {
