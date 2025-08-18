@@ -495,7 +495,12 @@ describe('PhotosPage', () => {
     }
     ;(apiClient.GET as jest.Mock)
       .mockResolvedValueOnce({ data: page1 })
-      .mockResolvedValueOnce({ data: page1 })
+      .mockImplementationOnce(
+        () =>
+          new Promise((resolve) =>
+            setTimeout(() => resolve({ data: page1 }), 50),
+          ),
+      )
       .mockResolvedValueOnce({ data: page2 })
       .mockResolvedValueOnce({ data: page1 })
 
@@ -514,14 +519,18 @@ describe('PhotosPage', () => {
     await waitFor(() =>
       expect(screen.getByText('Photo 2')).toBeInTheDocument(),
     )
-    expect(screen.queryByText('Photo 1')).not.toBeInTheDocument()
+    await waitFor(() =>
+      expect(screen.queryByText('Photo 1')).not.toBeInTheDocument(),
+    )
 
     fireEvent.keyDown(window, { key: 'ArrowLeft', keyCode: 37, which: 37 })
 
     await waitFor(() =>
       expect(screen.getByText('Photo 1')).toBeInTheDocument(),
     )
-    expect(screen.queryByText('Photo 2')).not.toBeInTheDocument()
+    await waitFor(() =>
+      expect(screen.queryByText('Photo 2')).not.toBeInTheDocument(),
+    )
   })
 
   it('hides selected photos', async () => {

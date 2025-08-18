@@ -62,6 +62,7 @@ export default function PhotosPage() {
   const [loading, setLoading] = useState(false)
   const loader = useRef<HTMLDivElement | null>(null)
   const [filtersLoaded, setFiltersLoaded] = useState(false)
+  const latestRequest = useRef(0)
 
   const { role, userId } = useAuth()
   const { showToast } = useToast()
@@ -74,6 +75,7 @@ export default function PhotosPage() {
   const fetchPhotos = useCallback(
     async (page: number, append = false) => {
       setLoading(true)
+      const requestId = ++latestRequest.current
       try {
         const { data } = await apiClient.GET('/photos', {
           params: {
@@ -93,6 +95,7 @@ export default function PhotosPage() {
             },
           },
         })
+        if (latestRequest.current !== requestId) return
         if (data) {
           setPhotos((prev) =>
             append ? [...prev, ...(data.items || [])] : data.items || [],
@@ -100,9 +103,10 @@ export default function PhotosPage() {
           setMeta(data.meta || { page, limit: meta.limit, total: 0 })
         }
       } catch {
-        showToast('error', 'Failed to load photos')
+        if (latestRequest.current === requestId)
+          showToast('error', 'Failed to load photos')
       }
-      setLoading(false)
+      if (latestRequest.current === requestId) setLoading(false)
     },
     [
       meta.limit,
