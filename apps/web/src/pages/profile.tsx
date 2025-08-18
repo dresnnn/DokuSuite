@@ -29,7 +29,8 @@ export default function ProfilePage() {
     try {
       await disable2FA();
       showToast('success', '2FA deaktiviert');
-    } catch {
+    } catch (error) {
+      console.error(error);
       showToast('error', '2FA konnte nicht deaktiviert werden');
     }
   };
