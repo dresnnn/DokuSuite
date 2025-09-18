@@ -1,8 +1,16 @@
-import { createContext, useCallback, useContext, useState, ReactNode } from 'react';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+  ReactNode,
+} from 'react';
 
 export type ToastType = 'success' | 'error';
 export interface Toast {
-  id: number;
+  id: string;
   type: ToastType;
   message: string;
 }
@@ -15,14 +23,29 @@ const ToastContext = createContext<ToastContextValue | undefined>(undefined);
 
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([]);
+  const timeoutHandles = useRef(new Map<string, ReturnType<typeof setTimeout>>());
+
+  useEffect(() => () => {
+    timeoutHandles.current.forEach((handle) => clearTimeout(handle));
+    timeoutHandles.current.clear();
+  }, []);
+
+  const createToastId = useCallback(() => {
+    if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
+      return crypto.randomUUID();
+    }
+    return `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+  }, []);
 
   const showToast = useCallback((type: ToastType, message: string) => {
-    const id = Date.now();
+    const id = createToastId();
     setToasts((prev) => [...prev, { id, type, message }]);
-    setTimeout(() => {
+    const timeout = setTimeout(() => {
       setToasts((prev) => prev.filter((t) => t.id !== id));
+      timeoutHandles.current.delete(id);
     }, 3000);
-  }, []);
+    timeoutHandles.current.set(id, timeout);
+  }, [createToastId]);
 
   return (
     <ToastContext.Provider value={{ showToast }}>
