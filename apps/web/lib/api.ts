@@ -31,6 +31,19 @@ const notifyUnauthorized = () => {
   for (const listener of unauthorizedListeners) listener();
 };
 
+const redirect = (path: string) => {
+  if (typeof window === 'undefined' || typeof window.location?.assign !== 'function') {
+    return;
+  }
+  try {
+    window.location.assign(path);
+  } catch (error) {
+    if (process.env.NODE_ENV !== 'test') {
+      throw error;
+    }
+  }
+};
+
 export const setAuthToken = (token: string) =>
   localStorage.setItem(TOKEN_STORAGE_KEY, token);
 
@@ -47,15 +60,11 @@ export const authFetch: typeof fetch = async (input, init = {}) => {
   if (response.status === 401) {
     clearAuthToken();
     notifyUnauthorized();
-    if (typeof window !== 'undefined') {
-      window.location.assign('/login');
-    }
+    redirect('/login');
   }
   if (response.status === 403) {
     notifyForbidden();
-    if (typeof window !== 'undefined') {
-      window.location.assign('/photos');
-    }
+    redirect('/photos');
   }
   return response;
 };

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { apiClient } from '../../../lib/api'
 import { useToast } from '../../components/Toast'
 
@@ -15,9 +15,14 @@ type PageMeta = {
   total?: number
 }
 
+const isMetaEqual = (a: PageMeta, b: PageMeta) =>
+  (a.page ?? null) === (b.page ?? null) &&
+  (a.limit ?? null) === (b.limit ?? null) &&
+  (a.total ?? null) === (b.total ?? null)
+
 export default function CustomersPage() {
   const [customers, setCustomers] = useState<Customer[]>([])
-  const [meta, setMeta] = useState<PageMeta>({ page: 1, limit: 10, total: 0 })
+  const [meta, setMetaState] = useState<PageMeta>({ page: 1, limit: 10, total: 0 })
   const [newCustomer, setNewCustomer] = useState({
     name: '',
     watermark_policy: 'none',
@@ -25,23 +30,49 @@ export default function CustomersPage() {
   })
   const { showToast } = useToast()
 
-  const fetchCustomers = async (page = meta.page, limit = meta.limit) => {
-    try {
-      const { data } = await apiClient.GET('/customers', {
-        params: { query: { page, limit } },
-      })
-      if (data) {
-        setCustomers(data.items || [])
-        setMeta(data.meta || { page, limit, total: 0 })
-      }
-    } catch {
-      showToast('error', 'Failed to load customers')
-    }
-  }
+  const metaRef = useRef(meta)
 
   useEffect(() => {
-    fetchCustomers()
-  }, [])
+    metaRef.current = meta
+  }, [meta])
+
+  const updateMeta = useCallback(
+    (updater: PageMeta | ((prev: PageMeta) => PageMeta)) => {
+      setMetaState((prev) => {
+        const next = typeof updater === 'function' ? updater(prev) : updater
+        return isMetaEqual(prev, next) ? prev : next
+      })
+    },
+    [],
+  )
+
+  const fetchCustomers = useCallback(
+    async (page?: number, limit?: number) => {
+      const currentMeta = metaRef.current
+      const pageToLoad = page ?? currentMeta.page ?? 1
+      const limitToLoad = limit ?? currentMeta.limit ?? 10
+      try {
+        const { data } = await apiClient.GET('/customers', {
+          params: { query: { page: pageToLoad, limit: limitToLoad } },
+        })
+        if (data) {
+          setCustomers(data.items || [])
+          updateMeta(data.meta || {
+            page: pageToLoad,
+            limit: limitToLoad,
+            total: 0,
+          })
+        }
+      } catch {
+        showToast('error', 'Failed to load customers')
+      }
+    },
+    [showToast, updateMeta],
+  )
+
+  useEffect(() => {
+    void fetchCustomers()
+  }, [fetchCustomers])
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -58,7 +89,8 @@ export default function CustomersPage() {
       })
       setNewCustomer({ name: '', watermark_policy: 'none', watermark_text: '' })
       showToast('success', 'Customer created')
-      fetchCustomers()
+      const current = metaRef.current
+      await fetchCustomers(current.page, current.limit)
     } catch {
       showToast('error', 'Failed to create customer')
     }
@@ -89,7 +121,8 @@ export default function CustomersPage() {
         },
       })
       showToast('success', 'Customer updated')
-      fetchCustomers()
+      const current = metaRef.current
+      await fetchCustomers(current.page, current.limit)
     } catch {
       showToast('error', 'Failed to update customer')
     }
@@ -108,13 +141,13 @@ export default function CustomersPage() {
   const totalPages = Math.ceil((meta.total || 0) / (meta.limit || 1)) || 1
 
   const changePage = (newPage: number) => {
-    setMeta((m) => ({ ...m, page: newPage }))
-    fetchCustomers(newPage)
+    updateMeta((m) => ({ ...m, page: newPage }))
+    void fetchCustomers(newPage)
   }
 
   const handleFetch = (e: React.FormEvent) => {
     e.preventDefault()
-    fetchCustomers()
+    void fetchCustomers(meta.page, meta.limit)
   }
 
   return (
@@ -126,7 +159,7 @@ export default function CustomersPage() {
             type="number"
             value={meta.page}
             onChange={(e) =>
-              setMeta((m) => ({ ...m, page: Number(e.target.value) }))
+              updateMeta((m) => ({ ...m, page: Number(e.target.value) }))
             }
           />
         </label>
@@ -136,7 +169,7 @@ export default function CustomersPage() {
             type="number"
             value={meta.limit}
             onChange={(e) =>
-              setMeta((m) => ({ ...m, limit: Number(e.target.value) }))
+              updateMeta((m) => ({ ...m, limit: Number(e.target.value) }))
             }
           />
         </label>

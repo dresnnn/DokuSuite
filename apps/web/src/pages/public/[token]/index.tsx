@@ -1,6 +1,7 @@
 import { useRouter } from 'next/router'
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import dynamic from 'next/dynamic'
+import Image from 'next/image'
 import { apiClient } from '../../../../lib/api'
 import {
   ExportJob,
@@ -37,18 +38,22 @@ export default function PublicSharePage() {
   const toastShown = useRef(false)
   const { showToast } = useToast()
 
-  const client = apiClient as unknown as {
-    GET: typeof apiClient.GET
-    POST: typeof apiClient.POST
-  }
+  const client = useMemo(
+    () =>
+      apiClient as unknown as {
+        GET: typeof apiClient.GET
+        POST: typeof apiClient.POST
+      },
+    [],
+  )
 
-  const handleNotFound = () => {
+  const handleNotFound = useCallback(() => {
     if (!toastShown.current) {
       showToast('error', 'Freigabe nicht gefunden')
       toastShown.current = true
     }
     setNotFound(true)
-  }
+  }, [showToast])
 
   useEffect(() => {
     const load = async () => {
@@ -66,7 +71,7 @@ export default function PublicSharePage() {
       setWatermarkText(data?.watermark_text || '')
     }
     load()
-  }, [token, notFound])
+  }, [token, notFound, handleNotFound])
 
   useEffect(() => {
     const load = async () => {
@@ -84,7 +89,7 @@ export default function PublicSharePage() {
       setPhotos((data?.items as Photo[]) || [])
     }
     load()
-  }, [token, notFound])
+  }, [token, notFound, handleNotFound])
 
   const toggleSelect = (id: number) => {
     setSelected((prev) => (prev.includes(id) ? prev.filter((p) => p !== id) : [...prev, id]))
@@ -225,7 +230,14 @@ export default function PublicSharePage() {
               />
               {p.thumbnail_url ? (
                 <div style={{ position: 'relative', display: 'inline-block' }}>
-                  <img src={p.thumbnail_url} alt={`Photo ${p.id}`} />
+                  <Image
+                    src={p.thumbnail_url}
+                    alt={`Photo ${p.id}`}
+                    width={320}
+                    height={240}
+                    style={{ width: '100%', height: 'auto', objectFit: 'cover' }}
+                    unoptimized
+                  />
                   {watermarkPolicy !== 'none' && (
                     <span
                       data-testid="watermark"

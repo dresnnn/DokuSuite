@@ -8,6 +8,7 @@ import {
   type ComponentType,
 } from 'react'
 import dynamic from 'next/dynamic'
+import Image from 'next/image'
 import Link from 'next/link'
 import { FixedSizeGrid as Grid, FixedSizeList as List, GridChildComponentProps } from 'react-window'
 import { apiClient } from '../../../lib/api'
@@ -431,7 +432,14 @@ export default function PhotosPage() {
           onChange={() => toggleSelect(p.id!)}
         />
         {p.thumbnail_url && (
-          <img src={p.thumbnail_url} alt={`Thumbnail for photo ${p.id}`} />
+          <Image
+            src={p.thumbnail_url}
+            alt={`Thumbnail for photo ${p.id}`}
+            width={80}
+            height={60}
+            style={{ width: '80px', height: '60px', objectFit: 'cover' }}
+            unoptimized
+          />
         )}
         {p.id !== undefined && <Link href={`/photos/${p.id}`}>Photo {p.id}</Link>}
         <span>{p.mode}</span>
@@ -463,7 +471,14 @@ export default function PhotosPage() {
           onChange={() => toggleSelect(p.id!)}
         />
         {p.thumbnail_url && (
-          <img src={p.thumbnail_url} alt={`Thumbnail for photo ${p.id}`} />
+          <Image
+            src={p.thumbnail_url}
+            alt={`Thumbnail for photo ${p.id}`}
+            width={200}
+            height={150}
+            style={{ width: '100%', height: 'auto', objectFit: 'cover' }}
+            unoptimized
+          />
         )}
         {p.id !== undefined && <Link href={`/photos/${p.id}`}>Photo {p.id}</Link>}
       </label>
